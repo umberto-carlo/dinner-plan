@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Gestione Utenti', ~{::section})}">
+<section>
+    <div style="margin-bottom: 1rem;">
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; Dashboard</a>
+    </div>
+
+    <h2>Gestione Utenti</h2>
+    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;">Password reimpostata con successo.</p>
+
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; border-bottom: 2px solid var(--border);">
+                    <th style="padding: 0.75rem;">ID</th>
+                    <th style="padding: 0.75rem;">Username</th>
+                    <th style="padding: 0.75rem;">Ruolo</th>
+                    <th style="padding: 0.75rem;">Azione</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="u : ${users}" style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.75rem;" th:text="${u.id}">1</td>
+                    <td style="padding: 0.75rem;" th:text="${u.username}">user</td>
+                    <td style="padding: 0.75rem;" th:text="${u.role}">USER</td>
+                    <td style="padding: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <form th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post"
+                                style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="text" name="newPassword" placeholder="Nuova pass" required
+                                    style="width: 120px; padding: 0.25rem; font-size: 0.875rem;">
+                                <button type="submit" class="btn btn-secondary"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                    Reset
+                                </button>
+                            </form>
+
+                            <form th:if="${u.role.name() != 'ORGANIZER'}"
+                                th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post">
+                                <button type="submit" class="btn"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #28a745;"
+                                    onclick="return confirm('Sei sicuro di voler promuovere questo utente a Organizzatore?');">
+                                    Promuovi
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Manuale Utente', ~{::section})}">
+<section>
+    <div style="margin-bottom: 1rem;">
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; Dashboard</a>
+    </div>
+
+    <h1>Manuale d'Uso Dinner Plan</h1>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2>Introduzione</h2>
+        <p>
+            <strong>Dinner Plan</strong> è un'applicazione per organizzare cene ed eventi aziendali.
+            Permette di proporre date e luoghi e di votare la soluzione migliore in modo democratico e trasparente.
+        </p>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <h2>Per Tutti gli Utenti</h2>
+        <ul>
+            <li><strong>Login:</strong> Accedi con le tue credenziali. Se non hai un account, chiedi a un organizzatore.
+            </li>
+            <li><strong>Dashboard:</strong> Visualizza tutti gli eventi aperti e chiusi.</li>
+            <li><strong>Dettagli Evento:</strong> Clicca su un evento per vedere le proposte.</li>
+            <li><strong>Voto:</strong> Puoi votare una o più proposte cliccando su "Vota". Se cambi idea, clicca
+                "Rimuovi Voto".</li>
+            <li><strong>Profilo:</strong> Accedi al tuo profilo (link nella barra di navigazione) per cambiare la tua
+                password.</li>
+        </ul>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color);">
+        <h2>Per gli Organizzatori</h2>
+        <p>Oltre alle funzionalità base, gli organizzatori hanno poteri di gestione:</p>
+        <ul>
+            <li><strong>Crea Evento:</strong> Usa il pulsante "Nuovo Evento" nella Dashboard per lanciare una nuova
+                iniziativa.</li>
+            <li><strong>Aggiungi Proposte:</strong> All'interno di un evento aperto, puoi aggiungere nuove proposte
+                (luogo, data, indirizzo).</li>
+            <li><strong>Suggerimenti Intelligenti:</strong> Quando crei una proposta, puoi usare il menu a tendina per
+                riutilizzare luoghi di eventi passati.</li>
+            <li><strong>Chiudi Evento (Scelta Definitiva):</strong> Quando sei pronto a decidere, clicca "Scegli come
+                definitiva" sulla proposta vincente. Questo chiuderà l'evento e bloccherà i voti.</li>
+            <li><strong>Gestione Utenti:</strong> Accedi alla pagina "Utenti" per resettare le password dimenticate o
+                promuovere altri utenti a ruolo di Organizzatore.</li>
+        </ul>
+    </div>
+</section>
+
+</html>

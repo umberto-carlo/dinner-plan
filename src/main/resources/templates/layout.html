@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html th:fragment="layout(title, content)" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Dinner Plan'">Dinner Plan</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/fonts.css}">
+    <script th:src="@{/js/sockjs.min.js}"></script>
+    <script th:src="@{/js/stomp.min.js}"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="/" class="logo">DinnerPlan</a>
+            <div class="nav-links">
+                <span sec:authorize="isAuthenticated()">
+                    Ciao, <span sec:authentication="name">User</span>!
+
+                    <a th:href="@{/profile}"
+                        style="margin-left: 1rem; margin-right: 0.5rem; font-weight: 500;">Profilo</a>
+                    <a sec:authorize="hasRole('ORGANIZER')" th:href="@{/admin/users}"
+                        style="margin-right: 0.5rem; font-weight: 500;">Utenti</a>
+
+                    <form th:action="@{/logout}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-secondary">Esci</button>
+                    </form>
+                </span>
+                <span sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/login}" class="btn btn-secondary">Accedi</a>
+                    <a th:href="@{/register}" class="btn">Registrati</a>
+                </span>
+            </div>
+        </header>
+
+        <main th:replace="${content}">
+            <!-- Content goes here -->
+        </main>
+    </div>
+
+    <footer
+        style="text-align: center; padding: 1rem; border-top: 1px solid var(--border); margin-top: 2rem; color: var(--text-secondary); font-size: 0.9rem;">
+        &copy; 2025 Dinner Plan | <a th:href="@{/manual}" style="color: var(--primary-color);">Manuale d'Uso</a>
+    </footer>
+</body>
+
+</html>
