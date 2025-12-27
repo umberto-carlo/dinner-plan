@@ -1,29 +1,23 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Registrati', ~{::section})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{register.title}, ~{::section})}">
 <section>
     <div class="card" style="max-width: 400px; margin: 2rem auto;">
-        <h2>Registrati</h2>
+        <h2 th:text="#{register.title}">Registrati</h2>
         <div th:if="${error}" style="color: red; margin-bottom: 1rem;" th:text="${error}"></div>
         <form th:action="@{/register}" method="post">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username" th:text="#{login.username}">Username</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password" th:text="#{login.password}">Password</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <div class="form-group">
-                <label for="role">Ruolo</label>
-                <select id="role" name="role">
-                    <option value="ORGANIZER">Organizzatore</option>
-                    <option value="PARTICIPANT">Partecipante</option>
-                </select>
-            </div>
-            <button type="submit" class="btn" style="width: 100%">Registrati</button>
+            <button type="submit" class="btn" style="width: 100%" th:text="#{register.button}">Registrati</button>
         </form>
         <p style="margin-top: 1rem; text-align: center;">
-            Hai già un account? <a th:href="@{/login}">Accedi</a>
+            <span th:text="#{register.has_account}">Hai già un account?</span> <a th:href="@{/login}"
+                th:text="#{register.login_link}">Accedi</a>
         </p>
     </div>
 </section>

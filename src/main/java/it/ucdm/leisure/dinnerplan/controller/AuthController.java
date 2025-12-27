@@ -1,6 +1,5 @@
 package it.ucdm.leisure.dinnerplan.controller;
 
-import it.ucdm.leisure.dinnerplan.model.Role;
 import it.ucdm.leisure.dinnerplan.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,10 +27,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@RequestParam String username, @RequestParam String password, @RequestParam Role role,
+    public String registerUser(@RequestParam String username, @RequestParam String password,
             Model model) {
         try {
-            userService.registerUser(username, password, role);
+            userService.registerUser(username, password, it.ucdm.leisure.dinnerplan.model.Role.PARTICIPANT);
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());

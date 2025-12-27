@@ -2,10 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Manuale Utente', ~{::section})}">
 <section>
     <div style="margin-bottom: 1rem;">
-        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; Dashboard</a>
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span
+                th:text="#{app.back_dashboard}">Dashboard</span></a>
     </div>
 
-    <h1>Manuale d'Uso Dinner Plan</h1>
+    <h1 th:text="#{manual.title}">Manuale d'Uso Dinner Plan</h1>
 
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2>Introduzione</h2>

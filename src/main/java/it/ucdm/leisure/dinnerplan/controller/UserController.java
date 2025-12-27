@@ -43,14 +43,28 @@ public class UserController {
         return "profile";
     }
 
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @GetMapping("/admin/users")
-    public String listUsers(Model model) {
-        model.addAttribute("users", userService.getAllUsers());
+    public String listUsers(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (isAdmin) {
+            model.addAttribute("users", userService.getAllUsers());
+        } else {
+            model.addAttribute("users", userService.getAllUsersExceptAdmins());
+        }
         return "user_list";
     }
 
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/users/create")
+    public String createUser(@RequestParam String username, @RequestParam String password, @RequestParam String role) {
+        userService.registerUser(username, password, it.ucdm.leisure.dinnerplan.model.Role.valueOf(role));
+        return "redirect:/admin/users";
+    }
+
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PostMapping("/admin/users/{id}/reset-password")
     public String resetPassword(@PathVariable Long id, @RequestParam String newPassword) {
         userService.resetPassword(id, newPassword);
@@ -61,6 +75,20 @@ public class UserController {
     @PostMapping("/admin/users/{id}/promote")
     public String promoteUser(@PathVariable Long id) {
         userService.promoteUserToOrganizer(id);
+        return "redirect:/admin/users";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/users/{id}/delete")
+    public String deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return "redirect:/admin/users";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/users/{id}/role")
+    public String changeUserRole(@PathVariable Long id, @RequestParam String role) {
+        userService.updateUserRole(id, it.ucdm.leisure.dinnerplan.model.Role.valueOf(role));
         return "redirect:/admin/users";
     }
 }

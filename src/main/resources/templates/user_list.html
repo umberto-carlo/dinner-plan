@@ -1,21 +1,46 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Gestione Utenti', ~{::section})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    th:replace="~{layout :: layout('Gestione Utenti', ~{::section})}">
 <section>
     <div style="margin-bottom: 1rem;">
-        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; Dashboard</a>
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span
+                th:text="#{app.back_dashboard}">Dashboard</span></a>
     </div>
 
     <h2>Gestione Utenti</h2>
-    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;">Password reimpostata con successo.</p>
+    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;">Operazione completata con successo.</p>
+
+    <!-- Admin: Create User -->
+    <div sec:authorize="hasRole('ADMIN')" class="card" style="margin-bottom: 1rem;">
+        <h3 th:text="#{users.create}">Crea Nuovo Utente</h3>
+        <form th:action="@{/admin/users/create}" method="post" style="display: flex; gap: 1rem; align-items: flex-end;">
+            <div>
+                <label th:text="#{login.username}">Username</label>
+                <input type="text" name="username" required style="display: block; width: 100%; padding: 0.5rem;">
+            </div>
+            <div>
+                <label th:text="#{login.password}">Password</label>
+                <input type="password" name="password" required style="display: block; width: 100%; padding: 0.5rem;">
+            </div>
+            <div>
+                <label th:text="#{users.role}">Ruolo</label>
+                <select name="role" style="display: block; width: 100%; padding: 0.5rem;">
+                    <option value="PARTICIPANT">PARTICIPANT</option>
+                    <option value="ORGANIZER">ORGANIZER</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </div>
+            <button type="submit" class="btn" th:text="#{users.create}">Crea Utente</button>
+        </form>
+    </div>
 
     <div class="card">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; border-bottom: 2px solid var(--border);">
                     <th style="padding: 0.75rem;">ID</th>
-                    <th style="padding: 0.75rem;">Username</th>
-                    <th style="padding: 0.75rem;">Ruolo</th>
-                    <th style="padding: 0.75rem;">Azione</th>
+                    <th style="padding: 0.75rem;" th:text="#{login.username}">Username</th>
+                    <th style="padding: 0.75rem;" th:text="#{users.role}">Ruolo</th>
+                    <th style="padding: 0.75rem;" th:text="#{users.action}">Azione</th>
                 </tr>
             </thead>
             <tbody>
@@ -24,25 +49,47 @@
                     <td style="padding: 0.75rem;" th:text="${u.username}">user</td>
                     <td style="padding: 0.75rem;" th:text="${u.role}">USER</td>
                     <td style="padding: 0.75rem;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <!-- Reset Password (All Admin/Organizer) -->
                             <form th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post"
                                 style="display: flex; gap: 0.5rem; align-items: center;">
-                                <input type="text" name="newPassword" placeholder="Nuova pass" required
-                                    style="width: 120px; padding: 0.25rem; font-size: 0.875rem;">
+                                <input type="text" name="newPassword" th:placeholder="#{users.new_pass_ph}" required
+                                    style="width: 100px; padding: 0.25rem; font-size: 0.875rem;">
                                 <button type="submit" class="btn btn-secondary"
-                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem;" th:text="#{users.reset}">
                                     Reset
                                 </button>
                             </form>
 
-                            <form th:if="${u.role.name() != 'ORGANIZER'}"
+                            <!-- Organizer: Promote -->
+                            <form sec:authorize="hasRole('ORGANIZER')" th:if="${u.role.name() == 'PARTICIPANT'}"
                                 th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post">
                                 <button type="submit" class="btn"
                                     style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #28a745;"
-                                    onclick="return confirm('Sei sicuro di voler promuovere questo utente a Organizzatore?');">
+                                    onclick="return confirm('Promuovere a Organizzatore?');" th:text="#{users.promote}">
                                     Promuovi
                                 </button>
                             </form>
+
+                            <!-- Admin: Change Role & Delete -->
+                            <div sec:authorize="hasRole('ADMIN')" style="display: flex; gap: 0.5rem;">
+                                <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post">
+                                    <select name="role" onchange="this.form.submit()" style="padding: 0.25rem;">
+                                        <option th:selected="${u.role.name() == 'PARTICIPANT'}" value="PARTICIPANT">P
+                                        </option>
+                                        <option th:selected="${u.role.name() == 'ORGANIZER'}" value="ORGANIZER">O
+                                        </option>
+                                        <option th:selected="${u.role.name() == 'ADMIN'}" value="ADMIN">A</option>
+                                    </select>
+                                </form>
+                                <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
+                                    <button type="submit" class="btn"
+                                        style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #dc3545;"
+                                        onclick="return confirm('Cancellare utente?');" th:text="#{users.delete}">
+                                        X
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </td>
                 </tr>

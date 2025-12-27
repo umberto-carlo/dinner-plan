@@ -18,20 +18,20 @@
             <a href="/" class="logo">DinnerPlan</a>
             <div class="nav-links">
                 <span sec:authorize="isAuthenticated()">
-                    Ciao, <span sec:authentication="name">User</span>!
+                    <span th:text="#{app.welcome(${#authentication.name})}">Ciao, User!</span>
 
-                    <a th:href="@{/profile}"
-                        style="margin-left: 1rem; margin-right: 0.5rem; font-weight: 500;">Profilo</a>
-                    <a sec:authorize="hasRole('ORGANIZER')" th:href="@{/admin/users}"
-                        style="margin-right: 0.5rem; font-weight: 500;">Utenti</a>
+                    <a th:href="@{/profile}" style="margin-left: 1rem; margin-right: 0.5rem; font-weight: 500;"
+                        th:text="#{app.profile}">Profilo</a>
+                    <a sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')" th:href="@{/admin/users}"
+                        style="margin-right: 0.5rem; font-weight: 500;" th:text="#{app.users}">Utenti</a>
 
                     <form th:action="@{/logout}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-secondary">Esci</button>
+                        <button type="submit" class="btn btn-secondary" th:text="#{app.logout}">Esci</button>
                     </form>
                 </span>
                 <span sec:authorize="!isAuthenticated()">
-                    <a th:href="@{/login}" class="btn btn-secondary">Accedi</a>
-                    <a th:href="@{/register}" class="btn">Registrati</a>
+                    <a th:href="@{/login}" class="btn btn-secondary" th:text="#{app.login}">Accedi</a>
+                    <a th:href="@{/register}" class="btn" th:text="#{app.register}">Registrati</a>
                 </span>
             </div>
         </header>
@@ -43,7 +43,18 @@
 
     <footer
         style="text-align: center; padding: 1rem; border-top: 1px solid var(--border); margin-top: 2rem; color: var(--text-secondary); font-size: 0.9rem;">
-        &copy; 2025 Dinner Plan | <a th:href="@{/manual}" style="color: var(--primary-color);">Manuale d'Uso</a>
+        <span th:text="#{app.footer}">&copy; 2025 Dinner Plan</span> |
+        <a th:href="@{/manual}" style="color: var(--primary-color);" th:text="#{app.manual}">Manuale d'Uso</a>
+
+        <div style="margin-top: 1rem;">
+            <form action="" method="get">
+                <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem;">
+                    <option value="it" th:selected="${#locale.language == 'it'}">Italiano</option>
+                    <option value="en" th:selected="${#locale.language == 'en'}">English</option>
+                    <option value="sv" th:selected="${#locale.language == 'sv'}">Svenska</option>
+                </select>
+            </form>
+        </div>
     </footer>
 </body>
 

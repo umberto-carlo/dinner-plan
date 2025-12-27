@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Dashboard', ~{::section})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{app.title}, ~{::section})}">
 <section>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h2>Prossime Cene</h2>
-        <a th:if="${isOrganizer}" th:href="@{/events/create}" class="btn">Crea Nuovo Evento</a>
+        <h2 th:text="#{app.title}">Prossime Cene</h2>
+        <a th:if="${isOrganizer}" th:href="@{/events/create}" class="btn" th:text="#{dashboard.create}">Crea Nuovo
+            Evento</a>
     </div>
 
     <div th:if="${events.empty}" class="card">
-        <p>Nessun evento pianificato al momento.</p>
+        <p th:text="#{dashboard.empty}">Nessun evento pianificato al momento.</p>
     </div>
 
     <div th:each="event : ${events}" class="card event-item">
@@ -16,15 +17,18 @@
                 <div class="event-title" th:text="${event.title}">Cena Team</div>
                 <div style="margin-bottom: 0.5rem;" th:text="${event.description}">Descrizione</div>
                 <div class="meta">
-                    Organizzatore: <span th:text="${event.organizer.username}">User</span>
-                    | Stato: <span th:text="${event.status}">OPEN</span>
+                    <span th:text="#{event.by}">Organizzatore:</span> <span
+                        th:text="${event.organizer.username}">User</span>
+                    | <span th:text="#{event.status}">Stato:</span> <span th:text="${event.status}">OPEN</span>
                 </div>
             </div>
             <div style="text-align: right;">
                 <div class="meta" style="margin-bottom: 0.5rem;">
-                    Scadenza: <span th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
+                    <span th:text="#{event.deadline}">Scadenza:</span> <span
+                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
                 </div>
-                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-secondary">Dettagli</a>
+                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-secondary"
+                    th:text="#{dashboard.view}">Dettagli</a>
             </div>
         </div>
     </div>

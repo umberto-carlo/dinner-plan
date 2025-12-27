@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Dettagli Evento', ~{::section})}">
 <section>
     <div style="margin-bottom: 1rem;">
-        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; Torna alla Dashboard</a>
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span th:text="#{app.back_dashboard}">Torna alla
+                Dashboard</span></a>
     </div>
 
     <div class="card">
@@ -12,8 +13,10 @@
                 <p th:text="${event.description}" style="color: var(--text-secondary); margin-bottom: 1rem;">Description
                 </p>
                 <div class="meta">
-                    Organizzatore: <span th:text="${event.organizer.username}">User</span>
-                    | Scadenza: <span th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
+                    <span th:text="#{event.by}">Organizzatore:</span> <span
+                        th:text="${event.organizer.username}">User</span>
+                    | <span th:text="#{event.deadline}">Scadenza:</span> <span
+                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
                 </div>
             </div>
             <div>
@@ -25,10 +28,11 @@
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h3>Proposte</h3>
+        <h3 th:text="#{event.proposals}">Proposte</h3>
         <!-- Only Organizer can add proposals AND event must be OPEN -->
         <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
-            onclick="document.getElementById('add-proposal-form').style.display='block'" class="btn">
+            onclick="document.getElementById('add-proposal-form').style.display='block'" class="btn"
+            th:text="#{event.proposals.add}">
             Aggiungi Proposta
         </button>
     </div>
@@ -36,15 +40,13 @@
     <!-- Add Proposal Form (Hidden by default) -->
     <div id="add-proposal-form" class="card"
         style="display: none; background: #f8fafc; border: 1px dashed var(--border);">
-        <h4>Nuova Proposta</h4>
-        <h4>Nuova Proposta</h4>
+        <h4 th:text="#{event.proposals.add}">Nuova Proposta</h4>
 
         <div th:if="${not #lists.isEmpty(recentProposals)}" style="margin-bottom: 1rem;">
             <label for="proposal-suggestion"
-                style="display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">Suggerimenti Recenti (clicca per
-                compilare)</label>
+                style="display: block; font-size: 0.9rem; margin-bottom: 0.25rem;">Suggerimenti Recenti</label>
             <select id="proposal-suggestion" class="form-control" onchange="fillProposalForm(this)">
-                <option value="">-- Seleziona un luogo recente --</option>
+                <option value="">-- Seleziona --</option>
                 <option th:each="p : ${recentProposals}" th:value="${p.location}" th:data-address="${p.address}"
                     th:data-description="${p.description}"
                     th:text="${p.location} + (${p.address} ? ' (' + ${p.address} + ')' : '')">
@@ -56,31 +58,32 @@
         <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
-                    <label for="dateOption">Data e Ora</label>
+                    <label for="dateOption" th:text="#{event.date}">Data e Ora</label>
                     <input type="datetime-local" id="dateOption" name="dateOption" required>
                 </div>
                 <div class="form-group">
-                    <label for="location">Luogo</label>
+                    <label for="location" th:text="#{event.location}">Luogo</label>
                     <input type="text" id="location" name="location" placeholder="es. Pizzeria da Michele" required>
                 </div>
             </div>
             <div class="form-group">
-                <label for="address">Indirizzo (per Mappa)</label>
+                <label for="address" th:text="#{event.address}">Indirizzo (per Mappa)</label>
                 <input type="text" id="address" name="address" placeholder="es. Via dei Tribunali 32, Napoli" required>
             </div>
             <div class="form-group">
-                <label for="propDescription">Descrizione</label>
+                <label for="propDescription" th:text="#{dashboard.description}">Descrizione</label>
                 <input type="text" id="propDescription" name="description" placeholder="Dettagli opzionali">
             </div>
             <div style="display: flex; gap: 0.5rem;">
-                <button type="submit" class="btn">Aggiungi</button>
+                <button type="submit" class="btn" th:text="#{app.add}">Aggiungi</button>
                 <button type="button" onclick="document.getElementById('add-proposal-form').style.display='none'"
-                    class="btn btn-secondary">Annulla</button>
+                    class="btn btn-secondary" th:text="#{app.cancel}">Annulla</button>
             </div>
         </form>
     </div>
 
-    <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+    <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);"
+        th:text="#{event.proposals.none}">
         Nessuna proposta aggiunta ancora.
     </div>
 
@@ -108,7 +111,8 @@
 
                 <!-- Winner Badge -->
                 <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
-                    style="margin-bottom: 0.5rem; display: inline-block; background: #FFD700; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;">
+                    style="margin-bottom: 0.5rem; display: inline-block; background: #FFD700; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;"
+                    th:text="#{event.selected}">
                     🏆 PROPOSTA SCELTA
                 </div>
 
@@ -117,7 +121,8 @@
                     <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
                         method="post" style="display:inline;">
                         <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 2px 8px;"
-                            onclick="return confirm('Sei sicuro di voler scegliere questa proposta come definitiva? L\'evento verrà chiuso.');">
+                            onclick="return confirm('Sei sicuro di voler scegliere questa proposta come definitiva? L\'evento verrà chiuso.');"
+                            th:text="#{event.select}">
                             Scegli come definitiva
                         </button>
                     </form>
@@ -125,7 +130,7 @@
 
                 <!-- Vote Count -->
                 <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-top: 0.5rem;">
-                    Voti: <span th:text="${proposal.votes.size()}">0</span>
+                    <span th:text="#{event.votes}">Voti</span>: <span th:text="${proposal.votes.size()}">0</span>
                 </div>
 
                 <!-- Voter List (Organizer Only) -->
@@ -143,14 +148,15 @@
                 <!-- Vote Button / Indicator -->
                 <div th:if="${#lists.contains(votedProposalIds, proposal.id)}"
                     style="color: var(--success); font-weight: 600; margin-bottom: 0.5rem;">
-                    <span style="font-size: 1.25rem;">&#10003;</span> Il tuo voto
+                    <span style="font-size: 1.25rem;">&#10003;</span> <span th:text="#{event.your_vote}">Il tuo
+                        voto</span>
                 </div>
 
                 <div th:if="${event.status.name() == 'OPEN'}">
                     <form th:action="@{/proposals/{id}/vote(id=${proposal.id}, eventId=${event.id})}" method="post">
                         <button type="submit"
                             th:class="${#lists.contains(votedProposalIds, proposal.id)} ? 'btn btn-red' : 'btn btn-secondary'"
-                            th:text="${#lists.contains(votedProposalIds, proposal.id)} ? 'Rimuovi Voto' : 'Vota'">
+                            th:text="${#lists.contains(votedProposalIds, proposal.id)} ? #{event.remove_vote} : #{event.vote}">
                             Vota
                         </button>
                     </form>

@@ -49,6 +49,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public List<User> getAllUsersExceptAdmins() {
+        return userRepository.findByRoleNot(it.ucdm.leisure.dinnerplan.model.Role.ADMIN);
+    }
+
     @Transactional
     public void resetPassword(Long userId, String newPassword) {
         User user = userRepository.findById(userId)
@@ -62,6 +66,19 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setRole(Role.ORGANIZER);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    public void updateUserRole(Long userId, Role role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setRole(role);
         userRepository.save(user);
     }
 }

@@ -2,21 +2,21 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Profilo Utente', ~{::section})}">
 <section>
     <div style="max-width: 600px; margin: 0 auto;">
-        <h2>Il tuo Profilo</h2>
+        <h2 th:text="#{profile.title}">Il tuo Profilo</h2>
 
         <div class="card">
             <div class="form-group">
-                <label>Username</label>
+                <label th:text="#{login.username}">Username</label>
                 <div th:text="${user.username}" style="padding: 0.5rem; background: #f1f5f9; border-radius: 4px;">User
                 </div>
             </div>
             <div class="form-group">
-                <label>Ruolo</label>
+                <label th:text="#{users.role}">Ruolo</label>
                 <div th:text="${user.role}" style="padding: 0.5rem; background: #f1f5f9; border-radius: 4px;">ROLE</div>
             </div>
         </div>
 
-        <h3>Cambia Password</h3>
+        <h3 th:text="#{profile.change_pass}">Cambia Password</h3>
         <div class="card">
             <div th:if="${success}" class="alert alert-success" style="color: green; margin-bottom: 1rem;"
                 th:text="${success}"></div>
@@ -25,10 +25,10 @@
 
             <form th:action="@{/profile/change-password}" method="post">
                 <div class="form-group">
-                    <label for="newPassword">Nuova Password</label>
+                    <label for="newPassword" th:text="#{profile.new_pass}">Nuova Password</label>
                     <input type="password" id="newPassword" name="newPassword" required>
                 </div>
-                <button type="submit" class="btn">Aggiorna Password</button>
+                <button type="submit" class="btn" th:text="#{profile.update}">Aggiorna Password</button>
             </form>
         </div>
     </div>
