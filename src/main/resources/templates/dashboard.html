@@ -41,6 +41,11 @@
                     location.reload();
                 }
             });
+            stompClient.subscribe('/user/topic/dashboard-updates', function (message) {
+                if (message.body === 'REFRESH') {
+                    location.reload();
+                }
+            });
         });
     </script>
 </section>

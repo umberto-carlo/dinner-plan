@@ -16,6 +16,9 @@
                 <label for="deadline" th:text="#{event.deadline}">Scadenza Conferma</label>
                 <input type="datetime-local" id="deadline" name="deadline" required>
             </div>
+
+
+
             <button type="submit" class="btn" th:text="#{create.button}">Crea Evento</button>
             <a th:href="@{/}" class="btn btn-secondary" th:text="#{app.cancel}">Annulla</a>
     </div>
