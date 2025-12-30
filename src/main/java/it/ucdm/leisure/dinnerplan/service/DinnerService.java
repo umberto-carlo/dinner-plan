@@ -66,6 +66,10 @@ public class DinnerService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + id));
     }
 
+    public List<Proposal> getProposalsForEvent(Long eventId) {
+        return proposalRepository.findAllByDinnerEventId(eventId);
+    }
+
     @Transactional
     public DinnerEvent createEvent(String title, String description, LocalDateTime deadline, String username,
             List<Long> participantIds) {
@@ -150,7 +154,7 @@ public class DinnerService {
                                     "REFRESH");
                         }
                         // Notify all viewers of this event (including organizer)
-                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update-participants");
                     }
                 });
     }
@@ -178,7 +182,14 @@ public class DinnerService {
         // Save event (CascadeType.ALL will save proposal)
         dinnerEventRepository.save(event);
 
-        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+        // Send updates only after transaction commit
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                    }
+                });
     }
 
     @Transactional
@@ -216,7 +227,15 @@ public class DinnerService {
 
             voteRepository.save(vote);
         }
-        messagingTemplate.convertAndSend("/topic/events/" + proposal.getDinnerEvent().getId(), "update");
+        // Send updates only after transaction commit
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events/" + proposal.getDinnerEvent().getId(),
+                                "update");
+                    }
+                });
     }
 
     public List<Vote> getUserVotesForEvent(Long eventId, Long userId) {
@@ -243,8 +262,14 @@ public class DinnerService {
         event.setStatus(DinnerEvent.EventStatus.DECIDED);
         dinnerEventRepository.save(event);
 
-        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
-        messagingTemplate.convertAndSend("/topic/events", "update"); // Update dashboard status too
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                        messagingTemplate.convertAndSend("/topic/events", "update"); // Update dashboard status too
+                    }
+                });
     }
 
     public List<ProposalSuggestionDTO> getProposalSuggestions() {
@@ -378,7 +403,13 @@ public class DinnerService {
                     .build();
             proposalRatingRepository.save(rating);
         }
-        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                    }
+                });
     }
 
     public Optional<Boolean> getUserRatingForProposal(Long proposalId, Long userId) {

@@ -397,12 +397,21 @@
             }
 
             function refreshAll() {
+                // Generic fetcher that handles redirects
+                const fetchFragment = (url) => fetch(url).then(response => {
+                    if (response.status === 403 || response.redirected) {
+                        window.location.href = '/';
+                        throw new Error("Redirected");
+                    }
+                    return response.text();
+                });
+
                 // Spinner is managed by the initiator (handleAjaxForm). Passive updates shouldn't block UI.
                 Promise.all([
-                    fetch('/events/' + eventId + '/fragments/header').then(r => r.text()),
-                    fetch('/events/' + eventId + '/fragments/actions').then(r => r.text()),
-                    fetch('/events/' + eventId + '/fragments/proposals').then(r => r.text()),
-                    fetch('/events/' + eventId + '/fragments/participants').then(r => r.text())
+                    fetchFragment('/events/' + eventId + '/fragments/header'),
+                    fetchFragment('/events/' + eventId + '/fragments/actions'),
+                    fetchFragment('/events/' + eventId + '/fragments/proposals'),
+                    fetchFragment('/events/' + eventId + '/fragments/participants')
                 ]).then(values => {
                     var header = document.getElementById('event-header-card'); if (header) header.outerHTML = values[0];
                     var actions = document.getElementById('event-action-bar'); if (actions) actions.outerHTML = values[1];
@@ -410,7 +419,7 @@
                     var participants = document.getElementById('participant-lists-container'); if (participants) participants.outerHTML = values[3];
                     document.getElementById('loading-overlay').style.display = 'none';
                 }).catch(e => {
-                    console.error(e);
+                    if (e.message !== "Redirected") console.error(e);
                     document.getElementById('loading-overlay').style.display = 'none';
                 });
             }
@@ -418,6 +427,13 @@
             stompClient.subscribe('/topic/events/' + eventId, function (message) {
                 if (message.body === 'update') {
                     refreshAll();
+                } else if (message.body === 'update-participants') {
+                    fetchFragment('/events/' + eventId + '/fragments/participants')
+                        .then(html => {
+                            var participants = document.getElementById('participant-lists-container');
+                            if (participants) participants.outerHTML = html;
+                        })
+                        .catch(console.error);
                 }
             });
             stompClient.subscribe('/user/topic/dashboard-updates', function (message) {

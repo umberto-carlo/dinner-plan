@@ -92,62 +92,74 @@ public class DinnerController {
         return "redirect:/events/" + id;
     }
 
-    private boolean populateEventModel(Long id, Model model, UserDetails userDetails) {
+    // Base population for common event data (User access, basic event info)
+    private DinnerEvent populateBaseEventModel(Long id, Model model, UserDetails userDetails) {
         DinnerEvent event = dinnerService.getEventById(id);
-
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
 
-            // Access Control
             boolean isParticipant = event.getParticipants().stream().anyMatch(p -> p.getId().equals(user.getId()));
             boolean isOrganizer = event.getOrganizer().getId().equals(user.getId());
             boolean isAdmin = user.getRole() == Role.ADMIN;
 
             if (!isOrganizer && !isParticipant && !isAdmin) {
-                return false;
+                return null;
             }
 
             model.addAttribute("event", event);
             model.addAttribute("currentUser", user);
             model.addAttribute("isOrganizer", isOrganizer);
-
-            // Recent proposals for suggestion
-            model.addAttribute("recentProposals", dinnerService.getProposalSuggestions());
-
-            // Sorted Proposals
-            List<Proposal> sortedProposals = new ArrayList<>(event.getProposals());
-            sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
-                    .reversed()
-                    .thenComparing(Proposal::getDateOption));
-            model.addAttribute("sortedProposals", sortedProposals);
-
-            // User Votes
-            var votes = dinnerService.getUserVotesForEvent(id, user.getId());
-            var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
-            model.addAttribute("votedProposalIds", votedProposalIds);
-
-            // User Rating
-            if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
-                dinnerService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
-                        .ifPresent(rating -> model.addAttribute("userRating", rating));
-            }
-
-            // All Users for Organizer
-            if (isOrganizer) {
-                model.addAttribute("allUsers", userService.getAllUsers());
-            }
-
-            // Chat Messages
-            model.addAttribute("chatMessages", dinnerService.getEventMessages(id));
-
-            return true;
+            return event;
         }
-        return false;
+        return null; // Not authenticated or user not found
+    }
+
+    // Heavy population for full page load
+    private boolean populateFullEventModel(Long id, Model model, UserDetails userDetails) {
+        DinnerEvent event = populateBaseEventModel(id, model, userDetails);
+        if (event == null)
+            return false;
+
+        // Recent proposals for suggestion (EXPENSIVE - only needed for Add Proposal
+        // form)
+        model.addAttribute("recentProposals", dinnerService.getProposalSuggestions());
+
+        // Sorted Proposals
+        // Sorted Proposals
+        List<Proposal> sortedProposals = new ArrayList<>(dinnerService.getProposalsForEvent(id));
+        sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
+                .reversed()
+                .thenComparing(Proposal::getDateOption));
+        model.addAttribute("sortedProposals", sortedProposals);
+
+        User user = (User) model.getAttribute("currentUser");
+
+        // User Votes
+        var votes = dinnerService.getUserVotesForEvent(id, user.getId());
+        var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
+        model.addAttribute("votedProposalIds", votedProposalIds);
+
+        // User Rating
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
+            dinnerService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
+                    .ifPresent(rating -> model.addAttribute("userRating", rating));
+        }
+
+        // All Users for Organizer
+        boolean isOrganizer = (boolean) model.getAttribute("isOrganizer");
+        if (isOrganizer) {
+            model.addAttribute("allUsers", userService.getAllUsers());
+        }
+
+        // Chat Messages
+        model.addAttribute("chatMessages", dinnerService.getEventMessages(id));
+
+        return true;
     }
 
     @GetMapping("/events/{id}")
     public String eventDetails(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        if (!populateEventModel(id, model, userDetails)) {
+        if (!populateFullEventModel(id, model, userDetails)) {
             return "redirect:/";
         }
         return "event_details";
@@ -156,32 +168,64 @@ public class DinnerController {
     @GetMapping("/events/{id}/fragments/header")
     public String getEventHeaderFragment(@PathVariable Long id, Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
-        if (!populateEventModel(id, model, userDetails))
-            return "error/403";
+        // Optimzation: Header only needs event data
+        if (populateBaseEventModel(id, model, userDetails) == null)
+            return "redirect:/";
         return "event_details :: eventHeader";
     }
 
     @GetMapping("/events/{id}/fragments/actions")
     public String getEventActionsFragment(@PathVariable Long id, Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
-        if (!populateEventModel(id, model, userDetails))
-            return "error/403";
+        // Actions needs event data (status) and isOrganizer. Base is enough.
+        // NOTE: 'new proposal' button is here but the FORM (with suggestions) is hidden
+        // and NOT refreshed by this fragment.
+        if (populateBaseEventModel(id, model, userDetails) == null)
+            return "redirect:/";
         return "event_details :: eventActions";
     }
 
     @GetMapping("/events/{id}/fragments/proposals")
     public String getProposalListFragment(@PathVariable Long id, Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
-        if (!populateEventModel(id, model, userDetails))
-            return "error/403";
+        // Needs Proposals, Votes, User Rating. Does NOT need Chat or Suggestions.
+        DinnerEvent event = populateBaseEventModel(id, model, userDetails);
+        if (event == null)
+            return "redirect:/";
+
+        // Sorted Proposals
+        // Sorted Proposals
+        List<Proposal> sortedProposals = new ArrayList<>(dinnerService.getProposalsForEvent(id));
+        sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
+                .reversed()
+                .thenComparing(Proposal::getDateOption));
+        model.addAttribute("sortedProposals", sortedProposals);
+
+        User user = (User) model.getAttribute("currentUser");
+        var votes = dinnerService.getUserVotesForEvent(id, user.getId());
+        var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
+        model.addAttribute("votedProposalIds", votedProposalIds);
+
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
+            dinnerService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
+                    .ifPresent(rating -> model.addAttribute("userRating", rating));
+        }
+
         return "event_details :: proposalList";
     }
 
     @GetMapping("/events/{id}/fragments/participants")
     public String getParticipantListFragment(@PathVariable Long id, Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
-        if (!populateEventModel(id, model, userDetails))
-            return "error/403";
+        // Needs All Users if Organizer.
+        DinnerEvent event = populateBaseEventModel(id, model, userDetails);
+        if (event == null)
+            return "redirect:/";
+
+        boolean isOrganizer = (boolean) model.getAttribute("isOrganizer");
+        if (isOrganizer) {
+            model.addAttribute("allUsers", userService.getAllUsers());
+        }
         return "event_details :: participantLists";
     }
 

@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface ProposalRepository extends JpaRepository<Proposal, Long> {
     List<Proposal> findTop50ByOrderByDinnerEvent_DeadlineDesc();
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "votes", "ratings" })
+    List<Proposal> findAllByDinnerEventId(Long eventId);
 }

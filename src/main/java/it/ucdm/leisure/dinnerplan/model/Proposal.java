@@ -3,7 +3,9 @@ package it.ucdm.leisure.dinnerplan.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "proposals")
@@ -26,24 +28,24 @@ public class Proposal {
     private String description;
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Vote> votes = new ArrayList<>();
+    private Set<Vote> votes = new HashSet<>();
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProposalRating> ratings = new ArrayList<>();
+    private Set<ProposalRating> ratings = new HashSet<>();
 
     public Proposal() {
     }
 
     public Proposal(Long id, DinnerEvent dinnerEvent, LocalDateTime dateOption, String location, String address,
-            String description, List<Vote> votes, List<ProposalRating> ratings) {
+            String description, Set<Vote> votes, Set<ProposalRating> ratings) {
         this.id = id;
         this.dinnerEvent = dinnerEvent;
         this.dateOption = dateOption;
         this.location = location;
         this.address = address;
         this.description = description;
-        this.votes = votes != null ? votes : new ArrayList<>();
-        this.ratings = ratings != null ? ratings : new ArrayList<>();
+        this.votes = votes != null ? votes : new HashSet<>();
+        this.ratings = ratings != null ? ratings : new HashSet<>();
     }
 
     public static ProposalBuilder builder() {
@@ -98,19 +100,19 @@ public class Proposal {
         this.description = description;
     }
 
-    public List<Vote> getVotes() {
+    public Set<Vote> getVotes() {
         return votes;
     }
 
-    public void setVotes(List<Vote> votes) {
+    public void setVotes(Set<Vote> votes) {
         this.votes = votes;
     }
 
-    public List<ProposalRating> getRatings() {
+    public Set<ProposalRating> getRatings() {
         return ratings;
     }
 
-    public void setRatings(List<ProposalRating> ratings) {
+    public void setRatings(Set<ProposalRating> ratings) {
         this.ratings = ratings;
     }
 
@@ -121,8 +123,8 @@ public class Proposal {
         private String location;
         private String address;
         private String description;
-        private List<Vote> votes = new ArrayList<>();
-        private List<ProposalRating> ratings = new ArrayList<>();
+        private Set<Vote> votes = new HashSet<>();
+        private Set<ProposalRating> ratings = new HashSet<>();
 
         public ProposalBuilder id(Long id) {
             this.id = id;
@@ -154,12 +156,12 @@ public class Proposal {
             return this;
         }
 
-        public ProposalBuilder votes(List<Vote> votes) {
+        public ProposalBuilder votes(Set<Vote> votes) {
             this.votes = votes;
             return this;
         }
 
-        public ProposalBuilder ratings(List<ProposalRating> ratings) {
+        public ProposalBuilder ratings(Set<ProposalRating> ratings) {
             this.ratings = ratings;
             return this;
         }
