@@ -6,7 +6,11 @@
                 Dashboard</span></a>
     </div>
 
-    <div class="card">
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="event-header-card" th:fragment="eventHeader" class="card">
         <div style="display: flex; justify-content: space-between; align-items: start;">
             <div>
                 <h2 th:text="${event.title}" style="margin-bottom: 0.5rem;">Event Title</h2>
@@ -33,7 +37,8 @@
         <strong>Errore:</strong> <span th:text="${errorMessage}">Messaggio di errore</span>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div id="event-action-bar" th:fragment="eventActions"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h3 th:text="#{event.proposals}">Proposte</h3>
         <div>
             <!-- Manage Participants (Organizer only) -->
@@ -63,6 +68,39 @@
             background-color: var(--primary-color);
             color: white;
         }
+
+        /* Loading Spinner Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 
     <!-- Add Proposal Form (Hidden by default) -->
@@ -83,7 +121,8 @@
             </select>
         </div>
 
-        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post">
+        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
+            onsubmit="handleAjaxForm(event, 'add-proposal-form')">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label for="dateOption" th:text="#{event.date}">Data e Ora</label>
@@ -110,139 +149,159 @@
         </form>
     </div>
 
-    <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);"
-        th:text="#{event.proposals.none}">
-        Nessuna proposta aggiunta ancora.
-    </div>
+    <div id="proposal-list-container" th:fragment="proposalList">
+        <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);"
+            th:text="#{event.proposals.none}">
+            Nessuna proposta aggiunta ancora.
+        </div>
 
-    <div th:each="proposal : ${sortedProposals}" class="card proposal-card"
-        style="background: white; border-left: 4px solid var(--primary-color);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="flex-grow: 1;">
-                <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">
-                    <span th:text="${proposal.location}">Location</span>
-                    <span style="font-weight: 400; color: var(--text-secondary);"> @ </span>
-                    <span th:text="${#temporals.format(proposal.dateOption, 'dd MMM yyyy HH:mm')}">Date</span>
-                </div>
-                <div th:if="${proposal.address}"
-                    style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.5rem;">
-                    📍 <span th:text="${proposal.address}">Indirizzo</span>
-                    <div
-                        style="margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; height: 150px; width: 100%; max-width: 400px;">
-                        <iframe width="100%" height="150" style="border:0" loading="lazy" allowfullscreen
-                            th:src="'https://maps.google.com/maps?q=' + ${proposal.address} + '&t=&z=15&ie=UTF8&iwloc=&output=embed'">
-                        </iframe>
+        <div th:each="proposal : ${sortedProposals}" class="card proposal-card"
+            style="background: white; border-left: 4px solid var(--primary-color);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex-grow: 1;">
+                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">
+                        <span th:text="${proposal.location}">Location</span>
+                        <span style="font-weight: 400; color: var(--text-secondary);"> @ </span>
+                        <span th:text="${#temporals.format(proposal.dateOption, 'dd MMM yyyy HH:mm')}">Date</span>
                     </div>
-                </div>
-                <div th:if="${proposal.description}" th:text="${proposal.description}"
-                    style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;"></div>
+                    <div th:if="${proposal.address}"
+                        style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        📍 <span th:text="${proposal.address}">Indirizzo</span>
+                        <div
+                            style="margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; height: 150px; width: 100%; max-width: 400px;">
+                            <iframe width="100%" height="150" style="border:0" loading="lazy" allowfullscreen
+                                th:src="'https://maps.google.com/maps?q=' + ${proposal.address} + '&t=&z=15&ie=UTF8&iwloc=&output=embed'">
+                            </iframe>
+                        </div>
+                    </div>
+                    <div th:if="${proposal.description}" th:text="${proposal.description}"
+                        style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;"></div>
 
-                <!-- Winner Badge -->
-                <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
-                    style="margin-bottom: 0.5rem; display: inline-block; background: #FFD700; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;"
-                    th:text="#{event.selected}">
-                    🏆 PROPOSTA SCELTA
-                </div>
+                    <!-- Winner Badge -->
+                    <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
+                        style="margin-bottom: 0.5rem; display: inline-block; background: #FFD700; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;"
+                        th:text="#{event.selected}">
+                        🏆 PROPOSTA SCELTA
+                    </div>
 
-                <!-- Rating Section (Only for decided event and selected proposal) -->
-                <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
-                    style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 0.5rem;">
-                    <div style="font-weight: 600; margin-bottom: 0.5rem;">Valuta la scelta:</div>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <!-- Like Button -->
-                        <form th:action="@{/events/{id}/rate(id=${event.id})}" method="post" style="display: inline;">
-                            <input type="hidden" name="proposalId" th:value="${proposal.id}" />
-                            <input type="hidden" name="isLiked" value="true" />
-                            <button type="submit" class="btn"
-                                th:style="${userRating != null and userRating} ? 'background-color: #22c55e; color: white;' : 'background-color: #f1f5f9; color: #475569;'"
-                                style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.2rem;">👍</span>
-                                <span th:text="${proposal.ratings.?[isLiked == true].size()}">0</span>
-                                <span th:if="${userRating != null and userRating}"
-                                    style="font-size: 0.8rem; margin-left: 0.25rem;">(Tu)</span>
+                    <!-- Rating Section (Only for decided event and selected proposal) -->
+                    <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
+                        style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 0.5rem;">
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Valuta la scelta:</div>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <!-- Like Button -->
+                            <form th:action="@{/events/{id}/rate(id=${event.id})}" method="post"
+                                style="display: inline;" onsubmit="handleAjaxForm(event)">
+                                <input type="hidden" name="proposalId" th:value="${proposal.id}" />
+                                <input type="hidden" name="isLiked" value="true" />
+                                <button type="submit" class="btn"
+                                    th:style="${userRating != null and userRating} ? 'background-color: #22c55e; color: white;' : 'background-color: #f1f5f9; color: #475569;'"
+                                    style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">👍</span>
+                                    <span th:text="${proposal.ratings.?[isLiked == true].size()}">0</span>
+                                    <span th:if="${userRating != null and userRating}"
+                                        style="font-size: 0.8rem; margin-left: 0.25rem;">(Tu)</span>
+                                </button>
+                            </form>
+
+                            <!-- Dislike Button -->
+                            <form th:action="@{/events/{id}/rate(id=${event.id})}" method="post"
+                                style="display: inline;" onsubmit="handleAjaxForm(event)">
+                                <input type="hidden" name="proposalId" th:value="${proposal.id}" />
+                                <input type="hidden" name="isLiked" value="false" />
+                                <button type="submit" class="btn"
+                                    th:style="${userRating != null and !userRating} ? 'background-color: #ef4444; color: white;' : 'background-color: #f1f5f9; color: #475569;'"
+                                    style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">👎</span>
+                                    <span th:text="${proposal.ratings.?[isLiked == false].size()}">0</span>
+                                    <span th:if="${userRating != null and !userRating}"
+                                        style="font-size: 0.8rem; margin-left: 0.25rem;">(Tu)</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Organizer Select Button -->
+                    <div th:if="${isOrganizer and event.status.name() == 'OPEN'}" style="margin-bottom: 0.5rem;">
+                        <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
+                            method="post" style="display:inline;" onsubmit="handleAjaxForm(event)">
+                            <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 2px 8px;"
+                                onclick="return confirm('Sei sicuro? Questa operazione chiuderà l&apos;evento.');"
+                                th:text="#{event.select}">
+                                Scegli come definitiva
                             </button>
                         </form>
+                    </div>
 
-                        <!-- Dislike Button -->
-                        <form th:action="@{/events/{id}/rate(id=${event.id})}" method="post" style="display: inline;">
-                            <input type="hidden" name="proposalId" th:value="${proposal.id}" />
-                            <input type="hidden" name="isLiked" value="false" />
-                            <button type="submit" class="btn"
-                                th:style="${userRating != null and !userRating} ? 'background-color: #ef4444; color: white;' : 'background-color: #f1f5f9; color: #475569;'"
-                                style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <span style="font-size: 1.2rem;">👎</span>
-                                <span th:text="${proposal.ratings.?[isLiked == false].size()}">0</span>
-                                <span th:if="${userRating != null and !userRating}"
-                                    style="font-size: 0.8rem; margin-left: 0.25rem;">(Tu)</span>
+                    <!-- Vote Count -->
+                    <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-top: 0.5rem;">
+                        <span th:text="#{event.votes}">Voti</span>: <span th:text="${proposal.votes.size()}">0</span>
+                    </div>
+
+                    <!-- Voter List (Organizer Only) -->
+                    <div th:if="${isOrganizer}"
+                        style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                        <strong>Partecipanti:</strong>
+                        <span th:each="vote, iterStat : ${proposal.votes}">
+                            <span th:text="${vote.user.username}">User</span><span th:if="${!iterStat.last}">, </span>
+                        </span>
+                        <span th:if="${proposal.votes.empty}">Nessuno</span>
+                    </div>
+                </div>
+
+                <div th:if="${currentUser != null}" style="text-align: right; min-width: 120px;">
+                    <!-- Vote Button / Indicator -->
+                    <div th:if="${#lists.contains(votedProposalIds, proposal.id)}"
+                        style="color: var(--success); font-weight: 600; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.25rem;">&#10003;</span> <span th:text="#{event.your_vote}">Il tuo
+                            voto</span>
+                    </div>
+
+                    <div th:if="${event.status.name() == 'OPEN'}">
+                        <form th:action="@{/proposals/{id}/vote(id=${proposal.id}, eventId=${event.id})}" method="post"
+                            onsubmit="handleAjaxForm(event)">
+                            <button type="submit"
+                                th:class="${#lists.contains(votedProposalIds, proposal.id)} ? 'btn btn-red' : 'btn btn-secondary'"
+                                th:text="${#lists.contains(votedProposalIds, proposal.id)} ? #{event.remove_vote} : #{event.vote}">
+                                Vota
                             </button>
                         </form>
                     </div>
                 </div>
-
-                <!-- Organizer Select Button -->
-                <div th:if="${isOrganizer and event.status.name() == 'OPEN'}" style="margin-bottom: 0.5rem;">
-                    <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
-                        method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 2px 8px;"
-                            onclick="return confirm('Sei sicuro? Questa operazione chiuderà l&apos;evento.');"
-                            th:text="#{event.select}">
-                            Scegli come definitiva
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Vote Count -->
-                <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-top: 0.5rem;">
-                    <span th:text="#{event.votes}">Voti</span>: <span th:text="${proposal.votes.size()}">0</span>
-                </div>
-
-                <!-- Voter List (Organizer Only) -->
-                <div th:if="${isOrganizer}"
-                    style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
-                    <strong>Partecipanti:</strong>
-                    <span th:each="vote, iterStat : ${proposal.votes}">
-                        <span th:text="${vote.user.username}">User</span><span th:if="${!iterStat.last}">, </span>
-                    </span>
-                    <span th:if="${proposal.votes.empty}">Nessuno</span>
-                </div>
-            </div>
-
-            <div th:if="${currentUser != null}" style="text-align: right; min-width: 120px;">
-                <!-- Vote Button / Indicator -->
-                <div th:if="${#lists.contains(votedProposalIds, proposal.id)}"
-                    style="color: var(--success); font-weight: 600; margin-bottom: 0.5rem;">
-                    <span style="font-size: 1.25rem;">&#10003;</span> <span th:text="#{event.your_vote}">Il tuo
-                        voto</span>
-                </div>
-
-                <div th:if="${event.status.name() == 'OPEN'}">
-                    <form th:action="@{/proposals/{id}/vote(id=${proposal.id}, eventId=${event.id})}" method="post">
-                        <button type="submit"
-                            th:class="${#lists.contains(votedProposalIds, proposal.id)} ? 'btn btn-red' : 'btn btn-secondary'"
-                            th:text="${#lists.contains(votedProposalIds, proposal.id)} ? #{event.remove_vote} : #{event.vote}">
-                            Vota
-                        </button>
-                    </form>
-                </div>
-                <!-- Note: The Controller "castVote" currently adds a vote. It doesn't toggle. 
-                     The prompt didn't strictly ask for remove vote, but logical behavior for "Vota" when already voted is either disable or toggle. 
-                     Given constraint "vote for one or more", adding duplicates is blocked by DB.
-                     I'll stick to "Vota" button. The visual indicator above confirms the vote. 
-                     Attempting to vote again will likely error or be ignored in backend (depending on implementation - currently it just saves, which might throw exception on UniqueConstraint). 
-                     For this iteration, showing "Il tuo voto" is key validation. Handling re-vote gracefully is bonus. 
-                -->
             </div>
         </div>
     </div>
+    </div>
+    <!-- Chat Section -->
+    <div class="card" style="margin-top: 2rem;">
+        <h3 th:text="#{event.chat}">Chat Evento</h3>
+        <div id="chat-container"
+            style="height: 300px; overflow-y: auto; border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; background: #fff; display: flex; flex-direction: column;">
+            <div th:each="msg : ${chatMessages}" style="margin-bottom: 0.5rem;">
+                <strong th:text="${msg.sender.username}">User</strong> <span
+                    style="font-size: 0.8em; color: var(--text-secondary);"
+                    th:text="${#temporals.format(msg.timestamp, 'dd MMM HH:mm')}">Time</span>:
+                <span th:text="${msg.content}">Content</span>
+            </div>
+        </div>
+        <form id="chat-form" onsubmit="sendChatMessage(event)" style="display: flex; gap: 0.5rem;">
+
+            <input type="text" id="chat-input" class="form-control" th:placeholder="#{event.chat.placeholder}" required
+                style="flex-grow: 1;" autocomplete="off">
+            <button type="submit" class="btn" th:text="#{event.chat.send}">Invia</button>
+        </form>
+    </div>
+
     <!-- Manage Participants Modal (Moved to bottom to avoid nesting issues) -->
     <div id="manage-participants-modal" class="card" th:if="${isOrganizer}"
         style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border);">
         <h4 style="margin-bottom: 1rem;">Gestisci Partecipanti</h4>
 
         <form th:action="@{/events/{id}/update-participants(id=${event.id})}" method="post" id="participantsForm"
-            onsubmit="prepareParticipantsSubmission()">
+            onsubmit="handleParticipantsSubmit(event)">
             <!-- Dual List Container -->
-            <div style="display: flex; gap: 1rem; align-items: center; height: 300px;">
+            <div id="participant-lists-container" th:fragment="participantLists"
+                style="display: flex; gap: 1rem; align-items: center; height: 300px;">
 
                 <!-- Left Column: Available Users -->
                 <div
@@ -317,20 +376,97 @@
         var eventId = /*[[${event.id}]]*/ '0';
         /*]]>*/
 
-        var socket = new SockJS('/ws');
+        var socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
         var stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
+            function updateFragment(url, elementId) {
+                var el = document.getElementById(elementId);
+                if (!el) return;
+                fetch(url)
+                    .then(response => {
+                        if (response.status === 403 || response.redirected) {
+                            window.location.href = '/';
+                            return null;
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        if (html) el.outerHTML = html;
+                    })
+                    .catch(console.error);
+            }
+
+            function refreshAll() {
+                // Spinner is managed by the initiator (handleAjaxForm). Passive updates shouldn't block UI.
+                Promise.all([
+                    fetch('/events/' + eventId + '/fragments/header').then(r => r.text()),
+                    fetch('/events/' + eventId + '/fragments/actions').then(r => r.text()),
+                    fetch('/events/' + eventId + '/fragments/proposals').then(r => r.text()),
+                    fetch('/events/' + eventId + '/fragments/participants').then(r => r.text())
+                ]).then(values => {
+                    var header = document.getElementById('event-header-card'); if (header) header.outerHTML = values[0];
+                    var actions = document.getElementById('event-action-bar'); if (actions) actions.outerHTML = values[1];
+                    var proposals = document.getElementById('proposal-list-container'); if (proposals) proposals.outerHTML = values[2];
+                    var participants = document.getElementById('participant-lists-container'); if (participants) participants.outerHTML = values[3];
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }).catch(e => {
+                    console.error(e);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                });
+            }
+
             stompClient.subscribe('/topic/events/' + eventId, function (message) {
                 if (message.body === 'update') {
-                    location.reload();
+                    refreshAll();
                 }
             });
             stompClient.subscribe('/user/topic/dashboard-updates', function (message) {
                 if (message.body === 'REFRESH') {
-                    location.reload();
+                    refreshAll();
                 }
             });
+            stompClient.subscribe('/topic/events/' + eventId + '/chat', function (message) {
+                var msg = JSON.parse(message.body);
+                appendChatMessage(msg);
+            });
         });
+
+        // Scroll to bottom on load
+        var chatContainer = document.getElementById('chat-container');
+        if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        function appendChatMessage(msg) {
+            var container = document.getElementById('chat-container');
+            var div = document.createElement('div');
+            div.style.marginBottom = '0.5rem';
+            div.innerHTML = '<strong>' + msg.sender + '</strong> <span style="font-size: 0.8em; color: var(--text-secondary);">' + msg.time + '</span>: <span>' + msg.content + '</span>';
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChatMessage(e) {
+            e.preventDefault();
+            var input = document.getElementById('chat-input');
+            var content = input.value.trim();
+            if (!content) return;
+
+
+
+            fetch('/events/' + eventId + '/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+
+                },
+                body: new URLSearchParams({ 'content': content })
+            }).then(response => {
+                if (response.ok) {
+                    input.value = '';
+                } else {
+                    console.error('Error sending message');
+                }
+            });
+        }
 
         function fillProposalForm(selectElement) {
             var selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -399,22 +535,68 @@
                 input.value = id;
                 container.appendChild(input);
             });
-            // If list is empty, we must ensure backend knows to clear list. 
-            // Spring Boot handles empty list parameter fine (null or empty list), 
-            // but if parameter key is missing, it might be null.
-            // If we want empty list, ensuring at least one dummy or empty param helps, or letting Controller handle null as empty.
-            // Our Controller logic: if (participantIds != null && !participantIds.isEmpty()) ...
-            // Wait, if we send NOTHING, `participantIds` might be null.
-            // Logic:
-            /*
-            List<User> newParticipants = new ArrayList<>();
-            if (participantIds != null && !participantIds.isEmpty()) {
-                newParticipants = userRepository.findAllById(participantIds);
-            }
-            event.setParticipants(newParticipants);
-            */
-            // So if null, it creates empty list. Correct.
         }
+
+        function handleAjaxForm(event, hideModalId) {
+            event.preventDefault();
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                // If it's a redirect or success, we just wait for socket or hide manually
+                // But for good UX, we keep spinner until socket updates or if error we hide it.
+                if (!response.ok && !response.redirected) {
+                    console.error('Action failed');
+                    alert('Operazione fallita!');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                // If success, we can hide the modal immediately if specified
+                if (hideModalId) {
+                    document.getElementById(hideModalId).style.display = 'none';
+                }
+                // Don't hide overlay yet, wait for WebSocket 'update' to hide it OR set a timeout fallback
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 2000); // Fallback if WS fails
+            }).catch(e => {
+                console.error(e);
+                document.getElementById('loading-overlay').style.display = 'none';
+            });
+        }
+
+        // Modified Participant Handler to use spinner
+        function handleParticipantsSubmit(event) {
+            event.preventDefault();
+            prepareParticipantsSubmission();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok || response.redirected) {
+                    document.getElementById('manage-participants-modal').style.display = 'none';
+                    // Spinner hides via WS update or timeout
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }, 2000);
+                } else {
+                    alert('Errore durante il salvataggio dei partecipanti.');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+            }).catch(console.error);
+        }
+
+        // ajaxVote is replaced by generic handleAjaxForm but kept if needed for specific logic? 
+        // No, replaced in HTML so this can be removed or aliased.
+        function ajaxVote(event) { handleAjaxForm(event); }
     </script>
 </section>
 

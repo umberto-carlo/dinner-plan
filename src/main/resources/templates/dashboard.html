@@ -7,43 +7,55 @@
             Evento</a>
     </div>
 
-    <div th:if="${events.empty}" class="card">
-        <p th:text="#{dashboard.empty}">Nessun evento pianificato al momento.</p>
-    </div>
+    <div id="event-list-container" th:fragment="eventList">
+        <div th:if="${events.empty}" class="card">
+            <p th:text="#{dashboard.empty}">Nessun evento pianificato al momento.</p>
+        </div>
 
-    <div th:each="event : ${events}" class="card event-item">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-                <div class="event-title" th:text="${event.title}">Cena Team</div>
-                <div style="margin-bottom: 0.5rem;" th:text="${event.description}">Descrizione</div>
-                <div class="meta">
-                    <span th:text="#{event.by}">Organizzatore:</span> <span
-                        th:text="${event.organizer.username}">User</span>
-                    | <span th:text="#{event.status}">Stato:</span> <span th:text="${event.status}">OPEN</span>
+        <div th:each="event : ${events}" class="card event-item"
+            th:styleappend="${event.status.name() == 'OPEN' ? 'border-left: 5px solid var(--success);' : 'border-left: 5px solid var(--error);'}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div class="event-title" th:text="${event.title}">Cena Team</div>
+                    <div style="margin-bottom: 0.5rem;" th:text="${event.description}">Descrizione</div>
+                    <div class="meta">
+                        <span th:text="#{event.by}">Organizzatore:</span> <span
+                            th:text="${event.organizer.username}">User</span>
+                        | <span th:text="#{event.status}">Stato:</span> <span th:text="${event.status}">OPEN</span>
+                    </div>
                 </div>
-            </div>
-            <div style="text-align: right;">
-                <div class="meta" style="margin-bottom: 0.5rem;">
-                    <span th:text="#{event.deadline}">Scadenza:</span> <span
-                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
+                <div style="text-align: right;">
+                    <div class="meta" style="margin-bottom: 0.5rem;">
+                        <span th:text="#{event.deadline}">Scadenza:</span> <span
+                            th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
+                    </div>
+                    <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-secondary"
+                        th:text="#{dashboard.view}">Dettagli</a>
                 </div>
-                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-secondary"
-                    th:text="#{dashboard.view}">Dettagli</a>
             </div>
         </div>
     </div>
     <script>
-        var socket = new SockJS('/ws');
+        var socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
         var stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
+            function refreshEventList() {
+                fetch('/fragments/dashboard')
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('event-list-container').outerHTML = html;
+                    })
+                    .catch(console.error);
+            }
+
             stompClient.subscribe('/topic/events', function (message) {
                 if (message.body === 'update') {
-                    location.reload();
+                    refreshEventList();
                 }
             });
             stompClient.subscribe('/user/topic/dashboard-updates', function (message) {
                 if (message.body === 'REFRESH') {
-                    location.reload();
+                    refreshEventList();
                 }
             });
         });

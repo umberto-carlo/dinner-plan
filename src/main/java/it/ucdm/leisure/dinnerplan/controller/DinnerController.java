@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,6 +54,16 @@ public class DinnerController {
         return "dashboard";
     }
 
+    @GetMapping("/fragments/dashboard")
+    public String getDashboardFragment(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails != null) {
+            model.addAttribute("events", dinnerService.getEventsForUser(userDetails.getUsername()));
+        } else {
+            model.addAttribute("events", new ArrayList<>());
+        }
+        return "dashboard :: eventList";
+    }
+
     @PreAuthorize("hasRole('ORGANIZER')")
     @GetMapping("/events/create")
     public String createEventForm(Model model) {
@@ -80,48 +92,97 @@ public class DinnerController {
         return "redirect:/events/" + id;
     }
 
-    @GetMapping("/events/{id}")
-    public String eventDetails(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    private boolean populateEventModel(Long id, Model model, UserDetails userDetails) {
         DinnerEvent event = dinnerService.getEventById(id);
-        model.addAttribute("event", event);
-        model.addAttribute("recentProposals", dinnerService.getProposalSuggestions());
-
-        List<Proposal> sortedProposals = new ArrayList<>(event.getProposals());
-        sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
-                .reversed()
-                .thenComparing(Proposal::getDateOption));
-        model.addAttribute("sortedProposals", sortedProposals);
 
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
 
-            // Access Control: Only Organizer or Participants (or Admin) can view
+            // Access Control
             boolean isParticipant = event.getParticipants().stream().anyMatch(p -> p.getId().equals(user.getId()));
             boolean isOrganizer = event.getOrganizer().getId().equals(user.getId());
-            boolean isAdmin = user.getRole() == Role.ADMIN; // Assuming ADMIN has global access
+            boolean isAdmin = user.getRole() == Role.ADMIN;
 
             if (!isOrganizer && !isParticipant && !isAdmin) {
-                return "redirect:/";
+                return false;
             }
 
+            model.addAttribute("event", event);
             model.addAttribute("currentUser", user);
             model.addAttribute("isOrganizer", isOrganizer);
 
-            // Get proposals voted by user
+            // Recent proposals for suggestion
+            model.addAttribute("recentProposals", dinnerService.getProposalSuggestions());
+
+            // Sorted Proposals
+            List<Proposal> sortedProposals = new ArrayList<>(event.getProposals());
+            sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
+                    .reversed()
+                    .thenComparing(Proposal::getDateOption));
+            model.addAttribute("sortedProposals", sortedProposals);
+
+            // User Votes
             var votes = dinnerService.getUserVotesForEvent(id, user.getId());
             var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
             model.addAttribute("votedProposalIds", votedProposalIds);
 
+            // User Rating
             if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
                 dinnerService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
                         .ifPresent(rating -> model.addAttribute("userRating", rating));
             }
 
-            if (model.getAttribute("isOrganizer") != null && (Boolean) model.getAttribute("isOrganizer")) {
+            // All Users for Organizer
+            if (isOrganizer) {
                 model.addAttribute("allUsers", userService.getAllUsers());
             }
+
+            // Chat Messages
+            model.addAttribute("chatMessages", dinnerService.getEventMessages(id));
+
+            return true;
+        }
+        return false;
+    }
+
+    @GetMapping("/events/{id}")
+    public String eventDetails(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+        if (!populateEventModel(id, model, userDetails)) {
+            return "redirect:/";
         }
         return "event_details";
+    }
+
+    @GetMapping("/events/{id}/fragments/header")
+    public String getEventHeaderFragment(@PathVariable Long id, Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (!populateEventModel(id, model, userDetails))
+            return "error/403";
+        return "event_details :: eventHeader";
+    }
+
+    @GetMapping("/events/{id}/fragments/actions")
+    public String getEventActionsFragment(@PathVariable Long id, Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (!populateEventModel(id, model, userDetails))
+            return "error/403";
+        return "event_details :: eventActions";
+    }
+
+    @GetMapping("/events/{id}/fragments/proposals")
+    public String getProposalListFragment(@PathVariable Long id, Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (!populateEventModel(id, model, userDetails))
+            return "error/403";
+        return "event_details :: proposalList";
+    }
+
+    @GetMapping("/events/{id}/fragments/participants")
+    public String getParticipantListFragment(@PathVariable Long id, Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (!populateEventModel(id, model, userDetails))
+            return "error/403";
+        return "event_details :: participantLists";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
@@ -166,5 +227,17 @@ public class DinnerController {
             @AuthenticationPrincipal UserDetails userDetails) {
         dinnerService.rateProposal(id, proposalId, userDetails.getUsername(), isLiked);
         return "redirect:/events/" + id;
+    }
+
+    @PostMapping("/events/{id}/chat/send")
+    @ResponseBody
+    public ResponseEntity<?> sendMessage(@PathVariable Long id, @RequestParam String content,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            dinnerService.addMessage(id, userDetails.getUsername(), content);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -3,6 +3,8 @@ package it.ucdm.leisure.dinnerplan.service;
 import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
 import it.ucdm.leisure.dinnerplan.model.*;
 import it.ucdm.leisure.dinnerplan.repository.*;
+import it.ucdm.leisure.dinnerplan.dto.ChatMessageDTO;
+import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,16 +24,19 @@ public class DinnerService {
     private final VoteRepository voteRepository;
     private final UserRepository userRepository;
     private final ProposalRatingRepository proposalRatingRepository;
+    private final DinnerEventMessageRepository dinnerEventMessageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public DinnerService(DinnerEventRepository dinnerEventRepository, ProposalRepository proposalRepository,
             VoteRepository voteRepository, UserRepository userRepository,
-            ProposalRatingRepository proposalRatingRepository, SimpMessagingTemplate messagingTemplate) {
+            ProposalRatingRepository proposalRatingRepository,
+            DinnerEventMessageRepository dinnerEventMessageRepository, SimpMessagingTemplate messagingTemplate) {
         this.dinnerEventRepository = dinnerEventRepository;
         this.proposalRepository = proposalRepository;
         this.voteRepository = voteRepository;
         this.userRepository = userRepository;
         this.proposalRatingRepository = proposalRatingRepository;
+        this.dinnerEventMessageRepository = dinnerEventMessageRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -131,12 +136,23 @@ public class DinnerService {
         // rimossi non vedono più"
         // So we strictly notify added/removed.
 
-        for (User u : added) {
-            messagingTemplate.convertAndSendToUser(u.getUsername(), "/topic/dashboard-updates", "REFRESH");
-        }
-        for (User u : removed) {
-            messagingTemplate.convertAndSendToUser(u.getUsername(), "/topic/dashboard-updates", "REFRESH");
-        }
+        // Send updates only after transaction commit to ensure clients read fresh data
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        for (User u : added) {
+                            messagingTemplate.convertAndSendToUser(u.getUsername(), "/topic/dashboard-updates",
+                                    "REFRESH");
+                        }
+                        for (User u : removed) {
+                            messagingTemplate.convertAndSendToUser(u.getUsername(), "/topic/dashboard-updates",
+                                    "REFRESH");
+                        }
+                        // Notify all viewers of this event (including organizer)
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                    }
+                });
     }
 
     @Transactional
@@ -371,5 +387,42 @@ public class DinnerService {
         User user = userRepository.getReferenceById(userId);
         return proposalRatingRepository.findByUserAndProposal(user, proposal)
                 .map(ProposalRating::isLiked);
+    }
+
+    @Transactional
+    public void addMessage(Long eventId, String username, String content) {
+        DinnerEvent event = dinnerEventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
+
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Access check: Organizer or Participant
+        boolean isParticipant = event.getParticipants().contains(sender);
+        boolean isOrganizer = event.getOrganizer().equals(sender);
+
+        if (!isParticipant && !isOrganizer) {
+            throw new SecurityException("User is not a participant of this event");
+        }
+
+        DinnerEventMessage message = new DinnerEventMessage();
+        message.setEvent(event);
+        message.setSender(sender);
+        message.setContent(content);
+        message.setTimestamp(LocalDateTime.now());
+
+        DinnerEventMessage saved = dinnerEventMessageRepository.save(message);
+
+        // Broadcast to WebSocket
+        ChatMessageDTO dto = new ChatMessageDTO(
+                saved.getId(),
+                saved.getSender().getUsername(),
+                saved.getContent(),
+                saved.getTimestamp().format(DateTimeFormatter.ofPattern("dd MMM HH:mm")));
+        messagingTemplate.convertAndSend("/topic/events/" + eventId + "/chat", dto);
+    }
+
+    public List<DinnerEventMessage> getEventMessages(Long eventId) {
+        return dinnerEventMessageRepository.findByEventIdOrderByTimestampAsc(eventId);
     }
 }
