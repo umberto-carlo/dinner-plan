@@ -16,7 +16,7 @@ public class Proposal {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dinner_event_id", nullable = false)
+    @JoinColumn(name = "dinner_event_id", nullable = true)
     private DinnerEvent dinnerEvent;
 
     private LocalDateTime dateOption;

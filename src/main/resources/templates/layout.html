@@ -10,6 +10,14 @@
     <link rel="stylesheet" th:href="@{/css/fonts.css}">
 
     <script th:src="@{/js/stomp.min.js}"></script>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme === 'system' || !savedTheme ? systemTheme : savedTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 
 <body>
@@ -47,8 +55,20 @@
         <a th:href="@{/manual}" style="color: var(--primary-color);" th:text="#{app.manual}">Manuale d'Uso</a>
 
         <div style="margin-top: 1rem;">
-            <form action="" method="get">
-                <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem;">
+            <!-- Theme Switcher -->
+            <div style="margin-bottom: 0.5rem;">
+                <label style="display: inline-block; margin-right: 0.5rem;" th:text="#{app.theme}">Tema:</label>
+                <select id="theme-selector" onchange="switchTheme(this.value)"
+                    style="width: auto; padding: 0.25rem; display: inline-block;">
+                    <option value="light" th:text="#{theme.light}">☀️ Light</option>
+                    <option value="dark" th:text="#{theme.dark}">🌙 Dark</option>
+                    <option value="system" th:text="#{theme.system}">💻 System</option>
+                </select>
+            </div>
+
+            <!-- Language Switcher -->
+            <form action="" method="get" style="display: inline-block;">
+                <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem; width: auto;">
                     <option value="it" th:selected="${#locale.language == 'it'}">Italiano</option>
                     <option value="en" th:selected="${#locale.language == 'en'}">English</option>
                     <option value="sv" th:selected="${#locale.language == 'sv'}">Svenska</option>
@@ -56,6 +76,34 @@
             </form>
         </div>
     </footer>
+
+    <script>
+        const themeSelector = document.getElementById('theme-selector');
+
+        // Initialize Selector Value
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        themeSelector.value = savedTheme;
+
+        function switchTheme(theme) {
+            localStorage.setItem('theme', theme);
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme) {
+            let effectiveTheme = theme;
+            if (theme === 'system') {
+                effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+        }
+
+        // Listen for system changes if 'system' is selected
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (localStorage.getItem('theme') === 'system' || !localStorage.getItem('theme')) {
+                applyTheme('system');
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
@@ -44,12 +45,14 @@ public class DinnerController {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
             model.addAttribute("events", dinnerService.getEventsForUser(userDetails.getUsername()));
+            model.addAttribute("rankedProposals", dinnerService.getProposalSuggestions());
             model.addAttribute("user", user);
             model.addAttribute("isOrganizer", user.getRole() == Role.ORGANIZER);
         } else {
             // Default or empty for non-logged in?
             // Assuming login is required, otherwise redirect or empty.
             model.addAttribute("events", new ArrayList<>());
+            model.addAttribute("rankedProposals", new ArrayList<>());
         }
         return "dashboard";
     }
@@ -58,10 +61,12 @@ public class DinnerController {
     public String getDashboardFragment(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails != null) {
             model.addAttribute("events", dinnerService.getEventsForUser(userDetails.getUsername()));
+            model.addAttribute("rankedProposals", dinnerService.getProposalSuggestions());
         } else {
             model.addAttribute("events", new ArrayList<>());
+            model.addAttribute("rankedProposals", new ArrayList<>());
         }
-        return "dashboard :: eventList";
+        return "dashboard :: dashboardContent";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
@@ -94,7 +99,13 @@ public class DinnerController {
 
     // Base population for common event data (User access, basic event info)
     private DinnerEvent populateBaseEventModel(Long id, Model model, UserDetails userDetails) {
-        DinnerEvent event = dinnerService.getEventById(id);
+        DinnerEvent event = null;
+        try {
+            event = dinnerService.getEventById(id);
+        } catch (IllegalArgumentException e) {
+            return null; // Event Not Found
+        }
+
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
 
@@ -283,5 +294,50 @@ public class DinnerController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/events/prepare-smart")
+    public String prepareSmartEvent(@RequestParam(required = false) List<String> selectedProposals, Model model) {
+        if (selectedProposals == null || selectedProposals.isEmpty()) {
+            return "redirect:/";
+        }
+
+        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> proposals = new ArrayList<>();
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+        for (String encoded : selectedProposals) {
+            try {
+                String json = new String(java.util.Base64.getDecoder().decode(encoded));
+                proposals.add(mapper.readValue(json, it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO.class));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        model.addAttribute("selectedProposals", proposals);
+        return "create_smart_event";
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/events/create-smart")
+    public String createSmartEvent(@ModelAttribute it.ucdm.leisure.dinnerplan.dto.SmartEventRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        DinnerEvent event = dinnerService.createEventWithProposals(
+                request.getTitle(),
+                request.getDescription(),
+                LocalDateTime.parse(request.getDeadline()),
+                userDetails.getUsername(),
+                request.getProposals());
+
+        return "redirect:/events/" + event.getId();
+    }
+
+    @PostMapping("/events/{id}/delete")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public String deleteEvent(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        dinnerService.deleteEvent(id, userDetails.getUsername());
+        return "redirect:/";
     }
 }

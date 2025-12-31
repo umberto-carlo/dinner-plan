@@ -6,11 +6,12 @@
         <form th:action="@{/events/create}" method="post">
             <div class="form-group">
                 <label for="title" th:text="#{dashboard.title}">Titolo</label>
-                <input type="text" id="title" name="title" placeholder="es. Cena di Natale" required>
+                <input type="text" id="title" name="title" th:placeholder="#{create.placeholder.title}" required>
             </div>
             <div class="form-group">
                 <label for="description" th:text="#{dashboard.description}">Descrizione</label>
-                <textarea id="description" name="description" rows="3" placeholder="Dettagli aggiuntivi..."></textarea>
+                <textarea id="description" name="description" rows="3"
+                    th:placeholder="#{create.placeholder.description}"></textarea>
             </div>
             <div class="form-group">
                 <label for="deadline" th:text="#{event.deadline}">Scadenza Conferma</label>

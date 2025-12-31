@@ -22,7 +22,7 @@ public class DinnerEvent {
     @JoinColumn(name = "organizer_id", nullable = false)
     private User organizer;
 
-    @OneToMany(mappedBy = "dinnerEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "dinnerEvent", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
     private List<Proposal> proposals = new ArrayList<>();
 
     private LocalDateTime deadline;

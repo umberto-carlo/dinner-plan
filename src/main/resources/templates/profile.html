@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Profilo Utente', ~{::section})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{profile.title}, ~{::section})}">
 <section>
     <div style="max-width: 600px; margin: 0 auto;">
         <h2 th:text="#{profile.title}">Il tuo Profilo</h2>
@@ -7,12 +7,15 @@
         <div class="card">
             <div class="form-group">
                 <label th:text="#{login.username}">Username</label>
-                <div th:text="${user.username}" style="padding: 0.5rem; background: #f1f5f9; border-radius: 4px;">User
+                <div th:text="${user.username}"
+                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">User
                 </div>
             </div>
             <div class="form-group">
                 <label th:text="#{users.role}">Ruolo</label>
-                <div th:text="${user.role}" style="padding: 0.5rem; background: #f1f5f9; border-radius: 4px;">ROLE</div>
+                <div th:text="${user.role}"
+                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
+                    ROLE</div>
             </div>
         </div>
 

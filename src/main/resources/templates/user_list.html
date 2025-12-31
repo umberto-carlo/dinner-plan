@@ -1,13 +1,14 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    th:replace="~{layout :: layout('Gestione Utenti', ~{::section})}">
+    th:replace="~{layout :: layout(#{users.title}, ~{::section})}">
 <section>
     <div style="margin-bottom: 1rem;">
         <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span
                 th:text="#{app.back_dashboard}">Dashboard</span></a>
     </div>
 
-    <h2>Gestione Utenti</h2>
-    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;">Operazione completata con successo.</p>
+    <h2 th:text="#{users.title}">Gestione Utenti</h2>
+    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;" th:text="#{app.success}">Operazione
+        completata con successo.</p>
 
     <!-- Admin: Create User -->
     <div sec:authorize="hasRole('ADMIN')" class="card" style="margin-bottom: 1rem;">
@@ -24,9 +25,9 @@
             <div>
                 <label th:text="#{users.role}">Ruolo</label>
                 <select name="role" style="display: block; width: 100%; padding: 0.5rem;">
-                    <option value="PARTICIPANT">PARTICIPANT</option>
-                    <option value="ORGANIZER">ORGANIZER</option>
-                    <option value="ADMIN">ADMIN</option>
+                    <option value="PARTICIPANT" th:text="#{role.participant}">PARTICIPANT</option>
+                    <option value="ORGANIZER" th:text="#{role.organizer}">ORGANIZER</option>
+                    <option value="ADMIN" th:text="#{role.admin}">ADMIN</option>
                 </select>
             </div>
             <button type="submit" class="btn" th:text="#{users.create}">Crea Utente</button>
@@ -66,7 +67,8 @@
                                 th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post">
                                 <button type="submit" class="btn"
                                     style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #28a745;"
-                                    onclick="return confirm('Promuovere a Organizzatore?');" th:text="#{users.promote}">
+                                    th:onclick="'return confirm(\'' + #{users.confirm.promote} + '\');'"
+                                    th:text="#{users.promote}">
                                     Promuovi
                                 </button>
                             </form>
@@ -85,7 +87,8 @@
                                 <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
                                     <button type="submit" class="btn"
                                         style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #dc3545;"
-                                        onclick="return confirm('Cancellare utente?');" th:text="#{users.delete}">
+                                        th:onclick="'return confirm(\'' + #{users.confirm.delete} + '\');'"
+                                        th:text="#{users.delete}">
                                         X
                                     </button>
                                 </form>

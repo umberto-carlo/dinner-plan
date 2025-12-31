@@ -329,6 +329,22 @@ public class DinnerService {
             map.put(key, dto);
         }
 
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        for (ProposalSuggestionDTO dto : map.values()) {
+            try {
+                // To avoid infinite recursion or complex serialization, we should maybe create
+                // a minimal map or object?
+                // But DTO is simple POJO. It should be fine.
+                // NOTE: getEncodedData is null right now, so it won't be serialized
+                // recursively.
+                String json = mapper.writeValueAsString(dto);
+                String encoded = java.util.Base64.getEncoder().encodeToString(json.getBytes());
+                dto.setEncodedData(encoded);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         suggestions.addAll(map.values());
 
         // Sort: Most liked first, then most used
@@ -455,5 +471,71 @@ public class DinnerService {
 
     public List<DinnerEventMessage> getEventMessages(Long eventId) {
         return dinnerEventMessageRepository.findByEventIdOrderByTimestampAsc(eventId);
+    }
+
+    @Transactional
+    public DinnerEvent createEventWithProposals(String title, String description, LocalDateTime deadline,
+            String username,
+            List<it.ucdm.leisure.dinnerplan.dto.SmartEventRequest.NewProposalDTO> proposals) {
+
+        // 1. Create the Event
+        DinnerEvent event = createEvent(title, description, deadline, username, new ArrayList<>());
+
+        // 2. Add Proposals
+        if (proposals != null) {
+            for (var p : proposals) {
+                if (p.getDateOption() != null && !p.getDateOption().isEmpty()) {
+                    addProposal(event.getId(), LocalDateTime.parse(p.getDateOption()), p.getLocation(), p.getAddress(),
+                            p.getDescription());
+                }
+            }
+        }
+        return event;
+    }
+
+    @Transactional
+    public void deleteEvent(Long eventId, String username) {
+        DinnerEvent event = dinnerEventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
+
+        if (!event.getOrganizer().getUsername().equals(username)) {
+            throw new SecurityException("Only organizer can delete event");
+        }
+
+        // Unlink proposals (Hard Delete Event, Keep Proposals)
+        List<Proposal> proposals = new ArrayList<>(event.getProposals());
+        for (Proposal p : proposals) {
+            p.setDinnerEvent(null);
+        }
+        proposalRepository.saveAll(proposals);
+
+        event.getProposals().clear();
+
+        // Pre-fetch data needed for notifications to avoid LazyInitializationException
+        // in afterCommit
+        final String organizerUsername = event.getOrganizer().getUsername();
+        final List<String> participantUsernames = event.getParticipants().stream().map(User::getUsername).toList();
+
+        dinnerEventRepository.delete(event);
+
+        // Notify users AFTER transaction commit to ensure data is consistent when they
+        // reload
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        // Notify users currently viewing the event
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "DELETED");
+
+                        // Notify users
+                        messagingTemplate.convertAndSendToUser(organizerUsername,
+                                "/topic/dashboard-updates",
+                                "REFRESH");
+                        for (String pUsername : participantUsernames) {
+                            messagingTemplate.convertAndSendToUser(pUsername, "/topic/dashboard-updates",
+                                    "REFRESH");
+                        }
+                    }
+                });
     }
 }
