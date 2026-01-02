@@ -114,6 +114,10 @@ public class DinnerService {
             throw new IllegalStateException("Only organizer can update participants");
         }
 
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED) {
+            throw new IllegalStateException("Cannot update participants for a decided event");
+        }
+
         List<User> newParticipants = new ArrayList<>();
         if (participantIds != null && !participantIds.isEmpty()) {
             newParticipants = userRepository.findAllById(participantIds);
@@ -188,6 +192,96 @@ public class DinnerService {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
+                    }
+                });
+    }
+
+    @Transactional
+    public void addProposalFromSuggestion(Long eventId, LocalDateTime dateOption, String location, String address,
+            String description, String username) {
+        DinnerEvent event = getEventById(eventId);
+
+        if (!event.getOrganizer().getUsername().equals(username)) {
+            throw new SecurityException("Only organizer can add proposals");
+        }
+
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED) {
+            throw new IllegalStateException("Event is already decided");
+        }
+
+        // Constraint: Check if already present (by Location)
+        boolean exists = event.getProposals().stream()
+                .anyMatch(p -> p.getLocation().equalsIgnoreCase(location));
+
+        if (exists) {
+            throw new IllegalArgumentException("Questa proposta è già presente nell'evento specificato.");
+        }
+
+        addProposal(eventId, dateOption, location, address, description);
+    }
+
+    @Transactional
+    public int addBatchProposalsFromSuggestion(Long eventId, List<LocalDateTime> dateOptions,
+            List<String> encodedProposals,
+            String username) {
+        DinnerEvent event = getEventById(eventId);
+
+        if (!event.getOrganizer().getUsername().equals(username)) {
+            throw new SecurityException("Only organizer can add proposals");
+        }
+
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED) {
+            throw new IllegalStateException("Event is already decided");
+        }
+
+        if (dateOptions == null || encodedProposals == null || dateOptions.size() != encodedProposals.size()) {
+            throw new IllegalArgumentException("Mismatch between proposals and dates");
+        }
+
+        int addedCount = 0;
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+        for (int i = 0; i < encodedProposals.size(); i++) {
+            String encoded = encodedProposals.get(i);
+            LocalDateTime date = dateOptions.get(i);
+            try {
+                String json = new String(java.util.Base64.getDecoder().decode(encoded));
+                ProposalSuggestionDTO dto = mapper.readValue(json, ProposalSuggestionDTO.class);
+
+                // Check duplicate
+                boolean exists = event.getProposals().stream()
+                        .anyMatch(p -> p.getLocation().equalsIgnoreCase(dto.getLocation()));
+
+                if (!exists) {
+                    addProposal(eventId, date, dto.getLocation(), dto.getAddress(), dto.getDescription());
+                    addedCount++;
+                }
+            } catch (Exception e) {
+                // Log and continue?
+                e.printStackTrace();
+            }
+        }
+        return addedCount;
+    }
+
+    @Transactional
+    public void addGlobalProposal(String location, String address, String description) {
+        Proposal proposal = Proposal.builder()
+                .dinnerEvent(null)
+                .dateOption(null) // No date for global proposal
+                .location(location)
+                .address(address)
+                .description(description)
+                .build();
+
+        proposalRepository.save(proposal);
+
+        // Notify dashboard to refresh proposal list
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events", "update");
                     }
                 });
     }

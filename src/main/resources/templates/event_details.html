@@ -42,7 +42,8 @@
             <!-- Manage Participants (Organizer only) -->
             <button th:if="${isOrganizer}"
                 onclick="document.getElementById('manage-participants-modal').style.display='block'"
-                class="btn btn-secondary" style="margin-right: 0.5rem;" th:text="#{event.actions.manage_participants}">
+                class="btn btn-secondary" style="margin-right: 0.5rem;"
+                th:text="${event.status.name() == 'OPEN'} ? #{event.actions.manage_participants} : #{event.actions.view_participants}">
                 Gestisci Partecipanti
             </button>
 
@@ -113,7 +114,7 @@
 
     <!-- Add Proposal Form (Hidden by default) -->
     <div id="add-proposal-form" class="card"
-        style="display: none; background: #f8fafc; border: 1px dashed var(--border);">
+        style="display: none; background: var(--surface); border: 1px dashed var(--border);">
         <h4 th:text="#{event.proposals.add}">Nuova Proposta</h4>
 
         <div th:if="${not #lists.isEmpty(recentProposals)}" style="margin-bottom: 1rem;">
@@ -232,17 +233,7 @@
                         </div>
                     </div>
 
-                    <!-- Organizer Select Button -->
-                    <div th:if="${isOrganizer and event.status.name() == 'OPEN'}" style="margin-bottom: 0.5rem;">
-                        <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
-                            method="post" style="display:inline;" onsubmit="handleAjaxForm(event)">
-                            <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 2px 8px;"
-                                th:onclick="'return confirm(\'' + #{event.select_confirm} + '\');'"
-                                th:text="#{event.select}">
-                                Scegli come definitiva
-                            </button>
-                        </form>
-                    </div>
+
 
                     <!-- Vote Count -->
                     <div style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-top: 0.5rem;">
@@ -278,6 +269,19 @@
                             </button>
                         </form>
                     </div>
+
+                    <!-- Organizer Select Button (Moved) -->
+                    <div th:if="${isOrganizer and event.status.name() == 'OPEN'}" style="margin-top: 0.75rem;">
+                        <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
+                            method="post" style="display:inline;" onsubmit="handleAjaxForm(event)">
+                            <button type="submit" class="btn"
+                                style="padding: 0.4rem 1rem; font-weight: bold; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                                th:onclick="'return confirm(\'' + #{event.select_confirm} + '\');'"
+                                th:text="#{event.select}">
+                                Scegli
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -306,7 +310,9 @@
     <!-- Manage Participants Modal (Moved to bottom to avoid nesting issues) -->
     <div id="manage-participants-modal" class="card" th:if="${isOrganizer}"
         style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border);">
-        <h4 style="margin-bottom: 1rem;" th:text="#{participants.modal.title}">Gestisci Partecipanti</h4>
+        <h4 style="margin-bottom: 1rem;"
+            th:text="${event.status.name() == 'OPEN'} ? #{participants.modal.title} : #{event.participants}">Gestisci
+            Partecipanti</h4>
 
         <form th:action="@{/events/{id}/update-participants(id=${event.id})}" method="post" id="participantsForm"
             onsubmit="handleParticipantsSubmit(event)">
@@ -314,8 +320,8 @@
             <div id="participant-lists-container" th:fragment="participantLists"
                 style="display: flex; gap: 1rem; align-items: center; height: 300px;">
 
-                <!-- Left Column: Available Users -->
-                <div
+                <!-- Left Column: Available Users (OPEN only) -->
+                <div th:if="${event.status.name() == 'OPEN'}"
                     style="flex: 1; display: flex; flex-direction: column; height: 100%; border: 1px solid var(--border); border-radius: 4px;">
                     <div style="padding: 0.5rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem;"
                         th:text="#{participants.to_select}">
@@ -332,8 +338,9 @@
                     </div>
                 </div>
 
-                <!-- Center Column: Controls -->
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- Center Column: Controls (OPEN only) -->
+                <div th:if="${event.status.name() == 'OPEN'}"
+                    style="display: flex; flex-direction: column; gap: 0.5rem;">
                     <button type="button" class="btn btn-secondary" onclick="moveAllRight()"
                         style="padding: 0.25rem 0.5rem;" title="Sposta tutti a destra">
                         &gt;&gt;
@@ -366,6 +373,14 @@
                             style="padding: 0.25rem 0.5rem; cursor: pointer; border-radius: 3px; margin-bottom: 2px;">
                             Username
                         </div>
+                        <!-- Fallback if simple view and allUsers not populated (optimization side effect) 
+                             If event is closed, we iterate event.participants directly instead of filtering allUsers? 
+                             Wait, if Closed, DinnerController might not populate allUsers? 
+                             Let's check Controller. 
+                             getParticipantListFragment: "Needs All Users if Organizer."
+                             populateFullEventModel: "All Users for Organizer".
+                             So allUsers is present. Safe.
+                        -->
                     </div>
                 </div>
 
@@ -378,7 +393,8 @@
                 <button type="button"
                     onclick="document.getElementById('manage-participants-modal').style.display='none'"
                     class="btn btn-secondary" th:text="#{app.close}">Chiudi</button>
-                <button type="submit" class="btn" th:text="#{app.save}">Salva</button>
+                <button th:if="${event.status.name() == 'OPEN'}" type="submit" class="btn"
+                    th:text="#{app.save}">Salva</button>
             </div>
         </form>
     </div>
@@ -500,10 +516,37 @@
 
         function fillProposalForm(selectElement) {
             var selectedOption = selectElement.options[selectElement.selectedIndex];
+            var locInput = document.getElementById('location');
+            var addrInput = document.getElementById('address');
+            var descInput = document.getElementById('propDescription');
+
             if (selectedOption.value) {
-                document.getElementById('location').value = selectedOption.value;
-                document.getElementById('address').value = selectedOption.getAttribute('data-address') || '';
-                document.getElementById('propDescription').value = selectedOption.getAttribute('data-description') || '';
+                locInput.value = selectedOption.value;
+                addrInput.value = selectedOption.getAttribute('data-address') || '';
+                descInput.value = selectedOption.getAttribute('data-description') || '';
+
+                // Make read-only
+                locInput.readOnly = true;
+                addrInput.readOnly = true;
+                descInput.readOnly = true;
+
+                // Visual feedback (optional but good)
+                locInput.style.backgroundColor = 'var(--bg-secondary)';
+                addrInput.style.backgroundColor = 'var(--bg-secondary)';
+                descInput.style.backgroundColor = 'var(--bg-secondary)';
+            } else {
+                // Clear and make editable
+                locInput.value = '';
+                addrInput.value = '';
+                descInput.value = '';
+
+                locInput.readOnly = false;
+                addrInput.readOnly = false;
+                descInput.readOnly = false;
+
+                locInput.style.backgroundColor = '';
+                addrInput.style.backgroundColor = '';
+                descInput.style.backgroundColor = '';
             }
         }
 

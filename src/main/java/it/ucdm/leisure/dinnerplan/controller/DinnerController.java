@@ -263,6 +263,73 @@ public class DinnerController {
         }
     }
 
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/proposals/add")
+    public String addGlobalProposal(@RequestParam String location, @RequestParam String address,
+            @RequestParam String description,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            dinnerService.addGlobalProposal(location, address, description);
+            return "redirect:/";
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Errore durante l'aggiunta della proposta: " + e.getMessage());
+            return "redirect:/";
+        }
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/proposals/add-to-event")
+    public String addSuggestionToEvent(@RequestParam Long eventId, @RequestParam String location,
+            @RequestParam String address, @RequestParam String description, @RequestParam String dateOption,
+            @AuthenticationPrincipal UserDetails userDetails,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            LocalDateTime dt = LocalDateTime.parse(dateOption);
+            dinnerService.addProposalFromSuggestion(eventId, dt, location, address, description,
+                    userDetails.getUsername());
+            redirectAttributes.addFlashAttribute("successMessage", "Proposta aggiunta all'evento con successo.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Errore generico: " + e.getMessage());
+        }
+        return "redirect:/";
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/proposals/add-batch-to-event")
+    public String addBatchSuggestionToEvent(@RequestParam Long eventId,
+            @RequestParam("selectedProposals") List<String> selectedProposals,
+            @RequestParam("dateOptions") List<String> dateOptions,
+            @AuthenticationPrincipal UserDetails userDetails,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            List<LocalDateTime> dts = new ArrayList<>();
+            for (String d : dateOptions) {
+                if (d != null && !d.isBlank()) {
+                    dts.add(LocalDateTime.parse(d));
+                } else {
+                    // Fallback or error? Logic assumes strict 1:1 match.
+                    // Frontend 'required' should prevent empty.
+                    dts.add(null);
+                }
+            }
+
+            int count = dinnerService.addBatchProposalsFromSuggestion(eventId, dts, selectedProposals,
+                    userDetails.getUsername());
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Aggiunte " + count + " proposte all'evento (i duplicati sono stati ignorati).");
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Errore durante l'aggiunta multipla: " + e.getMessage());
+        }
+        return "redirect:/";
+    }
+
     @PostMapping("/proposals/{id}/vote")
     public String vote(@PathVariable Long id, @RequestParam Long eventId,
             @AuthenticationPrincipal UserDetails userDetails) {
