@@ -1,6 +1,5 @@
 package it.ucdm.leisure.dinnerplan.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class SmartEventRequest {

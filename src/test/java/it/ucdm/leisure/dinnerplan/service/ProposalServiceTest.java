@@ -1,9 +1,6 @@
 package it.ucdm.leisure.dinnerplan.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
@@ -20,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class ProposalServiceTest {
 
     @Mock

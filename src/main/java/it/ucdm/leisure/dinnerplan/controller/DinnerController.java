@@ -139,6 +139,9 @@ public class DinnerController {
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");
+        if (user == null) {
+            return false;
+        }
 
         var votes = interactionService.getUserVotesForEvent(id, user.getId());
         var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
@@ -149,7 +152,8 @@ public class DinnerController {
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
-        boolean isOrganizer = (boolean) model.getAttribute("isOrganizer");
+        Boolean isOrganizerObj = (Boolean) model.getAttribute("isOrganizer");
+        boolean isOrganizer = Boolean.TRUE.equals(isOrganizerObj);
         if (isOrganizer) {
             model.addAttribute("allUsers", userService.getAllUsers());
         }
@@ -197,11 +201,14 @@ public class DinnerController {
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");
-        var votes = interactionService.getUserVotesForEvent(id, user.getId());
-        var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
-        model.addAttribute("votedProposalIds", votedProposalIds);
+        if (user != null) {
+            var votes = interactionService.getUserVotesForEvent(id, user.getId());
+            var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
+            model.addAttribute("votedProposalIds", votedProposalIds);
+        }
 
-        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null
+                && user != null) {
             interactionService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
@@ -216,7 +223,8 @@ public class DinnerController {
         if (event == null)
             return "redirect:/";
 
-        boolean isOrganizer = (boolean) model.getAttribute("isOrganizer");
+        Boolean isOrganizerObj = (Boolean) model.getAttribute("isOrganizer");
+        boolean isOrganizer = Boolean.TRUE.equals(isOrganizerObj);
         if (isOrganizer) {
             model.addAttribute("allUsers", userService.getAllUsers());
         }

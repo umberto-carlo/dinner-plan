@@ -8,6 +8,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Objects;
+
 @Configuration
 public class AdminInitializer implements CommandLineRunner {
 
@@ -33,7 +35,7 @@ public class AdminInitializer implements CommandLineRunner {
                     .password(passwordEncoder.encode(adminPassword))
                     .role(Role.ADMIN)
                     .build();
-            userRepository.save(admin);
+            userRepository.save(Objects.requireNonNull(admin));
             System.out.println("Admin user created: " + adminUsername);
         } else {
             // Optional: Ensure admin always has ADMIN role and correct password if we

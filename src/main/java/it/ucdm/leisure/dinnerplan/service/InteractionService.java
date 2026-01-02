@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -40,7 +41,7 @@ public class InteractionService {
     public void castVote(Long proposalId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Proposal proposal = proposalRepository.findById(proposalId)
+        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid proposal Id"));
 
         if (LocalDateTime.now().isAfter(proposal.getDinnerEvent().getDeadline())) {
@@ -54,17 +55,17 @@ public class InteractionService {
         Optional<Vote> existingVote = voteRepository.findByUserAndProposal(user, proposal);
 
         if (existingVote.isPresent()) {
-            voteRepository.delete(existingVote.get());
+            voteRepository.delete(Objects.requireNonNull(existingVote.get()));
         } else {
             Vote vote = Vote.builder()
                     .user(user)
                     .proposal(proposal)
                     .build();
-            voteRepository.save(vote);
+            voteRepository.save(Objects.requireNonNull(vote));
         }
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + proposal.getDinnerEvent().getId(),
@@ -75,14 +76,14 @@ public class InteractionService {
 
     @Transactional
     public void selectProposal(Long eventId, Long proposalId, String username) {
-        DinnerEvent event = dinnerEventRepository.findById(eventId)
+        DinnerEvent event = dinnerEventRepository.findById(Objects.requireNonNull(eventId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
         if (!event.getOrganizer().getUsername().equals(username)) {
             throw new IllegalStateException("Only organizer can decide the event");
         }
 
-        Proposal proposal = proposalRepository.findById(proposalId)
+        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid proposal Id"));
 
         if (!proposal.getDinnerEvent().getId().equals(eventId)) {
@@ -94,7 +95,7 @@ public class InteractionService {
         dinnerEventRepository.save(event);
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
@@ -105,7 +106,7 @@ public class InteractionService {
 
     @Transactional
     public void rateProposal(Long eventId, Long proposalId, String username, boolean isLiked) {
-        DinnerEvent event = dinnerEventRepository.findById(eventId)
+        DinnerEvent event = dinnerEventRepository.findById(Objects.requireNonNull(eventId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
         if (event.getStatus() != DinnerEvent.EventStatus.DECIDED) {
@@ -119,7 +120,7 @@ public class InteractionService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Proposal proposal = proposalRepository.findById(proposalId)
+        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid proposal Id"));
 
         Optional<ProposalRating> existingRating = proposalRatingRepository.findByUserAndProposal(user, proposal);
@@ -130,7 +131,7 @@ public class InteractionService {
                 proposalRatingRepository.delete(rating);
             } else {
                 rating.setLiked(isLiked);
-                proposalRatingRepository.save(rating);
+                proposalRatingRepository.save(Objects.requireNonNull(rating));
             }
         } else {
             ProposalRating rating = ProposalRating.builder()
@@ -138,10 +139,10 @@ public class InteractionService {
                     .proposal(proposal)
                     .isLiked(isLiked)
                     .build();
-            proposalRatingRepository.save(rating);
+            proposalRatingRepository.save(Objects.requireNonNull(rating));
         }
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
@@ -150,19 +151,20 @@ public class InteractionService {
     }
 
     public List<Vote> getUserVotesForEvent(Long eventId, Long userId) {
-        return voteRepository.findByProposal_DinnerEvent_IdAndUser_Id(eventId, userId);
+        return voteRepository.findByProposal_DinnerEvent_IdAndUser_Id(Objects.requireNonNull(eventId),
+                Objects.requireNonNull(userId));
     }
 
     public Optional<Boolean> getUserRatingForProposal(Long proposalId, Long userId) {
-        Proposal proposal = proposalRepository.getReferenceById(proposalId);
-        User user = userRepository.getReferenceById(userId);
+        Proposal proposal = proposalRepository.getReferenceById(Objects.requireNonNull(proposalId));
+        User user = userRepository.getReferenceById(Objects.requireNonNull(userId));
         return proposalRatingRepository.findByUserAndProposal(user, proposal)
                 .map(ProposalRating::isLiked);
     }
 
     @Transactional
     public void addMessage(Long eventId, String username, String content) {
-        DinnerEvent event = dinnerEventRepository.findById(eventId)
+        DinnerEvent event = dinnerEventRepository.findById(Objects.requireNonNull(eventId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
         User sender = userRepository.findByUsername(username)
@@ -181,7 +183,7 @@ public class InteractionService {
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
 
-        DinnerEventMessage saved = dinnerEventMessageRepository.save(message);
+        DinnerEventMessage saved = dinnerEventMessageRepository.save(Objects.requireNonNull(message));
 
         ChatMessageDTO dto = new ChatMessageDTO(
                 saved.getId(),

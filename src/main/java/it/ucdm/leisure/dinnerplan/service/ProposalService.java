@@ -10,9 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 @Service
 public class ProposalService {
@@ -36,6 +35,7 @@ public class ProposalService {
     @Transactional
     public void addProposal(Long eventId, LocalDateTime dateOption, String location, String address,
             String description) {
+        Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + eventId));
 
@@ -55,7 +55,7 @@ public class ProposalService {
         dinnerEventRepository.save(event);
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
@@ -66,6 +66,7 @@ public class ProposalService {
     @Transactional
     public void addProposalFromSuggestion(Long eventId, LocalDateTime dateOption, String location, String address,
             String description, String username) {
+        Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
@@ -90,6 +91,7 @@ public class ProposalService {
     @Transactional
     public int addBatchProposalsFromSuggestion(Long eventId, List<LocalDateTime> dateOptions,
             List<String> encodedProposals, String username) {
+        Objects.requireNonNull(eventId, "Event ID must not be null");
         // Reuse validation logic effectively via helper or direct call
         // For simplicity, re-fetch validation context
         DinnerEvent event = dinnerEventRepository.findById(eventId)
@@ -137,10 +139,10 @@ public class ProposalService {
                 .description(description)
                 .build();
 
-        proposalRepository.save(proposal);
+        proposalRepository.save(Objects.requireNonNull(proposal));
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events", "update");
