@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mobile/layout :: layout(#{event.details}, ~{::section})}">
+<section>
+    <div style="margin-bottom: 1rem;">
+        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span th:text="#{app.back_dashboard}">Torna alla
+                Dashboard</span></a>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="event-header-card" th:fragment="eventHeader" class="card">
+        <div class="bg-blue-600 text-white p-2 text-center text-xs mb-2"
+            style="background: #e0f2fe; color: #0284c7; padding: 0.5rem; border-radius: 4px; border: 1px solid #0284c7; margin-bottom: 1rem; text-align: center; font-weight: bold;">
+            📱 Mobile Event View
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                <h2 th:text="${event.title}" style="margin-bottom: 0; font-size: 1.25rem;">Event Title</h2>
+                <span class="badge" th:text="${event.status}" style="font-size: 0.8rem;">OPEN</span>
+            </div>
+
+            <p th:text="${event.description}"
+                style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.95rem;">Description</p>
+
+            <div class="meta" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div><span th:text="#{event.by}">Organizzatore:</span> <strong
+                        th:text="${event.organizer.username}">User</strong></div>
+                <div><span th:text="#{event.deadline}">Scadenza:</span> <span
+                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message Display -->
+    <div th:if="${errorMessage}" class="card"
+        style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border: 1px solid #f87171; margin-bottom: 1.5rem;">
+        <strong>Errore:</strong> <span th:text="${errorMessage}">Messaggio di errore</span>
+    </div>
+
+    <div id="event-action-bar" th:fragment="eventActions" style="margin-bottom: 1.5rem;">
+        <h3 th:text="#{event.proposals}" style="margin-bottom: 0.5rem;">Proposte</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <!-- Manage Participants (Organizer only) -->
+            <button th:if="${isOrganizer}"
+                onclick="document.getElementById('manage-participants-modal').style.display='block'"
+                class="btn btn-secondary" style="width: 100%;"
+                th:text="${event.status.name() == 'OPEN'} ? #{event.actions.manage_participants} : #{event.actions.view_participants}">
+                Gestisci Partecipanti
+            </button>
+
+            <!-- Only Organizer can add proposals AND event must be OPEN -->
+            <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
+                onclick="document.getElementById('add-proposal-form').style.display='block'" class="btn"
+                style="width: 100%;" th:text="#{event.proposals.add}">
+                Aggiungi Proposta
+            </button>
+
+            <!-- Delete Event (Organizer only) -->
+            <form th:if="${isOrganizer}" th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
+                style="width: 100%;">
+                <button type="submit" class="btn btn-red" style="width: 100%;"
+                    th:onclick="'return confirm(\'' + #{event.actions.delete_confirm} + '\');'"
+                    th:text="#{event.actions.delete}">
+                    Elimina Evento
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <style>
+        .user-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .user-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Loading Spinner Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    <!-- Add Proposal Form (Hidden by default) -->
+    <div id="add-proposal-form" class="card"
+        style="display: none; background: var(--surface); border: 1px dashed var(--border);">
+        <h4 th:text="#{event.proposals.add}">Nuova Proposta</h4>
+
+        <div th:if="${not #lists.isEmpty(recentProposals)}" style="margin-bottom: 1rem;">
+            <label for="proposal-suggestion" style="display: block; font-size: 0.9rem; margin-bottom: 0.25rem;"
+                th:text="#{event.suggestions.label}">Suggerimenti Recenti</label>
+            <select id="proposal-suggestion" class="form-control" onchange="fillProposalForm(this)">
+                <option value="" th:text="#{event.suggestions.select}">-- Seleziona --</option>
+                <option th:each="p : ${recentProposals}" th:value="${p.location}" th:data-address="${p.address}"
+                    th:data-description="${p.description}"
+                    th:text="${p.location} + (${p.address} ? ' (' + ${p.address} + ')' : '') + ' - 👍 ' + ${p.totalLikes} + ' | 👎 ' + ${p.totalDislikes}">
+                    Luogo
+                </option>
+            </select>
+        </div>
+
+        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
+            onsubmit="handleAjaxForm(event, 'add-proposal-form')">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="dateOption" th:text="#{event.date}">Data e Ora</label>
+                    <input type="datetime-local" id="dateOption" name="dateOption" required>
+                </div>
+                <div class="form-group">
+                    <label for="location" th:text="#{event.location}">Luogo</label>
+                    <input type="text" id="location" name="location" th:placeholder="#{create.placeholder.location}"
+                        required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="address" th:text="#{event.address}">Indirizzo (per Mappa)</label>
+                <input type="text" id="address" name="address" th:placeholder="#{create.placeholder.address}" required>
+            </div>
+            <div class="form-group">
+                <label for="propDescription" th:text="#{dashboard.description}">Descrizione</label>
+                <input type="text" id="propDescription" name="description"
+                    th:placeholder="#{create.placeholder.description}">
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn" th:text="#{app.add}">Aggiungi</button>
+                <button type="button" onclick="document.getElementById('add-proposal-form').style.display='none'"
+                    class="btn btn-secondary" th:text="#{app.cancel}">Annulla</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="proposal-list-container" th:fragment="proposalList">
+        <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);"
+            th:text="#{event.proposals.none}">
+            Nessuna proposta aggiunta ancora.
+        </div>
+
+        <div th:each="proposal : ${sortedProposals}" class="card proposal-card"
+            style="background: var(--surface); border-left: 4px solid var(--primary-color);">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div>
+                    <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem;">
+                        <span th:text="${proposal.location}">Location</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                        🕒 <span th:text="${#temporals.format(proposal.dateOption, 'dd MMM HH:mm')}">Date</span>
+                    </div>
+
+                    <div th:if="${proposal.address}"
+                        style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        📍 <span th:text="${proposal.address}">Indirizzo</span>
+                        <div style="margin-top: 0.25rem;">
+                            <a th:href="'https://www.google.com/maps/search/?api=1&query=' + ${proposal.address}"
+                                target="_blank" class="btn btn-secondary"
+                                style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">
+                                🗺️ Apri Mappa
+                            </a>
+                        </div>
+                    </div>
+                    <div th:if="${proposal.description}" th:text="${proposal.description}"
+                        style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-style: italic;">
+                    </div>
+
+                    <!-- Winner Badge -->
+                    <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposal != null and event.selectedProposal.id == proposal.id}"
+                        style="margin-bottom: 0.5rem; display: inline-block; background: #FFD700; color: #000; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem;"
+                        th:text="#{event.winner}">
+                        🏆 PROPOSTA SCELTA
+                    </div>
+
+                    <!-- Vote Count -->
+                    <div
+                        style="font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-top: 0.25rem;">
+                        <span th:text="#{event.votes}">Voti</span>: <span th:text="${proposal.votes.size()}">0</span>
+                    </div>
+                </div>
+
+                <div th:if="${currentUser != null}"
+                    style="border-top: 1px solid #eee; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <!-- Vote Button / Indicator -->
+                    <div th:if="${#lists.contains(votedProposalIds, proposal.id)}"
+                        style="color: var(--success); font-weight: 600; font-size: 0.9rem;">
+                        <span style="font-size: 1.1rem;">&#10003;</span> <span th:text="#{event.your_vote}">Il tuo
+                            voto</span>
+                    </div>
+
+                    <div th:if="${event.status.name() == 'OPEN'}" style="flex-grow: 1; text-align: right;">
+                        <form th:action="@{/proposals/{id}/vote(id=${proposal.id}, eventId=${event.id})}" method="post"
+                            onsubmit="handleAjaxForm(event)">
+                            <button type="submit"
+                                th:class="${#lists.contains(votedProposalIds, proposal.id)} ? 'btn btn-red' : 'btn btn-secondary'"
+                                style="width: 100%; max-width: 150px; margin-left: auto;"
+                                th:text="${#lists.contains(votedProposalIds, proposal.id)} ? #{event.remove_vote} : #{event.vote}">
+                                Vota
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Organizer Select Button (Moved) -->
+                <div th:if="${isOrganizer and event.status.name() == 'OPEN'}" style="margin-top: 0.5rem;">
+                    <form th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${proposal.id})}"
+                        method="post" onsubmit="handleAjaxForm(event)">
+                        <button type="submit" class="btn"
+                            style="padding: 0.4rem 1rem; font-weight: bold; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                            th:onclick="'return confirm(\'' + #{event.select_confirm} + '\');'"
+                            th:text="#{event.select}">
+                            Scegli
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- Chat Section -->
+    <div class="card" style="margin-top: 2rem;">
+        <h3 th:text="#{event.chat}">Chat Evento</h3>
+        <div id="chat-container"
+            style="height: 300px; overflow-y: auto; border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; background: var(--surface); display: flex; flex-direction: column;">
+            <div th:each="msg : ${chatMessages}" style="margin-bottom: 0.5rem;">
+                <strong th:text="${msg.sender.username}">User</strong> <span
+                    style="font-size: 0.8em; color: var(--text-secondary);"
+                    th:text="${#temporals.format(msg.timestamp, 'dd MMM HH:mm')}">Time</span>:
+                <span th:text="${msg.content}">Content</span>
+            </div>
+        </div>
+        <form id="chat-form" onsubmit="sendChatMessage(event)" style="display: flex; gap: 0.5rem;">
+
+            <input type="text" id="chat-input" class="form-control" th:placeholder="#{event.chat.placeholder}" required
+                style="flex-grow: 1;" autocomplete="off">
+            <button type="submit" class="btn" th:text="#{event.chat.send}">Invia</button>
+        </form>
+    </div>
+
+    <!-- Manage Participants Modal (Moved to bottom to avoid nesting issues) -->
+    <div id="manage-participants-modal" class="card" th:if="${isOrganizer}"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 800px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border);">
+        <h4 style="margin-bottom: 1rem;"
+            th:text="${event.status.name() == 'OPEN'} ? #{participants.modal.title} : #{event.participants}">Gestisci
+            Partecipanti</h4>
+
+        <form th:action="@{/events/{id}/update-participants(id=${event.id})}" method="post" id="participantsForm"
+            onsubmit="handleParticipantsSubmit(event)">
+            <!-- Dual List Container -->
+            <div id="participant-lists-container" th:fragment="participantLists"
+                style="display: flex; gap: 1rem; align-items: center; height: 300px;">
+
+                <!-- Left Column: Available Users (OPEN only) -->
+                <div th:if="${event.status.name() == 'OPEN'}"
+                    style="flex: 1; display: flex; flex-direction: column; height: 100%; border: 1px solid var(--border); border-radius: 4px;">
+                    <div style="padding: 0.5rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem;"
+                        th:text="#{participants.to_select}">
+                        Da Selezionare
+                    </div>
+                    <div id="left-list" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                        <div th:each="u : ${allUsers}"
+                            th:if="${u.role.name() != 'ADMIN' and u.username != #authentication.principal.username and !#lists.contains(event.participants, u)}"
+                            class="user-item" th:data-id="${u.id}" th:text="${u.username}"
+                            onclick="toggleSelection(this)"
+                            style="padding: 0.25rem 0.5rem; cursor: pointer; border-radius: 3px; margin-bottom: 2px;">
+                            Username
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Column: Controls (OPEN only) -->
+                <div th:if="${event.status.name() == 'OPEN'}"
+                    style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="moveAllRight()"
+                        style="padding: 0.25rem 0.5rem;" title="Sposta tutti a destra">
+                        &gt;&gt;
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveSelectedRight()"
+                        style="padding: 0.25rem 0.5rem;" title="Sposta selezionati a destra">
+                        &gt;
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveSelectedLeft()"
+                        style="padding: 0.25rem 0.5rem;" title="Sposta selezionati a sinistra">
+                        &lt;
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="moveAllLeft()"
+                        style="padding: 0.25rem 0.5rem;" title="Sposta tutti a sinistra">
+                        &lt;&lt;
+                    </button>
+                </div>
+
+                <!-- Right Column: Selected Participants -->
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; height: 100%; border: 1px solid var(--border); border-radius: 4px;">
+                    <div style="padding: 0.5rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.9rem;"
+                        th:text="#{participants.selected}">
+                        Selezionati
+                    </div>
+                    <div id="right-list" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                        <div th:each="u : ${allUsers}" th:if="${#lists.contains(event.participants, u)}"
+                            class="user-item" th:data-id="${u.id}" th:text="${u.username}"
+                            onclick="toggleSelection(this)"
+                            style="padding: 0.25rem 0.5rem; cursor: pointer; border-radius: 3px; margin-bottom: 2px;">
+                            Username
+                        </div>
+                        <!-- Fallback if simple view and allUsers not populated (optimization side effect) 
+                             If event is closed, we iterate event.participants directly instead of filtering allUsers? 
+                             Wait, if Closed, DinnerController might not populate allUsers? 
+                             Let's check Controller. 
+                             getParticipantListFragment: "Needs All Users if Organizer."
+                             populateFullEventModel: "All Users for Organizer".
+                             So allUsers is present. Safe.
+                        -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Hidden inputs container for submission -->
+            <div id="hidden-inputs-container"></div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                <button type="button"
+                    onclick="document.getElementById('manage-participants-modal').style.display='none'"
+                    class="btn btn-secondary" th:text="#{app.close}">Chiudi</button>
+                <button th:if="${event.status.name() == 'OPEN'}" type="submit" class="btn"
+                    th:text="#{app.save}">Salva</button>
+            </div>
+        </form>
+    </div>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var eventId = /*[[${event.id}]]*/ '0';
+        /*]]>*/
+
+        var socket = new WebSocket(((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.host + "/ws");
+        var stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            function updateFragment(url, elementId) {
+                var el = document.getElementById(elementId);
+                if (!el) return;
+                fetch(url)
+                    .then(response => {
+                        if (response.status === 403 || response.redirected) {
+                            window.location.href = '/';
+                            return null;
+                        }
+                        return response.text();
+                    })
+                    .then(html => {
+                        if (html) el.outerHTML = html;
+                    })
+                    .catch(console.error);
+            }
+
+            function refreshAll() {
+                // Generic fetcher that handles redirects
+                const fetchFragment = (url) => fetch(url).then(response => {
+                    if (response.status === 403 || response.redirected) {
+                        window.location.href = '/';
+                        throw new Error("Redirected");
+                    }
+                    return response.text();
+                });
+
+                // Spinner is managed by the initiator (handleAjaxForm). Passive updates shouldn't block UI.
+                Promise.all([
+                    fetchFragment('/events/' + eventId + '/fragments/header'),
+                    fetchFragment('/events/' + eventId + '/fragments/actions'),
+                    fetchFragment('/events/' + eventId + '/fragments/proposals'),
+                    fetchFragment('/events/' + eventId + '/fragments/participants')
+                ]).then(values => {
+                    var header = document.getElementById('event-header-card'); if (header) header.outerHTML = values[0];
+                    var actions = document.getElementById('event-action-bar'); if (actions) actions.outerHTML = values[1];
+                    var proposals = document.getElementById('proposal-list-container'); if (proposals) proposals.outerHTML = values[2];
+                    var participants = document.getElementById('participant-lists-container'); if (participants) participants.outerHTML = values[3];
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }).catch(e => {
+                    if (e.message !== "Redirected") console.error(e);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                });
+            }
+
+            stompClient.subscribe('/topic/events/' + eventId, function (message) {
+                if (message.body === 'update') {
+                    refreshAll();
+                } else if (message.body === 'update-participants') {
+                    fetchFragment('/events/' + eventId + '/fragments/participants')
+                        .then(html => {
+                            var participants = document.getElementById('participant-lists-container');
+                            if (participants) participants.outerHTML = html;
+                        })
+                        .catch(console.error);
+                } else if (message.body === 'DELETED') {
+                    alert('L\'evento è stato cancellato dall\'organizzatore.');
+                    window.location.href = '/';
+                }
+            });
+            stompClient.subscribe('/user/topic/dashboard-updates', function (message) {
+                if (message.body === 'REFRESH') {
+                    refreshAll();
+                }
+            });
+            stompClient.subscribe('/topic/events/' + eventId + '/chat', function (message) {
+                var msg = JSON.parse(message.body);
+                appendChatMessage(msg);
+            });
+        });
+
+        // Scroll to bottom on load
+        var chatContainer = document.getElementById('chat-container');
+        if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        function appendChatMessage(msg) {
+            var container = document.getElementById('chat-container');
+            var div = document.createElement('div');
+            div.style.marginBottom = '0.5rem';
+            div.innerHTML = '<strong>' + msg.sender + '</strong> <span style="font-size: 0.8em; color: var(--text-secondary);">' + msg.time + '</span>: <span>' + msg.content + '</span>';
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendChatMessage(e) {
+            e.preventDefault();
+            var input = document.getElementById('chat-input');
+            var content = input.value.trim();
+            if (!content) return;
+
+
+
+            fetch('/events/' + eventId + '/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+
+                },
+                body: new URLSearchParams({ 'content': content })
+            }).then(response => {
+                if (response.ok) {
+                    input.value = '';
+                } else {
+                    console.error('Error sending message');
+                }
+            });
+        }
+
+        function fillProposalForm(selectElement) {
+            var selectedOption = selectElement.options[selectElement.selectedIndex];
+            var locInput = document.getElementById('location');
+            var addrInput = document.getElementById('address');
+            var descInput = document.getElementById('propDescription');
+
+            if (selectedOption.value) {
+                locInput.value = selectedOption.value;
+                addrInput.value = selectedOption.getAttribute('data-address') || '';
+                descInput.value = selectedOption.getAttribute('data-description') || '';
+
+                // Make read-only
+                locInput.readOnly = true;
+                addrInput.readOnly = true;
+                descInput.readOnly = true;
+
+                // Visual feedback (optional but good)
+                locInput.style.backgroundColor = 'var(--bg-secondary)';
+                addrInput.style.backgroundColor = 'var(--bg-secondary)';
+                descInput.style.backgroundColor = 'var(--bg-secondary)';
+            } else {
+                // Clear and make editable
+                locInput.value = '';
+                addrInput.value = '';
+                descInput.value = '';
+
+                locInput.readOnly = false;
+                addrInput.readOnly = false;
+                descInput.readOnly = false;
+
+                locInput.style.backgroundColor = '';
+                addrInput.style.backgroundColor = '';
+                descInput.style.backgroundColor = '';
+            }
+        }
+
+        // Dual List Logic
+        function toggleSelection(element) {
+            element.classList.toggle('selected');
+        }
+
+        function moveAllRight() {
+            const leftList = document.getElementById('left-list');
+            const rightList = document.getElementById('right-list');
+            while (leftList.firstChild) {
+                let item = leftList.firstChild;
+                if (item.classList) item.classList.remove('selected');
+                rightList.appendChild(item);
+            }
+        }
+
+        function moveSelectedRight() {
+            const leftList = document.getElementById('left-list');
+            const rightList = document.getElementById('right-list');
+            const selected = leftList.querySelectorAll('.selected');
+            selected.forEach(item => {
+                item.classList.remove('selected');
+                rightList.appendChild(item);
+            });
+        }
+
+        function moveSelectedLeft() {
+            const leftList = document.getElementById('left-list');
+            const rightList = document.getElementById('right-list');
+            const selected = rightList.querySelectorAll('.selected');
+            selected.forEach(item => {
+                item.classList.remove('selected');
+                leftList.appendChild(item);
+            });
+        }
+
+        function moveAllLeft() {
+            const leftList = document.getElementById('left-list');
+            const rightList = document.getElementById('right-list');
+            while (rightList.firstChild) {
+                let item = rightList.firstChild;
+                if (item.classList) item.classList.remove('selected');
+                leftList.appendChild(item);
+            }
+        }
+
+        function prepareParticipantsSubmission() {
+            const container = document.getElementById('hidden-inputs-container');
+            container.innerHTML = ''; // Clear previous
+            const rightList = document.getElementById('right-list');
+            const items = rightList.querySelectorAll('.user-item');
+            items.forEach(item => {
+                const id = item.getAttribute('data-id');
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'participantIds';
+                input.value = id;
+                container.appendChild(input);
+            });
+        }
+
+        function handleAjaxForm(event, hideModalId) {
+            event.preventDefault();
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                // If it's a redirect or success, we just wait for socket or hide manually
+                // But for good UX, we keep spinner until socket updates or if error we hide it.
+                if (!response.ok && !response.redirected) {
+                    console.error('Action failed');
+                    alert('Operazione fallita!');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+                // If success, we can hide the modal immediately if specified
+                if (hideModalId) {
+                    document.getElementById(hideModalId).style.display = 'none';
+                }
+                // Don't hide overlay yet, wait for WebSocket 'update' to hide it OR set a timeout fallback
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 2000); // Fallback if WS fails
+            }).catch(e => {
+                console.error(e);
+                document.getElementById('loading-overlay').style.display = 'none';
+            });
+        }
+
+        // Modified Participant Handler to use spinner
+        function handleParticipantsSubmit(event) {
+            event.preventDefault();
+            prepareParticipantsSubmission();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            var form = event.target;
+            var formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok || response.redirected) {
+                    document.getElementById('manage-participants-modal').style.display = 'none';
+                    // Spinner hides via WS update or timeout
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }, 2000);
+                } else {
+                    alert('Errore durante il salvataggio dei partecipanti.');
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }
+            }).catch(console.error);
+        }
+
+        // ajaxVote is replaced by generic handleAjaxForm but kept if needed for specific logic? 
+        // No, replaced in HTML so this can be removed or aliased.
+        function ajaxVote(event) { handleAjaxForm(event); }
+    </script>
+</section>
+
+</html>

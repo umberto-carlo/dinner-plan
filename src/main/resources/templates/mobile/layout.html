@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html th:fragment="layout(title, content)" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Dinner Plan'">Dinner Plan</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/fonts.css}">
+
+    <script th:src="@{/js/stomp.min.js}"></script>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme === 'system' || !savedTheme ? systemTheme : savedTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header" style="flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="/" class="logo" style="font-size: 1.4rem;">DinnerPlan</a>
+                <span sec:authorize="isAuthenticated()" style="font-size: 0.9rem; color: var(--text-secondary);">
+                    <span th:text="#{app.welcome(${#authentication.name})}">Ciao, User!</span>
+                </span>
+            </div>
+
+            <div class="nav-links"
+                style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.05);">
+                <span sec:authorize="isAuthenticated()"
+                    style="display: flex; gap: 0.75rem; width: 100%; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.75rem;">
+                        <a th:href="@{/profile}" style="font-weight: 500; text-decoration: none; padding: 0.25rem 0;"
+                            th:text="#{app.profile}">Profilo</a>
+                        <a sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')" th:href="@{/admin/users}"
+                            style="font-weight: 500; text-decoration: none; padding: 0.25rem 0;"
+                            th:text="#{app.users}">Utenti</a>
+                    </div>
+
+                    <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
+                        <button type="submit" class="btn btn-secondary"
+                            style="padding: 0.3rem 0.8rem; font-size: 0.85rem;" th:text="#{app.logout}">Esci</button>
+                    </form>
+                </span>
+
+                <span sec:authorize="!isAuthenticated()"
+                    style="width: 100%; display: flex; justify-content: center; gap: 1rem;">
+                    <a th:href="@{/login}" class="btn btn-secondary" th:text="#{app.login}">Accedi</a>
+                    <a th:href="@{/register}" class="btn" th:text="#{app.register}">Registrati</a>
+                </span>
+            </div>
+        </header>
+
+        <main th:replace="${content}">
+            <!-- Content goes here -->
+        </main>
+    </div>
+
+    <footer
+        style="text-align: center; padding: 1rem; border-top: 1px solid var(--border); margin-top: 2rem; color: var(--text-secondary); font-size: 0.9rem;">
+        <span th:text="#{app.footer}">&copy; 2025 Dinner Plan</span> |
+        <a th:href="@{/manual}" style="color: var(--primary-color);" th:text="#{app.manual}">Manuale d'Uso</a>
+
+        <div style="margin-top: 1rem;">
+            <!-- Theme Switcher -->
+            <div style="margin-bottom: 0.5rem;">
+                <label style="display: inline-block; margin-right: 0.5rem;" th:text="#{app.theme}">Tema:</label>
+                <select id="theme-selector" onchange="switchTheme(this.value)"
+                    style="width: auto; padding: 0.25rem; display: inline-block;">
+                    <option value="light" th:text="#{theme.light}">☀️ Light</option>
+                    <option value="dark" th:text="#{theme.dark}">🌙 Dark</option>
+                    <option value="system" th:text="#{theme.system}">💻 System</option>
+                </select>
+            </div>
+
+            <!-- Language Switcher -->
+            <form action="" method="get" style="display: inline-block;">
+                <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem; width: auto;">
+                    <option value="it" th:selected="${#locale.language == 'it'}">Italiano</option>
+                    <option value="en" th:selected="${#locale.language == 'en'}">English</option>
+                    <option value="sv" th:selected="${#locale.language == 'sv'}">Svenska</option>
+                </select>
+            </form>
+        </div>
+    </footer>
+
+    <script>
+        const themeSelector = document.getElementById('theme-selector');
+
+        // Initialize Selector Value
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        themeSelector.value = savedTheme;
+
+        function switchTheme(theme) {
+            localStorage.setItem('theme', theme);
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme) {
+            let effectiveTheme = theme;
+            if (theme === 'system') {
+                effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+        }
+
+        // Listen for system changes if 'system' is selected
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (localStorage.getItem('theme') === 'system' || !localStorage.getItem('theme')) {
+                applyTheme('system');
+            }
+        });
+    </script>
+</body>
+
+</html>

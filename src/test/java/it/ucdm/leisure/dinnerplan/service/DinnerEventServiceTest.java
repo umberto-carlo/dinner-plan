@@ -118,7 +118,7 @@ class DinnerEventServiceTest {
     @Test
     void updateParticipants_NotOrganizer_ThrowsException() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        assertThrows(IllegalStateException.class,
+        assertThrows(SecurityException.class,
                 () -> dinnerEventService.updateParticipants(1L, List.of(), "participant"));
     }
 

@@ -17,12 +17,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
 @Controller
 public class DinnerController {
@@ -31,13 +33,15 @@ public class DinnerController {
     private final ProposalService proposalService;
     private final InteractionService interactionService;
     private final UserService userService;
+    private final UserAgentUtils userAgentUtils;
 
     public DinnerController(DinnerEventService dinnerEventService, ProposalService proposalService,
-            InteractionService interactionService, UserService userService) {
+            InteractionService interactionService, UserService userService, UserAgentUtils userAgentUtils) {
         this.dinnerEventService = dinnerEventService;
         this.proposalService = proposalService;
         this.interactionService = interactionService;
         this.userService = userService;
+        this.userAgentUtils = userAgentUtils;
     }
 
     @GetMapping("/manual")
@@ -46,7 +50,8 @@ public class DinnerController {
     }
 
     @GetMapping("/")
-    public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
             model.addAttribute("events", dinnerEventService.getEventsForUser(userDetails.getUsername()));
@@ -56,6 +61,10 @@ public class DinnerController {
         } else {
             model.addAttribute("events", new ArrayList<>());
             model.addAttribute("rankedProposals", new ArrayList<>());
+        }
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/dashboard";
         }
         return "dashboard";
     }
@@ -164,9 +173,13 @@ public class DinnerController {
     }
 
     @GetMapping("/events/{id}")
-    public String eventDetails(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String eventDetails(@PathVariable Long id, Model model, @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (!populateFullEventModel(id, model, userDetails)) {
             return "redirect:/";
+        }
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/event_details";
         }
         return "event_details";
     }
