@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mobile/layout :: layout(#{profile.title}, ~{::section})}">
+<section>
+    <div style="padding: 0.5rem;">
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{/}" style="color: var(--text-secondary); text-decoration: none;">&larr; <span
+                    th:text="#{app.back_dashboard}">Torna alla Dashboard</span></a>
+        </div>
+        <h2 th:text="#{profile.title}" style="font-size: 1.25rem; margin-bottom: 0.5rem;">Il tuo Profilo</h2>
+
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+                <label th:text="#{login.username}" style="font-size: 0.9rem;">Username</label>
+                <div th:text="${user.username}"
+                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">User
+                </div>
+            </div>
+            <div class="form-group">
+                <label th:text="#{users.role}" style="font-size: 0.9rem;">Ruolo</label>
+                <div th:text="${user.role}"
+                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">
+                    ROLE</div>
+            </div>
+        </div>
+
+        <h3 th:text="#{profile.change_pass}" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Cambia Password</h3>
+        <div class="card">
+            <div th:if="${success}" class="alert alert-success"
+                style="color: green; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid green; border-radius: 4px; font-size: 0.9rem;"
+                th:text="${success}"></div>
+            <div th:if="${error}" class="alert alert-danger"
+                style="color: red; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid red; border-radius: 4px; font-size: 0.9rem;"
+                th:text="${error}"></div>
+
+            <form th:action="@{/profile/change-password}" method="post">
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label for="newPassword" th:text="#{profile.new_pass}" style="font-size: 0.9rem;">Nuova
+                        Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required
+                        style="width: 100%; padding: 0.5rem;">
+                </div>
+                <button type="submit" class="btn" th:text="#{profile.update}" style="width: 100%;">Aggiorna
+                    Password</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+</html>

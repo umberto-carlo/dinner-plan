@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mobile/layout :: layout(#{create.title}, ~{::section})}">
+<section>
+    <div class="card" style="margin-bottom: 1rem;">
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{/}" style="color: var(--text-secondary); text-decoration: none;">&larr; <span
+                    th:text="#{app.back_dashboard}">Torna alla Dashboard</span></a>
+        </div>
+        <h2 th:text="#{create.title}" style="font-size: 1.25rem; margin-bottom: 0.5rem;">Crea Nuova Cena</h2>
+        <form th:action="@{/events/create}" method="post">
+            <div class="form-group">
+                <label for="title" th:text="#{dashboard.title}">Titolo</label>
+                <input type="text" id="title" name="title" th:placeholder="#{create.placeholder.title}" required
+                    style="width: 100%; padding: 0.5rem;">
+            </div>
+            <div class="form-group">
+                <label for="description" th:text="#{dashboard.description}">Descrizione</label>
+                <textarea id="description" name="description" rows="3"
+                    th:placeholder="#{create.placeholder.description}" style="width: 100%; padding: 0.5rem;"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="deadline" th:text="#{event.deadline}">Scadenza Conferma</label>
+                <input type="datetime-local" id="deadline" name="deadline" required
+                    style="width: 100%; padding: 0.5rem;">
+            </div>
+
+            <button type="submit" class="btn" th:text="#{create.button}" style="width: 100%;">Crea Evento</button>
+            <a th:href="@{/}" class="btn btn-secondary" th:text="#{app.cancel}"
+                style="display: block; text-align: center; margin-top: 0.5rem; width: 100%;">Annulla</a>
+        </form>
+    </div>
+</section>
+
+</html>

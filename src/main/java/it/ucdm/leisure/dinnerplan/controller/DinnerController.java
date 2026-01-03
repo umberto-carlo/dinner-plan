@@ -70,20 +70,32 @@ public class DinnerController {
     }
 
     @GetMapping("/fragments/dashboard")
-    public String getDashboardFragment(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String getDashboardFragment(Model model, @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (userDetails != null) {
+            User user = userService.findByUsername(userDetails.getUsername());
             model.addAttribute("events", dinnerEventService.getEventsForUser(userDetails.getUsername()));
             model.addAttribute("rankedProposals", proposalService.getProposalSuggestions());
+            model.addAttribute("user", user);
+            model.addAttribute("isOrganizer", user.getRole() == Role.ORGANIZER);
         } else {
             model.addAttribute("events", new ArrayList<>());
             model.addAttribute("rankedProposals", new ArrayList<>());
+        }
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/dashboard :: dashboardContent";
         }
         return "dashboard :: dashboardContent";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
     @GetMapping("/events/create")
-    public String createEventForm(Model model) {
+    public String createEventForm(Model model,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/create_event";
+        }
         return "create_event";
     }
 
@@ -186,23 +198,32 @@ public class DinnerController {
 
     @GetMapping("/events/{id}/fragments/header")
     public String getEventHeaderFragment(@PathVariable Long id, Model model,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (populateBaseEventModel(id, model, userDetails) == null)
             return "redirect:/";
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/event_details :: eventHeader";
+        }
         return "event_details :: eventHeader";
     }
 
     @GetMapping("/events/{id}/fragments/actions")
     public String getEventActionsFragment(@PathVariable Long id, Model model,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (populateBaseEventModel(id, model, userDetails) == null)
             return "redirect:/";
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/event_details :: eventActions";
+        }
         return "event_details :: eventActions";
     }
 
     @GetMapping("/events/{id}/fragments/proposals")
     public String getProposalListFragment(@PathVariable Long id, Model model,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         DinnerEvent event = populateBaseEventModel(id, model, userDetails);
         if (event == null)
             return "redirect:/";
@@ -226,12 +247,16 @@ public class DinnerController {
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/event_details :: proposalList";
+        }
         return "event_details :: proposalList";
     }
 
     @GetMapping("/events/{id}/fragments/participants")
     public String getParticipantListFragment(@PathVariable Long id, Model model,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         DinnerEvent event = populateBaseEventModel(id, model, userDetails);
         if (event == null)
             return "redirect:/";
@@ -241,12 +266,16 @@ public class DinnerController {
         if (isOrganizer) {
             model.addAttribute("allUsers", userService.getAllUsers());
         }
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/event_details :: participantLists";
+        }
         return "event_details :: participantLists";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/events/prepare-smart")
-    public String prepareSmartEvent(@RequestParam(required = false) List<String> selectedProposals, Model model) {
+    public String prepareSmartEvent(@RequestParam(required = false) List<String> selectedProposals, Model model,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (selectedProposals == null || selectedProposals.isEmpty()) {
             return "redirect:/";
         }
@@ -264,6 +293,9 @@ public class DinnerController {
         }
 
         model.addAttribute("selectedProposals", proposals);
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/create_smart_event";
+        }
         return "create_smart_event";
     }
 
@@ -336,5 +368,37 @@ public class DinnerController {
     public String deleteEvent(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         dinnerEventService.deleteEvent(id, userDetails.getUsername());
         return "redirect:/";
+    }
+
+    @GetMapping("/api/calendar/events")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public List<it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO> getCalendarEvents(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null)
+            return new ArrayList<>();
+
+        List<DinnerEvent> events = dinnerEventService.getEventsForUser(userDetails.getUsername());
+        List<it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO> calendarEvents = new ArrayList<>();
+
+        for (DinnerEvent event : events) {
+            // Add Deadline
+            calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
+                    event.getId(),
+                    "Deadline: " + event.getTitle(),
+                    event.getDeadline(),
+                    "DEADLINE",
+                    "Scadenza votazioni per " + event.getTitle()));
+
+            // Add Actual Event Date if decided
+            if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
+                calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
+                        event.getId(),
+                        "Cena: " + event.getTitle(),
+                        event.getSelectedProposal().getDateOption(),
+                        "EVENT",
+                        "Cena presso " + event.getSelectedProposal().getLocation()));
+            }
+        }
+        return calendarEvents;
     }
 }

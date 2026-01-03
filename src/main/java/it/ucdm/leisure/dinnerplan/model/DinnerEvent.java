@@ -22,7 +22,7 @@ public class DinnerEvent {
     @JoinColumn(name = "organizer_id", nullable = false)
     private User organizer;
 
-    @OneToMany(mappedBy = "dinnerEvent", cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+    @OneToMany(mappedBy = "dinnerEvent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Proposal> proposals = new ArrayList<>();
 
     private LocalDateTime deadline;
@@ -34,6 +34,9 @@ public class DinnerEvent {
     @ManyToMany
     @JoinTable(name = "event_participants", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DinnerEventMessage> messages = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
@@ -48,7 +51,8 @@ public class DinnerEvent {
     }
 
     public DinnerEvent(Long id, String title, String description, User organizer, List<Proposal> proposals,
-            LocalDateTime deadline, Proposal selectedProposal, List<User> participants, EventStatus status) {
+            LocalDateTime deadline, Proposal selectedProposal, List<User> participants,
+            List<DinnerEventMessage> messages, EventStatus status) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -57,6 +61,7 @@ public class DinnerEvent {
         this.deadline = deadline;
         this.selectedProposal = selectedProposal;
         this.participants = participants != null ? participants : new ArrayList<>();
+        this.messages = messages != null ? messages : new ArrayList<>();
         this.status = status;
     }
 
@@ -128,6 +133,14 @@ public class DinnerEvent {
         this.participants = participants;
     }
 
+    public List<DinnerEventMessage> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<DinnerEventMessage> messages) {
+        this.messages = messages;
+    }
+
     public EventStatus getStatus() {
         return status;
     }
@@ -145,6 +158,7 @@ public class DinnerEvent {
         private LocalDateTime deadline;
         private Proposal selectedProposal;
         private List<User> participants = new ArrayList<>();
+        private List<DinnerEventMessage> messages = new ArrayList<>();
         private EventStatus status;
 
         public DinnerEventBuilder id(Long id) {
@@ -187,6 +201,11 @@ public class DinnerEvent {
             return this;
         }
 
+        public DinnerEventBuilder messages(List<DinnerEventMessage> messages) {
+            this.messages = messages;
+            return this;
+        }
+
         public DinnerEventBuilder status(EventStatus status) {
             this.status = status;
             return this;
@@ -194,7 +213,7 @@ public class DinnerEvent {
 
         public DinnerEvent build() {
             return new DinnerEvent(id, title, description, organizer, proposals, deadline, selectedProposal,
-                    participants, status);
+                    participants, messages, status);
         }
     }
 }

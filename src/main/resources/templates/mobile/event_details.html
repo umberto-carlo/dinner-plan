@@ -39,13 +39,13 @@
         <strong>Errore:</strong> <span th:text="${errorMessage}">Messaggio di errore</span>
     </div>
 
-    <div id="event-action-bar" th:fragment="eventActions" style="margin-bottom: 1.5rem;">
-        <h3 th:text="#{event.proposals}" style="margin-bottom: 0.5rem;">Proposte</h3>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+    <div id="event-action-bar" th:fragment="eventActions" class="card" style="margin-bottom: 1.5rem;">
+        <h3 th:text="#{event.proposals}" style="margin-bottom: 1rem;">Proposte</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             <!-- Manage Participants (Organizer only) -->
             <button th:if="${isOrganizer}"
                 onclick="document.getElementById('manage-participants-modal').style.display='block'"
-                class="btn btn-secondary" style="width: 100%;"
+                class="btn btn-secondary" style="width: 100%; text-align: center;"
                 th:text="${event.status.name() == 'OPEN'} ? #{event.actions.manage_participants} : #{event.actions.view_participants}">
                 Gestisci Partecipanti
             </button>
@@ -53,14 +53,14 @@
             <!-- Only Organizer can add proposals AND event must be OPEN -->
             <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
                 onclick="document.getElementById('add-proposal-form').style.display='block'" class="btn"
-                style="width: 100%;" th:text="#{event.proposals.add}">
+                style="width: 100%; text-align: center;" th:text="#{event.proposals.add}">
                 Aggiungi Proposta
             </button>
 
             <!-- Delete Event (Organizer only) -->
             <form th:if="${isOrganizer}" th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
-                style="width: 100%;">
-                <button type="submit" class="btn btn-red" style="width: 100%;"
+                style="width: 100%; margin: 0;">
+                <button type="submit" class="btn btn-outline-danger" style="width: 100%; text-align: center;"
                     th:onclick="'return confirm(\'' + #{event.actions.delete_confirm} + '\');'"
                     th:text="#{event.actions.delete}">
                     Elimina Evento

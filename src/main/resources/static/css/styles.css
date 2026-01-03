@@ -10,7 +10,7 @@
     --success: #10b981;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --radius: 0.5rem;
+    --radius: 1rem;
     --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
     --font-body: 'Inter', system-ui, -apple-system, sans-serif;
     --bg-secondary: #f1f5f9;
@@ -79,15 +79,17 @@ a:hover {
 
 .btn {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.25rem;
     background-color: var(--primary-color);
     color: white;
-    border-radius: var(--radius);
+    border-radius: 9999px;
     font-weight: 500;
     border: none;
     cursor: pointer;
     transition: background-color 0.15s;
     font-size: 0.875rem;
+    box-sizing: border-box;
+    /* Prevent overflow with width: 100% */
 }
 
 .btn:hover {
@@ -201,6 +203,19 @@ textarea:focus {
 
 .btn-red:hover {
     background-color: #dc2626;
+}
+
+.btn-outline-danger {
+    background-color: transparent;
+    border: 1px solid var(--error);
+    color: var(--error);
+    border-radius: 9999px;
+    padding: 0.5rem 1.25rem;
+}
+
+.btn-outline-danger:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
 }
 
 /* Tabs */

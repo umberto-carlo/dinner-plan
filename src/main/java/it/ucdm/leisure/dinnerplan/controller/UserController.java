@@ -16,36 +16,53 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class UserController {
 
     private final UserService userService;
+    private final it.ucdm.leisure.dinnerplan.utils.UserAgentUtils userAgentUtils;
+    private final org.springframework.context.MessageSource messageSource;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, it.ucdm.leisure.dinnerplan.utils.UserAgentUtils userAgentUtils,
+            org.springframework.context.MessageSource messageSource) {
         this.userService = userService;
+        this.userAgentUtils = userAgentUtils;
+        this.messageSource = messageSource;
     }
 
     @GetMapping("/profile")
-    public String profile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String profile(@AuthenticationPrincipal UserDetails userDetails, Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent) {
         User user = userService.findByUsername(userDetails.getUsername());
         model.addAttribute("user", user);
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/profile";
+        }
         return "profile";
     }
 
     @PostMapping("/profile/change-password")
     public String changePassword(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String newPassword,
-            Model model) {
+            Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent,
+            java.util.Locale locale) {
         try {
             userService.changePassword(userDetails.getUsername(), newPassword);
-            model.addAttribute("success", "Password aggiornata con successo");
+            model.addAttribute("success", messageSource.getMessage("profile.password_success", null, locale));
         } catch (Exception e) {
-            model.addAttribute("error", "Errore durante l'aggiornamento della password");
+            model.addAttribute("error", messageSource.getMessage("profile.password_error", null, locale));
         }
         // Reload user to keep consistency
         User user = userService.findByUsername(userDetails.getUsername());
         model.addAttribute("user", user);
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/profile";
+        }
         return "profile";
     }
 
     @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @GetMapping("/admin/users")
-    public String listUsers(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String listUsers(@AuthenticationPrincipal UserDetails userDetails, Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent) {
         boolean isAdmin = userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -53,6 +70,10 @@ public class UserController {
             model.addAttribute("users", userService.getAllUsers());
         } else {
             model.addAttribute("users", userService.getAllUsersExceptAdmins());
+        }
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/user_list";
         }
         return "user_list";
     }
