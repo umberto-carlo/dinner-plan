@@ -56,6 +56,13 @@ public class DinnerEventService {
         Objects.requireNonNull(deadline, "Deadline must not be null");
         Objects.requireNonNull(username, "Username must not be null");
 
+        if (deadline.isBefore(LocalDateTime.now())) {
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+                    .ofPattern("dd/MM/yyyy HH:mm");
+            throw new IllegalArgumentException(
+                    "La scadenza deve essere una data futura (inserito: " + deadline.format(formatter) + ")");
+        }
+
         User organizer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

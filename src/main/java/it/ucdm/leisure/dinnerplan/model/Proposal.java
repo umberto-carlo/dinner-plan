@@ -2,7 +2,9 @@ package it.ucdm.leisure.dinnerplan.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -17,8 +19,6 @@ public class Proposal {
     @JoinColumn(name = "dinner_event_id", nullable = true)
     private DinnerEvent dinnerEvent;
 
-    private LocalDateTime dateOption;
-
     private String location;
 
     private String address;
@@ -26,7 +26,7 @@ public class Proposal {
     private String description;
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Vote> votes = new HashSet<>();
+    private List<ProposalDate> dates = new ArrayList<>();
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ProposalRating> ratings = new HashSet<>();
@@ -34,15 +34,14 @@ public class Proposal {
     public Proposal() {
     }
 
-    public Proposal(Long id, DinnerEvent dinnerEvent, LocalDateTime dateOption, String location, String address,
-            String description, Set<Vote> votes, Set<ProposalRating> ratings) {
+    public Proposal(Long id, DinnerEvent dinnerEvent, String location, String address,
+            String description, List<ProposalDate> dates, Set<ProposalRating> ratings) {
         this.id = id;
         this.dinnerEvent = dinnerEvent;
-        this.dateOption = dateOption;
         this.location = location;
         this.address = address;
         this.description = description;
-        this.votes = votes != null ? votes : new HashSet<>();
+        this.dates = dates != null ? dates : new ArrayList<>();
         this.ratings = ratings != null ? ratings : new HashSet<>();
     }
 
@@ -66,12 +65,12 @@ public class Proposal {
         this.dinnerEvent = dinnerEvent;
     }
 
-    public LocalDateTime getDateOption() {
-        return dateOption;
+    public List<ProposalDate> getDates() {
+        return dates;
     }
 
-    public void setDateOption(LocalDateTime dateOption) {
-        this.dateOption = dateOption;
+    public void setDates(List<ProposalDate> dates) {
+        this.dates = dates;
     }
 
     public String getLocation() {
@@ -98,14 +97,6 @@ public class Proposal {
         this.description = description;
     }
 
-    public Set<Vote> getVotes() {
-        return votes;
-    }
-
-    public void setVotes(Set<Vote> votes) {
-        this.votes = votes;
-    }
-
     public Set<ProposalRating> getRatings() {
         return ratings;
     }
@@ -114,14 +105,17 @@ public class Proposal {
         this.ratings = ratings;
     }
 
+    public boolean hasVotes() {
+        return dates != null && dates.stream().anyMatch(d -> d.getVotes() != null && !d.getVotes().isEmpty());
+    }
+
     public static class ProposalBuilder {
         private Long id;
         private DinnerEvent dinnerEvent;
-        private LocalDateTime dateOption;
         private String location;
         private String address;
         private String description;
-        private Set<Vote> votes = new HashSet<>();
+        private List<ProposalDate> dates = new ArrayList<>();
         private Set<ProposalRating> ratings = new HashSet<>();
 
         public ProposalBuilder id(Long id) {
@@ -134,8 +128,8 @@ public class Proposal {
             return this;
         }
 
-        public ProposalBuilder dateOption(LocalDateTime dateOption) {
-            this.dateOption = dateOption;
+        public ProposalBuilder dates(List<ProposalDate> dates) {
+            this.dates = dates;
             return this;
         }
 
@@ -154,18 +148,13 @@ public class Proposal {
             return this;
         }
 
-        public ProposalBuilder votes(Set<Vote> votes) {
-            this.votes = votes;
-            return this;
-        }
-
         public ProposalBuilder ratings(Set<ProposalRating> ratings) {
             this.ratings = ratings;
             return this;
         }
 
         public Proposal build() {
-            return new Proposal(id, dinnerEvent, dateOption, location, address, description, votes, ratings);
+            return new Proposal(id, dinnerEvent, location, address, description, dates, ratings);
         }
     }
 }

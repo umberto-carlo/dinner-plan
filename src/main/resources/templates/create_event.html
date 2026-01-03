@@ -3,6 +3,13 @@
 <section>
     <div class="card" style="max-width: 600px; margin: 2rem auto;">
         <h2 th:text="#{create.title}">Crea Nuova Cena</h2>
+
+        <!-- Error Message Display -->
+        <div th:if="${errorMessage}"
+            style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border: 1px solid #f87171; margin-bottom: 1.5rem; border-radius: 4px;">
+            <strong>Errore:</strong> <span th:text="${errorMessage}">Messaggio di errore</span>
+        </div>
+
         <form th:action="@{/events/create}" method="post">
             <div class="form-group">
                 <label for="title" th:text="#{dashboard.title}">Titolo</label>

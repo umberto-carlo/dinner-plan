@@ -50,7 +50,7 @@ class ProposalServiceTest {
     @Test
     void addProposal_Success() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        proposalService.addProposal(1L, LocalDateTime.now(), "Loc", "Addr", "Desc");
+        proposalService.addProposal(1L, List.of(LocalDateTime.now()), "Loc", "Addr", "Desc");
         assertEquals(1, event.getProposals().size());
         verify(dinnerEventRepository).save(event);
     }
@@ -68,7 +68,7 @@ class ProposalServiceTest {
 
     @Test
     void getProposalSuggestions_CalculatesStats() {
-        Proposal p = Proposal.builder().location("Place").votes(new HashSet<>()).ratings(new HashSet<>()).build();
+        Proposal p = Proposal.builder().location("Place").dates(new ArrayList<>()).ratings(new HashSet<>()).build();
         when(proposalRepository.findAll()).thenReturn(List.of(p));
 
         List<ProposalSuggestionDTO> res = proposalService.getProposalSuggestions();

@@ -38,11 +38,16 @@ public class InteractionService {
     }
 
     @Transactional
-    public void castVote(Long proposalId, String username) {
+    public void castVote(Long proposalDateId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid proposal Id"));
+        ProposalDate proposalDate = proposalRepository.findAll().stream()
+                .flatMap(p -> p.getDates().stream())
+                .filter(pd -> pd.getId().equals(proposalDateId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid proposal date Id"));
+
+        Proposal proposal = proposalDate.getProposal();
 
         if (LocalDateTime.now().isAfter(proposal.getDinnerEvent().getDeadline())) {
             throw new IllegalStateException("Voting is closed");
@@ -52,14 +57,14 @@ public class InteractionService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        Optional<Vote> existingVote = voteRepository.findByUserAndProposal(user, proposal);
+        Optional<Vote> existingVote = voteRepository.findByUserAndProposalDate(user, proposalDate);
 
         if (existingVote.isPresent()) {
             voteRepository.delete(Objects.requireNonNull(existingVote.get()));
         } else {
             Vote vote = Vote.builder()
                     .user(user)
-                    .proposal(proposal)
+                    .proposalDate(proposalDate)
                     .build();
             voteRepository.save(Objects.requireNonNull(vote));
         }
@@ -75,7 +80,7 @@ public class InteractionService {
     }
 
     @Transactional
-    public void selectProposal(Long eventId, Long proposalId, String username) {
+    public void selectProposal(Long eventId, Long proposalDateId, String username) {
         DinnerEvent event = dinnerEventRepository.findById(Objects.requireNonNull(eventId))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
@@ -83,14 +88,19 @@ public class InteractionService {
             throw new IllegalStateException("Only organizer can decide the event");
         }
 
-        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid proposal Id"));
+        ProposalDate proposalDate = proposalRepository.findAll().stream()
+                .flatMap(p -> p.getDates().stream())
+                .filter(pd -> pd.getId().equals(proposalDateId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid proposal date Id"));
+
+        Proposal proposal = proposalDate.getProposal();
 
         if (!proposal.getDinnerEvent().getId().equals(eventId)) {
             throw new IllegalArgumentException("Proposal does not belong to this event");
         }
 
-        event.setSelectedProposal(proposal);
+        event.setSelectedProposalDate(proposalDate);
         event.setStatus(DinnerEvent.EventStatus.DECIDED);
         dinnerEventRepository.save(event);
 
@@ -113,7 +123,8 @@ public class InteractionService {
             throw new IllegalStateException("You can only rate proposals for decided events");
         }
 
-        if (event.getSelectedProposal() == null || !event.getSelectedProposal().getId().equals(proposalId)) {
+        if (event.getSelectedProposalDate() == null
+                || !event.getSelectedProposalDate().getProposal().getId().equals(proposalId)) {
             throw new IllegalArgumentException("You can only rate the selected proposal");
         }
 
@@ -151,7 +162,7 @@ public class InteractionService {
     }
 
     public List<Vote> getUserVotesForEvent(Long eventId, Long userId) {
-        return voteRepository.findByProposal_DinnerEvent_IdAndUser_Id(Objects.requireNonNull(eventId),
+        return voteRepository.findByProposalDate_Proposal_DinnerEvent_IdAndUser_Id(Objects.requireNonNull(eventId),
                 Objects.requireNonNull(userId));
     }
 

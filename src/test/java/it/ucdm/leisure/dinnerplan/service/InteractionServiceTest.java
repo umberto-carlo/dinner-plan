@@ -49,6 +49,8 @@ class InteractionServiceTest {
         event = DinnerEvent.builder().id(1L).deadline(LocalDateTime.now().plusDays(1))
                 .participants(List.of(participant)).organizer(User.builder().username("org").build()).build();
         proposal = Proposal.builder().id(1L).dinnerEvent(event).build();
+        ProposalDate pd = ProposalDate.builder().id(10L).date(LocalDateTime.now()).proposal(proposal).build();
+        proposal.setDates(List.of(pd));
         event.setProposals(new ArrayList<>(List.of(proposal)));
     }
 
@@ -60,17 +62,20 @@ class InteractionServiceTest {
     @Test
     void castVote_Success() {
         when(userRepository.findByUsername("participant")).thenReturn(Optional.of(participant));
-        when(proposalRepository.findById(1L)).thenReturn(Optional.of(proposal));
-        when(voteRepository.findByUserAndProposal(participant, proposal)).thenReturn(Optional.empty());
 
-        interactionService.castVote(1L, "participant");
+        ProposalDate pd = proposal.getDates().get(0);
+
+        when(proposalRepository.findAll()).thenReturn(List.of(proposal));
+        when(voteRepository.findByUserAndProposalDate(participant, pd)).thenReturn(Optional.empty());
+
+        interactionService.castVote(10L, "participant");
         verify(voteRepository).save(any(Vote.class));
     }
 
     @Test
     void rateProposal_Success() {
         event.setStatus(DinnerEvent.EventStatus.DECIDED);
-        event.setSelectedProposal(proposal);
+        event.setSelectedProposalDate(proposal.getDates().get(0));
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(proposalRepository.findById(1L)).thenReturn(Optional.of(proposal));
         when(userRepository.findByUsername("participant")).thenReturn(Optional.of(participant));

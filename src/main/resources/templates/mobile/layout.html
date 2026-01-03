@@ -66,9 +66,9 @@
         <span th:text="#{app.footer}">&copy; 2025 Dinner Plan</span> |
         <a th:href="@{/manual}" style="color: var(--primary-color);" th:text="#{app.manual}">Manuale d'Uso</a>
 
-        <div style="margin-top: 1rem;">
+        <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
             <!-- Theme Switcher -->
-            <div style="margin-bottom: 0.5rem;">
+            <div>
                 <label style="display: inline-block; margin-right: 0.5rem;" th:text="#{app.theme}">Tema:</label>
                 <select id="theme-selector" onchange="switchTheme(this.value)"
                     style="width: auto; padding: 0.25rem; display: inline-block;">
@@ -79,7 +79,7 @@
             </div>
 
             <!-- Language Switcher -->
-            <form action="" method="get" style="display: inline-block;">
+            <form action="" method="get" style="display: inline-block; margin: 0;">
                 <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem; width: auto;">
                     <option value="it" th:selected="${#locale.language == 'it'}">Italiano</option>
                     <option value="en" th:selected="${#locale.language == 'en'}">English</option>

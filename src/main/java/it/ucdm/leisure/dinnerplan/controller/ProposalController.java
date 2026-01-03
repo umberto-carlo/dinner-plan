@@ -25,17 +25,25 @@ public class ProposalController {
 
     @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/events/{id}/add-proposal")
-    public String addProposal(@PathVariable Long id, @RequestParam String dateOption, @RequestParam String location,
+    public String addProposal(@PathVariable Long id, @RequestParam("dateOption") List<String> dateOptions,
+            @RequestParam String location,
             @RequestParam String address, @RequestParam String description,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         try {
-            LocalDateTime dt = LocalDateTime.parse(dateOption);
-            proposalService.addProposal(id, dt, location, address, description);
+            List<LocalDateTime> dts = new ArrayList<>();
+            for (String d : dateOptions) {
+                if (!d.isBlank()) {
+                    dts.add(LocalDateTime.parse(d));
+                }
+            }
+            proposalService.addProposal(id, dts, location, address, description);
+            return "redirect:/events/" + id;
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/events/" + id;
         } catch (Exception e) {
             e.printStackTrace();
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Errore durante l'aggiunta della proposta: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/events/" + id;
         }
     }
@@ -64,7 +72,7 @@ public class ProposalController {
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         try {
             LocalDateTime dt = LocalDateTime.parse(dateOption);
-            proposalService.addProposalFromSuggestion(eventId, dt, location, address, description,
+            proposalService.addProposalFromSuggestion(eventId, List.of(dt), location, address, description,
                     userDetails.getUsername());
             redirectAttributes.addFlashAttribute("successMessage", "Proposta aggiunta all'evento con successo.");
         } catch (IllegalArgumentException e) {

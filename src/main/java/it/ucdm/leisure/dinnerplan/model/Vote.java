@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "votes", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "proposal_id" })
+        @UniqueConstraint(columnNames = { "user_id", "proposal_date_id" })
 })
 public class Vote {
 
@@ -17,16 +17,16 @@ public class Vote {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "proposal_id", nullable = false)
-    private Proposal proposal;
+    @JoinColumn(name = "proposal_date_id", nullable = false)
+    private ProposalDate proposalDate;
 
     public Vote() {
     }
 
-    public Vote(Long id, User user, Proposal proposal) {
+    public Vote(Long id, User user, ProposalDate proposalDate) {
         this.id = id;
         this.user = user;
-        this.proposal = proposal;
+        this.proposalDate = proposalDate;
     }
 
     public static VoteBuilder builder() {
@@ -49,18 +49,18 @@ public class Vote {
         this.user = user;
     }
 
-    public Proposal getProposal() {
-        return proposal;
+    public ProposalDate getProposalDate() {
+        return proposalDate;
     }
 
-    public void setProposal(Proposal proposal) {
-        this.proposal = proposal;
+    public void setProposalDate(ProposalDate proposalDate) {
+        this.proposalDate = proposalDate;
     }
 
     public static class VoteBuilder {
         private Long id;
         private User user;
-        private Proposal proposal;
+        private ProposalDate proposalDate;
 
         public VoteBuilder id(Long id) {
             this.id = id;
@@ -72,13 +72,13 @@ public class Vote {
             return this;
         }
 
-        public VoteBuilder proposal(Proposal proposal) {
-            this.proposal = proposal;
+        public VoteBuilder proposalDate(ProposalDate proposalDate) {
+            this.proposalDate = proposalDate;
             return this;
         }
 
         public Vote build() {
-            return new Vote(id, user, proposal);
+            return new Vote(id, user, proposalDate);
         }
     }
 }

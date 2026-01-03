@@ -1,0 +1,102 @@
+package it.ucdm.leisure.dinnerplan.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "proposal_dates")
+public class ProposalDate {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDateTime date;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proposal_id", nullable = false)
+    private Proposal proposal;
+
+    @OneToMany(mappedBy = "proposalDate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Vote> votes = new HashSet<>();
+
+    public ProposalDate() {
+    }
+
+    public ProposalDate(Long id, LocalDateTime date, Proposal proposal, Set<Vote> votes) {
+        this.id = id;
+        this.date = date;
+        this.proposal = proposal;
+        this.votes = votes != null ? votes : new HashSet<>();
+    }
+
+    public static ProposalDateBuilder builder() {
+        return new ProposalDateBuilder();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
+    }
+
+    public Proposal getProposal() {
+        return proposal;
+    }
+
+    public void setProposal(Proposal proposal) {
+        this.proposal = proposal;
+    }
+
+    public Set<Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(Set<Vote> votes) {
+        this.votes = votes;
+    }
+
+    public static class ProposalDateBuilder {
+        private Long id;
+        private LocalDateTime date;
+        private Proposal proposal;
+        private Set<Vote> votes = new HashSet<>();
+
+        public ProposalDateBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public ProposalDateBuilder date(LocalDateTime date) {
+            this.date = date;
+            return this;
+        }
+
+        public ProposalDateBuilder proposal(Proposal proposal) {
+            this.proposal = proposal;
+            return this;
+        }
+
+        public ProposalDateBuilder votes(Set<Vote> votes) {
+            this.votes = votes;
+            return this;
+        }
+
+        public ProposalDate build() {
+            return new ProposalDate(id, date, proposal, votes);
+        }
+    }
+}

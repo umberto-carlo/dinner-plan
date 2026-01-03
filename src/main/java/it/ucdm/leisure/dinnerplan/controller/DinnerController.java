@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -103,10 +104,17 @@ public class DinnerController {
     @PostMapping("/events/create")
     public String createEvent(@RequestParam String title, @RequestParam String description,
             @RequestParam String deadline, @RequestParam(required = false) List<Long> participantIds,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        LocalDateTime dt = LocalDateTime.parse(deadline);
-        dinnerEventService.createEvent(title, description, dt, userDetails.getUsername(), participantIds);
-        return "redirect:/";
+            @AuthenticationPrincipal UserDetails userDetails,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            LocalDateTime dt = LocalDateTime.parse(deadline);
+            DinnerEvent event = dinnerEventService.createEvent(title, description, dt, userDetails.getUsername(),
+                    participantIds);
+            return "redirect:/events/" + event.getId();
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/events/create";
+        }
     }
 
     @PostMapping("/events/{id}/update-participants")
@@ -154,9 +162,10 @@ public class DinnerController {
         model.addAttribute("recentProposals", proposalService.getProposalSuggestions());
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
-                .reversed()
-                .thenComparing(Proposal::getDateOption));
+        sortedProposals.sort(
+                Comparator.comparingInt(
+                        (Proposal p) -> p.getDates().stream().mapToInt(d -> d.getVotes().size()).max().orElse(0))
+                        .reversed());
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");
@@ -165,11 +174,12 @@ public class DinnerController {
         }
 
         var votes = interactionService.getUserVotesForEvent(id, user.getId());
-        var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
-        model.addAttribute("votedProposalIds", votedProposalIds);
+        var votedProposalDateIds = votes.stream().map(v -> v.getProposalDate().getId()).toList();
+        model.addAttribute("votedProposalDateIds", votedProposalDateIds);
 
-        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
-            interactionService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null) {
+            interactionService
+                    .getUserRatingForProposal(event.getSelectedProposalDate().getProposal().getId(), user.getId())
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
@@ -229,21 +239,23 @@ public class DinnerController {
             return "redirect:/";
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        sortedProposals.sort(Comparator.comparingInt((Proposal p) -> p.getVotes().size())
-                .reversed()
-                .thenComparing(Proposal::getDateOption));
+        sortedProposals.sort(
+                Comparator.comparingInt(
+                        (Proposal p) -> p.getDates().stream().mapToInt(d -> d.getVotes().size()).max().orElse(0))
+                        .reversed());
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");
         if (user != null) {
             var votes = interactionService.getUserVotesForEvent(id, user.getId());
-            var votedProposalIds = votes.stream().map(v -> v.getProposal().getId()).toList();
-            model.addAttribute("votedProposalIds", votedProposalIds);
+            var votedProposalDateIds = votes.stream().map(v -> v.getProposalDate().getId()).toList();
+            model.addAttribute("votedProposalDateIds", votedProposalDateIds);
         }
 
-        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null
                 && user != null) {
-            interactionService.getUserRatingForProposal(event.getSelectedProposal().getId(), user.getId())
+            interactionService
+                    .getUserRatingForProposal(event.getSelectedProposalDate().getProposal().getId(), user.getId())
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
@@ -354,7 +366,8 @@ public class DinnerController {
         if (request.getProposals() != null) {
             for (var p : request.getProposals()) {
                 if (p.getDateOption() != null && !p.getDateOption().isEmpty()) {
-                    proposalService.addProposal(event.getId(), LocalDateTime.parse(p.getDateOption()), p.getLocation(),
+                    proposalService.addProposal(event.getId(), List.of(LocalDateTime.parse(p.getDateOption())),
+                            p.getLocation(),
                             p.getAddress(), p.getDescription());
                 }
             }
@@ -384,21 +397,50 @@ public class DinnerController {
             // Add Deadline
             calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
                     event.getId(),
-                    "Deadline: " + event.getTitle(),
+                    "Deadline: " + event.getTitle() + " ("
+                            + event.getDeadline().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) + ")",
                     event.getDeadline(),
                     "DEADLINE",
                     "Scadenza votazioni per " + event.getTitle()));
 
             // Add Actual Event Date if decided
-            if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposal() != null) {
+            if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null) {
                 calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
                         event.getId(),
-                        "Cena: " + event.getTitle(),
-                        event.getSelectedProposal().getDateOption(),
+                        "Cena: " + event.getTitle() + " ("
+                                + event.getSelectedProposalDate().getDate()
+                                        .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+                                + ")",
+                        event.getSelectedProposalDate().getDate(),
                         "EVENT",
-                        "Cena presso " + event.getSelectedProposal().getLocation()));
+                        "Cena presso " + event.getSelectedProposalDate().getProposal().getLocation()));
             }
         }
         return calendarEvents;
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/proposals/{proposalId}/dates/{dateId}/delete")
+    public String deleteProposalDate(@PathVariable Long proposalId, @PathVariable Long dateId,
+            @RequestParam Long eventId, @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+        try {
+            proposalService.deleteProposalDate(proposalId, dateId, userDetails.getUsername());
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/events/" + eventId;
+    }
+
+    @PostMapping("/events/{eventId}/proposals/{proposalId}/rate")
+    public String rateProposal(@PathVariable Long eventId, @PathVariable Long proposalId,
+            @RequestParam boolean isLiked, @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+        try {
+            interactionService.rateProposal(eventId, proposalId, userDetails.getUsername(), isLiked);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/events/" + eventId;
     }
 }

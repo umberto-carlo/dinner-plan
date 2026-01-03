@@ -28,8 +28,8 @@ public class DinnerEvent {
     private LocalDateTime deadline;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "selected_proposal_id")
-    private Proposal selectedProposal;
+    @JoinColumn(name = "selected_proposal_date_id")
+    private ProposalDate selectedProposalDate;
 
     @ManyToMany
     @JoinTable(name = "event_participants", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
@@ -51,7 +51,7 @@ public class DinnerEvent {
     }
 
     public DinnerEvent(Long id, String title, String description, User organizer, List<Proposal> proposals,
-            LocalDateTime deadline, Proposal selectedProposal, List<User> participants,
+            LocalDateTime deadline, ProposalDate selectedProposalDate, List<User> participants,
             List<DinnerEventMessage> messages, EventStatus status) {
         this.id = id;
         this.title = title;
@@ -59,7 +59,7 @@ public class DinnerEvent {
         this.organizer = organizer;
         this.proposals = proposals != null ? proposals : new ArrayList<>();
         this.deadline = deadline;
-        this.selectedProposal = selectedProposal;
+        this.selectedProposalDate = selectedProposalDate;
         this.participants = participants != null ? participants : new ArrayList<>();
         this.messages = messages != null ? messages : new ArrayList<>();
         this.status = status;
@@ -117,12 +117,12 @@ public class DinnerEvent {
         this.deadline = deadline;
     }
 
-    public Proposal getSelectedProposal() {
-        return selectedProposal;
+    public ProposalDate getSelectedProposalDate() {
+        return selectedProposalDate;
     }
 
-    public void setSelectedProposal(Proposal selectedProposal) {
-        this.selectedProposal = selectedProposal;
+    public void setSelectedProposalDate(ProposalDate selectedProposalDate) {
+        this.selectedProposalDate = selectedProposalDate;
     }
 
     public List<User> getParticipants() {
@@ -156,7 +156,7 @@ public class DinnerEvent {
         private User organizer;
         private List<Proposal> proposals = new ArrayList<>();
         private LocalDateTime deadline;
-        private Proposal selectedProposal;
+        private ProposalDate selectedProposalDate;
         private List<User> participants = new ArrayList<>();
         private List<DinnerEventMessage> messages = new ArrayList<>();
         private EventStatus status;
@@ -191,8 +191,8 @@ public class DinnerEvent {
             return this;
         }
 
-        public DinnerEventBuilder selectedProposal(Proposal selectedProposal) {
-            this.selectedProposal = selectedProposal;
+        public DinnerEventBuilder selectedProposalDate(ProposalDate selectedProposalDate) {
+            this.selectedProposalDate = selectedProposalDate;
             return this;
         }
 
@@ -212,7 +212,7 @@ public class DinnerEvent {
         }
 
         public DinnerEvent build() {
-            return new DinnerEvent(id, title, description, organizer, proposals, deadline, selectedProposal,
+            return new DinnerEvent(id, title, description, organizer, proposals, deadline, selectedProposalDate,
                     participants, messages, status);
         }
     }

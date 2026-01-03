@@ -33,7 +33,7 @@ public class ProposalService {
     }
 
     @Transactional
-    public void addProposal(Long eventId, LocalDateTime dateOption, String location, String address,
+    public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
             String description) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
@@ -43,15 +43,45 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        Proposal proposal = Proposal.builder()
-                .dinnerEvent(event)
-                .dateOption(dateOption)
-                .location(location)
-                .address(address)
-                .description(description)
-                .build();
+        Proposal proposal = event.getProposals().stream()
+                .filter(p -> p.getLocation().equalsIgnoreCase(location))
+                .findFirst()
+                .orElse(null);
 
-        event.getProposals().add(proposal);
+        if (proposal == null) {
+            proposal = Proposal.builder()
+                    .dinnerEvent(event)
+                    .location(location)
+                    .address(address)
+                    .description(description)
+                    .dates(new ArrayList<>())
+                    .build();
+            event.getProposals().add(proposal);
+        }
+
+        if (dateOptions != null) {
+            for (LocalDateTime d : dateOptions) {
+                if (d.isBefore(LocalDateTime.now())) {
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+                            .ofPattern("dd/MM/yyyy HH:mm");
+                    throw new IllegalArgumentException(
+                            "Le date delle proposte devono essere future (inserito: " + d.format(formatter) + ")");
+                }
+                if (d.isBefore(event.getDeadline())) {
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter
+                            .ofPattern("dd/MM/yyyy HH:mm");
+                    throw new IllegalArgumentException(
+                            "Impossibile aggiungere una data precedente alla scadenza dell'evento ("
+                                    + event.getDeadline().format(formatter) + ")");
+                }
+                boolean exists = proposal.getDates().stream()
+                        .anyMatch(existing -> existing.getDate().isEqual(d));
+                if (!exists) {
+                    proposal.getDates().add(ProposalDate.builder().date(d).proposal(proposal).build());
+                }
+            }
+        }
+
         dinnerEventRepository.save(event);
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
@@ -64,7 +94,8 @@ public class ProposalService {
     }
 
     @Transactional
-    public void addProposalFromSuggestion(Long eventId, LocalDateTime dateOption, String location, String address,
+    public void addProposalFromSuggestion(Long eventId, List<LocalDateTime> dateOptions, String location,
+            String address,
             String description, String username) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
@@ -78,14 +109,7 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        boolean exists = event.getProposals().stream()
-                .anyMatch(p -> p.getLocation().equalsIgnoreCase(location));
-
-        if (exists) {
-            throw new IllegalArgumentException("Questa proposta è già presente nell'evento specificato.");
-        }
-
-        addProposal(eventId, dateOption, location, address, description);
+        addProposal(eventId, dateOptions, location, address, description);
     }
 
     @Transactional
@@ -115,13 +139,8 @@ public class ProposalService {
                 String json = new String(java.util.Base64.getDecoder().decode(encoded));
                 ProposalSuggestionDTO dto = mapper.readValue(json, ProposalSuggestionDTO.class);
 
-                boolean exists = event.getProposals().stream()
-                        .anyMatch(p -> p.getLocation().equalsIgnoreCase(dto.getLocation()));
-
-                if (!exists) {
-                    addProposal(eventId, date, dto.getLocation(), dto.getAddress(), dto.getDescription());
-                    addedCount++;
-                }
+                addProposal(eventId, List.of(date), dto.getLocation(), dto.getAddress(), dto.getDescription());
+                addedCount++;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -133,7 +152,7 @@ public class ProposalService {
     public void addGlobalProposal(String location, String address, String description) {
         Proposal proposal = Proposal.builder()
                 .dinnerEvent(null)
-                .dateOption(null)
+                .dates(new ArrayList<>())
                 .location(location)
                 .address(address)
                 .description(description)
@@ -201,5 +220,24 @@ public class ProposalService {
             return Integer.compare(b.getUsageCount(), a.getUsageCount());
         });
         return suggestions;
+    }
+
+    @Transactional
+    public void deleteProposalDate(Long proposalId, Long dateId, String username) {
+        Proposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new IllegalArgumentException("Proposal not found"));
+
+        if (proposal.getDates().size() <= 1) {
+            throw new IllegalStateException(
+                    "Cannot remove the last date. Only proposals with multiple dates can have dates removed.");
+        }
+
+        ProposalDate dateToRemove = proposal.getDates().stream()
+                .filter(d -> d.getId().equals(dateId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Date not found in proposal"));
+
+        proposal.getDates().remove(dateToRemove);
+        proposalRepository.save(proposal);
     }
 }
