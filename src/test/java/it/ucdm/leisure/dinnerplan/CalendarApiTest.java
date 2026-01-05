@@ -2,19 +2,17 @@ package it.ucdm.leisure.dinnerplan;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import it.ucdm.leisure.dinnerplan.controller.DinnerController;
 import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
-import it.ucdm.leisure.dinnerplan.model.Proposal;
 import it.ucdm.leisure.dinnerplan.model.User;
 import it.ucdm.leisure.dinnerplan.model.Role;
 import it.ucdm.leisure.dinnerplan.service.DinnerEventService;
@@ -35,23 +33,24 @@ public class CalendarApiTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private DinnerEventService dinnerEventService;
 
-    @MockBean
+    @MockitoBean
     private ProposalService proposalService;
 
-    @MockBean
+    @MockitoBean
     private InteractionService interactionService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private UserAgentUtils userAgentUtils;
 
     @Test
     @WithMockUser(username = "testuser")
+    @SuppressWarnings("null")
     public void testGetCalendarEvents() throws Exception {
         User user = new User();
         user.setUsername("testuser");

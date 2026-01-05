@@ -22,7 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
+
 import java.util.List;
 import it.ucdm.leisure.dinnerplan.model.Proposal;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
@@ -159,13 +159,39 @@ public class DinnerController {
         if (event == null)
             return false;
 
-        model.addAttribute("recentProposals", proposalService.getProposalSuggestions());
+        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> allSuggestions = proposalService
+                .getProposalSuggestions();
+        java.util.Set<String> existingKeys = event.getProposals().stream()
+                .map(p -> (p.getLocation() + "|" + (p.getAddress() != null ? p.getAddress() : "")).toLowerCase())
+                .collect(java.util.stream.Collectors.toSet());
+
+        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> filteredSuggestions = allSuggestions.stream()
+                .filter(dto -> {
+                    String key = (dto.getLocation() + "|" + (dto.getAddress() != null ? dto.getAddress() : ""))
+                            .toLowerCase();
+                    return !existingKeys.contains(key);
+                })
+                .toList();
+
+        model.addAttribute("recentProposals", filteredSuggestions);
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        sortedProposals.sort(
-                Comparator.comparingInt(
-                        (Proposal p) -> p.getDates().stream().mapToInt(d -> d.getVotes().size()).max().orElse(0))
-                        .reversed());
+        Long selectedProposalId = event.getSelectedProposalDate() != null
+                ? event.getSelectedProposalDate().getProposal().getId()
+                : -1L;
+        sortedProposals.sort((p1, p2) -> {
+            if (p1.getId().equals(selectedProposalId))
+                return -1;
+            if (p2.getId().equals(selectedProposalId))
+                return 1;
+            int v1 = p1.getDates().stream()
+                    .filter(d -> d.getDinnerEvent().getId().equals(id))
+                    .mapToInt(d -> d.getVotes().size()).max().orElse(0);
+            int v2 = p2.getDates().stream()
+                    .filter(d -> d.getDinnerEvent().getId().equals(id))
+                    .mapToInt(d -> d.getVotes().size()).max().orElse(0);
+            return Integer.compare(v2, v1);
+        });
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");
@@ -239,10 +265,22 @@ public class DinnerController {
             return "redirect:/";
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        sortedProposals.sort(
-                Comparator.comparingInt(
-                        (Proposal p) -> p.getDates().stream().mapToInt(d -> d.getVotes().size()).max().orElse(0))
-                        .reversed());
+        Long selectedProposalId = event.getSelectedProposalDate() != null
+                ? event.getSelectedProposalDate().getProposal().getId()
+                : -1L;
+        sortedProposals.sort((p1, p2) -> {
+            if (p1.getId().equals(selectedProposalId))
+                return -1;
+            if (p2.getId().equals(selectedProposalId))
+                return 1;
+            int v1 = p1.getDates().stream()
+                    .filter(d -> d.getDinnerEvent().getId().equals(id))
+                    .mapToInt(d -> d.getVotes().size()).max().orElse(0);
+            int v2 = p2.getDates().stream()
+                    .filter(d -> d.getDinnerEvent().getId().equals(id))
+                    .mapToInt(d -> d.getVotes().size()).max().orElse(0);
+            return Integer.compare(v2, v1);
+        });
         model.addAttribute("sortedProposals", sortedProposals);
 
         User user = (User) model.getAttribute("currentUser");

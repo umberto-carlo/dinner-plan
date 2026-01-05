@@ -8,8 +8,9 @@ import java.util.List;
 
 @Repository
 public interface ProposalRepository extends JpaRepository<Proposal, Long> {
-    List<Proposal> findTop50ByOrderByDinnerEvent_DeadlineDesc();
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "dates" })
-    List<Proposal> findAllByDinnerEventId(Long eventId);
+    List<Proposal> findAllByDinnerEventsId(Long eventId);
+
+    java.util.Optional<Proposal> findByLocationIgnoreCaseAndAddressIgnoreCase(String location, String address);
 }

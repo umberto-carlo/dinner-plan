@@ -22,7 +22,8 @@ public class DinnerEvent {
     @JoinColumn(name = "organizer_id", nullable = false)
     private User organizer;
 
-    @OneToMany(mappedBy = "dinnerEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "event_proposals", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "proposal_id"))
     private List<Proposal> proposals = new ArrayList<>();
 
     private LocalDateTime deadline;

@@ -1,7 +1,6 @@
 package it.ucdm.leisure.dinnerplan.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,9 +14,8 @@ public class Proposal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dinner_event_id", nullable = true)
-    private DinnerEvent dinnerEvent;
+    @ManyToMany(mappedBy = "proposals")
+    private List<DinnerEvent> dinnerEvents = new ArrayList<>();
 
     private String location;
 
@@ -34,10 +32,10 @@ public class Proposal {
     public Proposal() {
     }
 
-    public Proposal(Long id, DinnerEvent dinnerEvent, String location, String address,
+    public Proposal(Long id, List<DinnerEvent> dinnerEvents, String location, String address,
             String description, List<ProposalDate> dates, Set<ProposalRating> ratings) {
         this.id = id;
-        this.dinnerEvent = dinnerEvent;
+        this.dinnerEvents = dinnerEvents != null ? dinnerEvents : new ArrayList<>();
         this.location = location;
         this.address = address;
         this.description = description;
@@ -57,12 +55,12 @@ public class Proposal {
         this.id = id;
     }
 
-    public DinnerEvent getDinnerEvent() {
-        return dinnerEvent;
+    public List<DinnerEvent> getDinnerEvents() {
+        return dinnerEvents;
     }
 
-    public void setDinnerEvent(DinnerEvent dinnerEvent) {
-        this.dinnerEvent = dinnerEvent;
+    public void setDinnerEvents(List<DinnerEvent> dinnerEvents) {
+        this.dinnerEvents = dinnerEvents;
     }
 
     public List<ProposalDate> getDates() {
@@ -111,7 +109,7 @@ public class Proposal {
 
     public static class ProposalBuilder {
         private Long id;
-        private DinnerEvent dinnerEvent;
+        private List<DinnerEvent> dinnerEvents = new ArrayList<>();
         private String location;
         private String address;
         private String description;
@@ -123,8 +121,8 @@ public class Proposal {
             return this;
         }
 
-        public ProposalBuilder dinnerEvent(DinnerEvent dinnerEvent) {
-            this.dinnerEvent = dinnerEvent;
+        public ProposalBuilder dinnerEvents(List<DinnerEvent> dinnerEvents) {
+            this.dinnerEvents = dinnerEvents;
             return this;
         }
 
@@ -154,7 +152,7 @@ public class Proposal {
         }
 
         public Proposal build() {
-            return new Proposal(id, dinnerEvent, location, address, description, dates, ratings);
+            return new Proposal(id, dinnerEvents, location, address, description, dates, ratings);
         }
     }
 }

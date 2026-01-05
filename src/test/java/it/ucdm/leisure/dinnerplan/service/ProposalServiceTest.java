@@ -48,16 +48,37 @@ class ProposalServiceTest {
     }
 
     @Test
-    void addProposal_Success() {
+    void addProposal_NewProposal_Success() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+
         proposalService.addProposal(1L, List.of(LocalDateTime.now()), "Loc", "Addr", "Desc");
         assertEquals(1, event.getProposals().size());
         verify(dinnerEventRepository).save(event);
     }
 
     @Test
+    void addProposal_ExistingProposal_Reuse() {
+        when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        Proposal existing = Proposal.builder().id(99L).dinnerEvents(new ArrayList<>()).location("Loc").address("Addr")
+                .build();
+        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase("Loc", "Addr"))
+                .thenReturn(Optional.of(existing));
+
+        proposalService.addProposal(1L, List.of(LocalDateTime.now()), "Loc", "Addr", "Desc");
+
+        assertEquals(1, event.getProposals().size());
+        assertEquals(99L, event.getProposals().get(0).getId());
+        assertTrue(existing.getDinnerEvents().contains(event));
+        verify(dinnerEventRepository).save(event);
+    }
+
+    @Test
     void addBatchProposals_Success() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
+                .thenReturn(Optional.empty());
         String json = "{\"location\":\"Loc1\",\"address\":\"Addr1\",\"description\":\"Desc1\"}";
         String encoded = Base64.getEncoder().encodeToString(json.getBytes());
 

@@ -39,6 +39,7 @@ public class UserController {
     }
 
     @PostMapping("/profile/change-password")
+    @SuppressWarnings("null")
     public String changePassword(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String newPassword,
             Model model,
             @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent,

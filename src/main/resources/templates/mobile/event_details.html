@@ -262,7 +262,7 @@
                             </form>
                         </div>
 
-                        <div th:each="pDate : ${proposal.dates}"
+                        <div th:each="pDate : ${proposal.dates}" th:if="${pDate.dinnerEvent.id == event.id}"
                             style="margin-bottom: 0.25rem; background: var(--bg-secondary); border-radius: 4px; padding: 0.35rem;"
                             th:styleappend="${#lists.contains(votedProposalDateIds, pDate.id)} ? 'border: 2px solid #28a745; background-color: rgba(40, 167, 69, 0.05);' : 'border: 1px solid var(--border);'">
                             <div style="display: flex; justify-content: space-between; align-items: center;">

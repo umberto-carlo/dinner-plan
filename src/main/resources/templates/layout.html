@@ -32,6 +32,8 @@
                         th:text="#{app.profile}">Profilo</a>
                     <a sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')" th:href="@{/admin/users}"
                         style="margin-right: 0.5rem; font-weight: 500;" th:text="#{app.users}">Utenti</a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}"
+                        style="margin-right: 0.5rem; font-weight: 500;">Admin</a>
 
                     <form th:action="@{/logout}" method="post" style="display:inline;">
                         <button type="submit" class="btn btn-secondary" th:text="#{app.logout}">Esci</button>

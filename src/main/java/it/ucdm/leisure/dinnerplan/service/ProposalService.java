@@ -29,7 +29,7 @@ public class ProposalService {
     }
 
     public List<Proposal> getProposalsForEvent(Long eventId) {
-        return proposalRepository.findAllByDinnerEventId(eventId);
+        return proposalRepository.findAllByDinnerEventsId(eventId);
     }
 
     @Transactional
@@ -43,20 +43,35 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        Proposal proposal = event.getProposals().stream()
-                .filter(p -> p.getLocation().equalsIgnoreCase(location))
-                .findFirst()
+        // Check if proposal already exists in DB (Global Uniqueness)
+        Proposal proposal = proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address)
                 .orElse(null);
 
         if (proposal == null) {
             proposal = Proposal.builder()
-                    .dinnerEvent(event)
+                    .dinnerEvents(new ArrayList<>(List.of(event)))
                     .location(location)
                     .address(address)
                     .description(description)
                     .dates(new ArrayList<>())
                     .build();
             event.getProposals().add(proposal);
+        } else {
+            // Found existing global proposal. Check if it's already linked to this event.
+            // If the proposal is not associated with the event, we associate them.
+            if (!proposal.getDinnerEvents().contains(event)) {
+                proposal.getDinnerEvents().add(event);
+                event.getProposals().add(proposal);
+            }
+            // Also, update description if the new one is provided and significant?
+            // Requirement says "transparently use existing". Usually implies keeping
+            // existing data or merging.
+            // We'll keep existing description to avoid overriding with potentially less
+            // info, or update if empty.
+            if ((proposal.getDescription() == null || proposal.getDescription().isBlank()) && description != null
+                    && !description.isBlank()) {
+                proposal.setDescription(description);
+            }
         }
 
         if (dateOptions != null) {
@@ -75,9 +90,10 @@ public class ProposalService {
                                     + event.getDeadline().format(formatter) + ")");
                 }
                 boolean exists = proposal.getDates().stream()
-                        .anyMatch(existing -> existing.getDate().isEqual(d));
+                        .anyMatch(existing -> existing.getDate().isEqual(d) && existing.getDinnerEvent().equals(event));
                 if (!exists) {
-                    proposal.getDates().add(ProposalDate.builder().date(d).proposal(proposal).build());
+                    proposal.getDates()
+                            .add(ProposalDate.builder().date(d).proposal(proposal).dinnerEvent(event).build());
                 }
             }
         }
@@ -150,8 +166,13 @@ public class ProposalService {
 
     @Transactional
     public void addGlobalProposal(String location, String address, String description) {
+        // Check if exists
+        if (proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address).isPresent()) {
+            return; // Already exists, do nothing or maybe update? Requirement implies reusing.
+        }
+
         Proposal proposal = Proposal.builder()
-                .dinnerEvent(null)
+                .dinnerEvents(new ArrayList<>())
                 .dates(new ArrayList<>())
                 .location(location)
                 .address(address)
@@ -169,6 +190,7 @@ public class ProposalService {
                 });
     }
 
+    @Transactional(readOnly = true)
     public List<ProposalSuggestionDTO> getProposalSuggestions() {
         List<Proposal> allProposals = proposalRepository.findAll();
         List<ProposalSuggestionDTO> suggestions = new ArrayList<>();
@@ -185,7 +207,8 @@ public class ProposalService {
                     .usageCount(0)
                     .build());
 
-            dto.setUsageCount(dto.getUsageCount() + 1);
+            int eventCount = (p.getDinnerEvents() != null) ? p.getDinnerEvents().size() : 0;
+            dto.setUsageCount(dto.getUsageCount() + eventCount);
 
             if (p.getRatings() != null) {
                 for (ProposalRating r : p.getRatings()) {
@@ -224,7 +247,7 @@ public class ProposalService {
 
     @Transactional
     public void deleteProposalDate(Long proposalId, Long dateId, String username) {
-        Proposal proposal = proposalRepository.findById(proposalId)
+        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
                 .orElseThrow(() -> new IllegalArgumentException("Proposal not found"));
 
         if (proposal.getDates().size() <= 1) {

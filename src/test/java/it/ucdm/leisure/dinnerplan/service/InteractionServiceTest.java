@@ -48,8 +48,9 @@ class InteractionServiceTest {
         participant = User.builder().id(2L).username("participant").role(Role.PARTICIPANT).build();
         event = DinnerEvent.builder().id(1L).deadline(LocalDateTime.now().plusDays(1))
                 .participants(List.of(participant)).organizer(User.builder().username("org").build()).build();
-        proposal = Proposal.builder().id(1L).dinnerEvent(event).build();
-        ProposalDate pd = ProposalDate.builder().id(10L).date(LocalDateTime.now()).proposal(proposal).build();
+        proposal = Proposal.builder().id(1L).dinnerEvents(new ArrayList<>(List.of(event))).build();
+        ProposalDate pd = ProposalDate.builder().id(10L).date(LocalDateTime.now()).proposal(proposal).dinnerEvent(event)
+                .build();
         proposal.setDates(List.of(pd));
         event.setProposals(new ArrayList<>(List.of(proposal)));
     }
