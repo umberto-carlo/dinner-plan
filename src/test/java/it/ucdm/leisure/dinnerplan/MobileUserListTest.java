@@ -3,12 +3,12 @@ package it.ucdm.leisure.dinnerplan;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import it.ucdm.leisure.dinnerplan.controller.UserController;
 import it.ucdm.leisure.dinnerplan.service.UserService;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
@@ -16,7 +16,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.mockito.ArgumentMatchers.anyString;
 
-@WebMvcTest(UserController.class)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
 public class MobileUserListTest {
 
     @Autowired

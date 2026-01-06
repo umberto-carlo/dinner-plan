@@ -19,7 +19,7 @@ public class ProposalService {
     private final ProposalRepository proposalRepository;
     private final DinnerEventRepository dinnerEventRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private final tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
     public ProposalService(ProposalRepository proposalRepository, DinnerEventRepository dinnerEventRepository,
             SimpMessagingTemplate messagingTemplate) {
@@ -162,6 +162,7 @@ public class ProposalService {
             }
         }
         return addedCount;
+
     }
 
     @Transactional

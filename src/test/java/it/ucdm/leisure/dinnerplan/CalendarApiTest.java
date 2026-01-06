@@ -6,12 +6,12 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import it.ucdm.leisure.dinnerplan.controller.DinnerController;
 import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
 import it.ucdm.leisure.dinnerplan.model.User;
 import it.ucdm.leisure.dinnerplan.model.Role;
@@ -27,7 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-@WebMvcTest(DinnerController.class)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
 public class CalendarApiTest {
 
     @Autowired

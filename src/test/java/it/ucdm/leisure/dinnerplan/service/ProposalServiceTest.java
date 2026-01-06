@@ -39,6 +39,7 @@ class ProposalServiceTest {
 
         organizer = User.builder().id(1L).username("organizer").role(Role.ORGANIZER).build();
         event = DinnerEvent.builder().id(1L).organizer(organizer).status(DinnerEvent.EventStatus.OPEN)
+                .deadline(LocalDateTime.now())
                 .proposals(new ArrayList<>()).build();
     }
 
@@ -53,7 +54,7 @@ class ProposalServiceTest {
         when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
                 .thenReturn(Optional.empty());
 
-        proposalService.addProposal(1L, List.of(LocalDateTime.now()), "Loc", "Addr", "Desc");
+        proposalService.addProposal(1L, List.of(LocalDateTime.now().plusDays(1)), "Loc", "Addr", "Desc");
         assertEquals(1, event.getProposals().size());
         verify(dinnerEventRepository).save(event);
     }
@@ -66,7 +67,7 @@ class ProposalServiceTest {
         when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase("Loc", "Addr"))
                 .thenReturn(Optional.of(existing));
 
-        proposalService.addProposal(1L, List.of(LocalDateTime.now()), "Loc", "Addr", "Desc");
+        proposalService.addProposal(1L, List.of(LocalDateTime.now().plusDays(1)), "Loc", "Addr", "Desc");
 
         assertEquals(1, event.getProposals().size());
         assertEquals(99L, event.getProposals().get(0).getId());
@@ -79,10 +80,11 @@ class ProposalServiceTest {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
         when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
                 .thenReturn(Optional.empty());
-        String json = "{\"location\":\"Loc1\",\"address\":\"Addr1\",\"description\":\"Desc1\"}";
+        String json = "{\"location\":\"Loc1\",\"address\":\"Addr1\",\"description\":\"Desc1\",\"totalLikes\":0,\"totalDislikes\":0,\"usageCount\":0}";
         String encoded = Base64.getEncoder().encodeToString(json.getBytes());
 
-        int count = proposalService.addBatchProposalsFromSuggestion(1L, List.of(LocalDateTime.now()), List.of(encoded),
+        int count = proposalService.addBatchProposalsFromSuggestion(1L, List.of(LocalDateTime.now().plusDays(1)),
+                List.of(encoded),
                 "organizer");
         assertEquals(1, count);
     }

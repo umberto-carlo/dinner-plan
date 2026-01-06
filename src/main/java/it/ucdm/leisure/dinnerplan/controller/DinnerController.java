@@ -331,7 +331,7 @@ public class DinnerController {
         }
 
         List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> proposals = new ArrayList<>();
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
         for (String encoded : selectedProposals) {
             try {

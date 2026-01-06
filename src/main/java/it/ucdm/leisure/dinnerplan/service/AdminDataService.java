@@ -1,8 +1,8 @@
 package it.ucdm.leisure.dinnerplan.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import it.ucdm.leisure.dinnerplan.dto.backup.*;
 import it.ucdm.leisure.dinnerplan.model.*;
 import it.ucdm.leisure.dinnerplan.repository.*;
@@ -44,9 +44,9 @@ public class AdminDataService {
         this.proposalRatingRepository = proposalRatingRepository;
         this.voteRepository = voteRepository;
         this.messageRepository = messageRepository;
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+        this.objectMapper = JsonMapper.builder()
+                .disable(tools.jackson.core.StreamWriteFeature.AUTO_CLOSE_TARGET)
+                .build();
     }
 
     @Transactional(readOnly = true)

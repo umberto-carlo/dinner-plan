@@ -108,7 +108,8 @@ class DinnerEventServiceTest {
         when(userRepository.findByUsername("organizer")).thenReturn(Optional.of(organizer));
         when(dinnerEventRepository.save(any(DinnerEvent.class))).thenAnswer(i -> i.getArguments()[0]);
 
-        DinnerEvent result = dinnerEventService.createEvent("Title", "Desc", LocalDateTime.now(), "organizer", null);
+        DinnerEvent result = dinnerEventService.createEvent("Title", "Desc", LocalDateTime.now().plusDays(1),
+                "organizer", null);
 
         assertNotNull(result);
         assertEquals("Title", result.getTitle());
