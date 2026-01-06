@@ -226,16 +226,6 @@ public class ProposalService {
             map.put(key, dto);
         }
 
-        for (ProposalSuggestionDTO dto : map.values()) {
-            try {
-                String json = mapper.writeValueAsString(dto);
-                String encoded = java.util.Base64.getEncoder().encodeToString(json.getBytes());
-                dto.setEncodedData(encoded);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
         suggestions.addAll(map.values());
         suggestions.sort((a, b) -> {
             int likeCompare = Long.compare(b.getTotalLikes(), a.getTotalLikes());

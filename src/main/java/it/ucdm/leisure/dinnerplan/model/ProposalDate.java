@@ -7,6 +7,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "proposal_dates")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ProposalDate {
 
     @Id
@@ -16,10 +17,12 @@ public class ProposalDate {
     @Column(nullable = false)
     private LocalDateTime date;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proposal_id", nullable = false)
     private Proposal proposal;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dinner_event_id", nullable = false)
     private DinnerEvent dinnerEvent;
@@ -58,6 +61,7 @@ public class ProposalDate {
         this.date = date;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Proposal getProposal() {
         return proposal;
     }
@@ -66,6 +70,7 @@ public class ProposalDate {
         this.proposal = proposal;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public DinnerEvent getDinnerEvent() {
         return dinnerEvent;
     }

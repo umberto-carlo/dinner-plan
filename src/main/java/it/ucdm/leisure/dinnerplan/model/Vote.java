@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 @Table(name = "votes", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "user_id", "proposal_date_id" })
 })
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Vote {
 
     @Id
@@ -16,6 +17,7 @@ public class Vote {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proposal_date_id", nullable = false)
     private ProposalDate proposalDate;
@@ -49,6 +51,7 @@ public class Vote {
         this.user = user;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public ProposalDate getProposalDate() {
         return proposalDate;
     }

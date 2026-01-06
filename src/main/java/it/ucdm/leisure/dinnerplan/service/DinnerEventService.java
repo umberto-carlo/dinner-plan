@@ -46,7 +46,8 @@ public class DinnerEventService {
 
     public DinnerEvent getEventById(Long id) {
         return dinnerEventRepository.findById(Objects.requireNonNull(id, "ID must not be null"))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + id));
+                .orElseThrow(() -> new it.ucdm.leisure.dinnerplan.exception.ResourceNotFoundException(
+                        "Invalid event Id:" + id));
     }
 
     @Transactional

@@ -11,25 +11,14 @@ public class ProposalSuggestionDTO {
     public ProposalSuggestionDTO() {
     }
 
-    private String encodedData;
-
     public ProposalSuggestionDTO(String location, String address, String description, long totalLikes,
-            long totalDislikes, int usageCount, String encodedData) {
+            long totalDislikes, int usageCount) {
         this.location = location;
         this.address = address;
         this.description = description;
         this.totalLikes = totalLikes;
         this.totalDislikes = totalDislikes;
         this.usageCount = usageCount;
-        this.encodedData = encodedData;
-    }
-
-    public String getEncodedData() {
-        return encodedData;
-    }
-
-    public void setEncodedData(String encodedData) {
-        this.encodedData = encodedData;
     }
 
     public static ProposalSuggestionDTOBuilder builder() {
@@ -92,7 +81,6 @@ public class ProposalSuggestionDTO {
         private long totalLikes;
         private long totalDislikes;
         private int usageCount;
-        private String encodedData;
 
         public ProposalSuggestionDTOBuilder location(String location) {
             this.location = location;
@@ -124,14 +112,8 @@ public class ProposalSuggestionDTO {
             return this;
         }
 
-        public ProposalSuggestionDTOBuilder encodedData(String encodedData) {
-            this.encodedData = encodedData;
-            return this;
-        }
-
         public ProposalSuggestionDTO build() {
-            return new ProposalSuggestionDTO(location, address, description, totalLikes, totalDislikes, usageCount,
-                    encodedData);
+            return new ProposalSuggestionDTO(location, address, description, totalLikes, totalDislikes, usageCount);
         }
     }
 }

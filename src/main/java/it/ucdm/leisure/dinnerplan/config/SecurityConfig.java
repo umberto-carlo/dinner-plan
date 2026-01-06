@@ -27,7 +27,8 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/login", "/register", "/manual", "/css/**", "/js/**")
+                                                .requestMatchers("/login", "/register", "/manual", "/css/**", "/js/**",
+                                                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
@@ -38,6 +39,7 @@ public class SecurityConfig {
                                                 .logoutUrl("/logout")
                                                 .logoutSuccessUrl("/login?logout")
                                                 .permitAll())
+                                .httpBasic(org.springframework.security.config.Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable()) // For simplicity in this demo, though typically enabled
                                 .headers(headers -> headers
                                                 .contentSecurityPolicy(csp -> csp

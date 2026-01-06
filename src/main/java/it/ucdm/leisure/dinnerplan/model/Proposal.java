@@ -8,12 +8,14 @@ import java.util.Set;
 
 @Entity
 @Table(name = "proposals")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Proposal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany(mappedBy = "proposals")
     private List<DinnerEvent> dinnerEvents = new ArrayList<>();
 
@@ -55,6 +57,7 @@ public class Proposal {
         this.id = id;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public List<DinnerEvent> getDinnerEvents() {
         return dinnerEvents;
     }

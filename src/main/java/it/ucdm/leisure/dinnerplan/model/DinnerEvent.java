@@ -7,6 +7,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "dinner_events")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class DinnerEvent {
 
     @Id
