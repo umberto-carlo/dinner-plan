@@ -1,5 +1,7 @@
 package it.ucdm.leisure.dinnerplan.config;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,11 +26,24 @@ public class SecurityConfig {
         }
 
         @Bean
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .securityMatcher("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                                "/swagger-ui/index.html", "/webjars/**", "/api/**")
+                                .authorizeHttpRequests(auth -> auth
+                                                .anyRequest().authenticated())
+                                .httpBasic(org.springframework.security.config.Customizer.withDefaults())
+                                .csrf(csrf -> csrf.disable());
+                return http.build();
+        }
+
+        @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/login", "/register", "/manual", "/css/**", "/js/**",
-                                                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                                                                "/error")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .formLogin(form -> form
@@ -39,7 +54,6 @@ public class SecurityConfig {
                                                 .logoutUrl("/logout")
                                                 .logoutSuccessUrl("/login?logout")
                                                 .permitAll())
-                                .httpBasic(org.springframework.security.config.Customizer.withDefaults())
                                 .csrf(csrf -> csrf.disable()) // For simplicity in this demo, though typically enabled
                                 .headers(headers -> headers
                                                 .contentSecurityPolicy(csp -> csp
