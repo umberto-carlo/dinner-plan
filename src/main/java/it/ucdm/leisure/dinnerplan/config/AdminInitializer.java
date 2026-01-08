@@ -1,8 +1,8 @@
 package it.ucdm.leisure.dinnerplan.config;
 
-import it.ucdm.leisure.dinnerplan.model.Role;
-import it.ucdm.leisure.dinnerplan.model.User;
-import it.ucdm.leisure.dinnerplan.repository.UserRepository;
+import it.ucdm.leisure.dinnerplan.features.user.Role;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;

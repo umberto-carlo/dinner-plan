@@ -1,22 +1,38 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{register.title}, ~{::section})}">
-<section>
-    <div class="card" style="max-width: 400px; margin: 2rem auto;">
-        <h2 th:text="#{register.title}">Registrati</h2>
-        <div th:if="${error}" style="color: red; margin-bottom: 1rem;" th:text="${error}"></div>
-        <form th:action="@{/register}" method="post">
-            <div class="form-group">
-                <label for="username" th:text="#{login.username}">Username</label>
-                <input type="text" id="username" name="username" required>
+<section class="flex items-center justify-center min-h-[80vh]">
+    <div
+        class="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6" th:text="#{register.title}">
+            Registrati</h2>
+
+        <div th:if="${error}"
+            class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert"
+            th:text="${error}"></div>
+
+        <form th:action="@{/register}" method="post" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    th:text="#{login.username}">Username</label>
+                <input type="text" id="username" name="username" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
-            <div class="form-group">
-                <label for="password" th:text="#{login.password}">Password</label>
-                <input type="password" id="password" name="password" required>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    th:text="#{login.password}">Password</label>
+                <input type="password" id="password" name="password" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
-            <button type="submit" class="btn" style="width: 100%" th:text="#{register.button}">Registrati</button>
+            <button type="submit"
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                th:text="#{register.button}">
+                Registrati
+            </button>
         </form>
-        <p style="margin-top: 1rem; text-align: center;">
+
+        <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             <span th:text="#{register.has_account}">Hai già un account?</span> <a th:href="@{/login}"
+                class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
                 th:text="#{register.login_link}">Accedi</a>
         </p>
     </div>

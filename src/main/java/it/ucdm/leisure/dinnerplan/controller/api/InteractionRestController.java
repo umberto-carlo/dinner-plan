@@ -1,8 +1,8 @@
 package it.ucdm.leisure.dinnerplan.controller.api;
 
-import it.ucdm.leisure.dinnerplan.model.DinnerEventMessage;
-import it.ucdm.leisure.dinnerplan.model.Vote;
-import it.ucdm.leisure.dinnerplan.service.InteractionService;
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
+
+import it.ucdm.leisure.dinnerplan.features.event.InteractionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/interactions")

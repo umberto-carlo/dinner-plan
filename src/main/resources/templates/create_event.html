@@ -1,36 +1,49 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{create.title}, ~{::section})}">
 <section>
-    <div class="card" style="max-width: 600px; margin: 2rem auto;">
-        <h2 th:text="#{create.title}">Crea Nuova Cena</h2>
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6" th:text="#{create.title}">Crea Nuova Cena
+        </h2>
 
         <!-- Error Message Display -->
         <div th:if="${errorMessage}"
-            style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border: 1px solid #f87171; margin-bottom: 1.5rem; border-radius: 4px;">
+            class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4 mb-6 text-red-800 dark:text-red-200">
             <strong>Errore:</strong> <span th:text="${errorMessage}">Messaggio di errore</span>
         </div>
 
-        <form th:action="@{/events/create}" method="post">
-            <div class="form-group">
-                <label for="title" th:text="#{dashboard.title}">Titolo</label>
-                <input type="text" id="title" name="title" th:placeholder="#{create.placeholder.title}" required>
+        <form th:action="@{/events/create}" method="post" class="space-y-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{dashboard.title}">Titolo</label>
+                <input type="text" id="title" name="title"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                    th:placeholder="#{create.placeholder.title}" required>
             </div>
-            <div class="form-group">
-                <label for="description" th:text="#{dashboard.description}">Descrizione</label>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{dashboard.description}">Descrizione</label>
                 <textarea id="description" name="description" rows="3"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     th:placeholder="#{create.placeholder.description}"></textarea>
             </div>
-            <div class="form-group">
-                <label for="deadline" th:text="#{event.deadline}">Scadenza Conferma</label>
-                <input type="datetime-local" id="deadline" name="deadline" required>
+
+            <div>
+                <label for="deadline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{event.deadline}">Scadenza Conferma</label>
+                <input type="datetime-local" id="deadline" name="deadline" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
 
-
-
-            <button type="submit" class="btn" th:text="#{create.button}">Crea Evento</button>
-            <a th:href="@{/}" class="btn btn-secondary" th:text="#{app.cancel}">Annulla</a>
-    </div>
-    </form>
+            <div class="flex items-center gap-4 pt-4">
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                    th:text="#{create.button}">Crea Evento</button>
+                <a th:href="@{/}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors transition-colors cursor-pointer"
+                    th:text="#{app.cancel}">Annulla</a>
+            </div>
+        </form>
     </div>
 </section>
 

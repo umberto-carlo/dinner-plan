@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.dto.backup;
 
-import it.ucdm.leisure.dinnerplan.model.Role;
+import it.ucdm.leisure.dinnerplan.features.user.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

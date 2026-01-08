@@ -1,23 +1,31 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Manuale Utente', ~{::section})}">
-<section>
-    <div style="margin-bottom: 1rem;">
-        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span
-                th:text="#{app.back_dashboard}">Dashboard</span></a>
+<section class="max-w-4xl mx-auto space-y-6">
+    <div class="mb-4">
+        <a th:href="@{/}"
+            class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span th:text="#{app.back_dashboard}">Dashboard</span>
+        </a>
     </div>
 
-    <h1 th:text="#{manual.title}">Manuale d'Uso Dinner Plan</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100" th:text="#{manual.title}">Manuale d'Uso Dinner Plan
+    </h1>
 
-    <div class="card" style="margin-bottom: 1.5rem;">
-        <h2 th:text="#{manual.intro.title}">Introduzione</h2>
-        <p th:utext="#{manual.intro.text}">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{manual.intro.title}">Introduzione
+        </h2>
+        <p class="text-gray-600 dark:text-gray-300 leading-relaxed" th:utext="#{manual.intro.text}">
             Text...
         </p>
     </div>
 
-    <div class="card" style="margin-bottom: 1.5rem;">
-        <h2 th:text="#{manual.users.title}">Per Tutti gli Utenti</h2>
-        <ul>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{manual.users.title}">Per Tutti
+            gli Utenti</h2>
+        <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
             <li th:utext="#{manual.users.registration}">Registration</li>
             <li th:utext="#{manual.users.dashboard}">Dashboard</li>
             <li th:utext="#{manual.users.calendar}">Calendar</li>
@@ -30,10 +38,12 @@
         </ul>
     </div>
 
-    <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color);">
-        <h2 th:text="#{manual.organizers.title}">Per gli Organizzatori</h2>
-        <p th:text="#{manual.organizers.text}">Oltre alle funzionalità base...</p>
-        <ul>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-primary-500">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{manual.organizers.title}">Per gli
+            Organizzatori</h2>
+        <p class="mb-4 text-gray-600 dark:text-gray-300" th:text="#{manual.organizers.text}">Oltre alle funzionalità
+            base...</p>
+        <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
             <li th:utext="#{manual.organizers.create_event}">Create Event</li>
             <li th:utext="#{manual.organizers.manage_participants}">Manage Participants</li>
             <li th:utext="#{manual.organizers.add_proposal}">Add Proposals</li>

@@ -9,9 +9,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import it.ucdm.leisure.dinnerplan.model.User;
-import it.ucdm.leisure.dinnerplan.model.Role;
-import it.ucdm.leisure.dinnerplan.service.UserService;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.Role;
+import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

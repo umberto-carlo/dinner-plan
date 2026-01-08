@@ -1,103 +1,133 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
     th:replace="~{layout :: layout(#{users.title}, ~{::section})}">
-<section>
-    <div style="margin-bottom: 1rem;">
-        <a th:href="@{/}" style="color: var(--text-secondary);">&larr; <span
-                th:text="#{app.back_dashboard}">Dashboard</span></a>
+<section class="space-y-6">
+    <div class="mb-4">
+        <a th:href="@{/}"
+            class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span th:text="#{app.back_dashboard}">Dashboard</span>
+        </a>
     </div>
 
-    <h2 th:text="#{users.title}">Gestione Utenti</h2>
-    <p th:if="${param.success}" style="color: green; margin-bottom: 1rem;" th:text="#{app.success}">Operazione
-        completata con successo.</p>
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100" th:text="#{users.title}">Gestione Utenti</h2>
+
+    <p th:if="${param.success}"
+        class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800"
+        th:text="#{app.success}">Operazione completata con successo.</p>
 
     <!-- Admin: Create User -->
-    <div sec:authorize="hasRole('ADMIN')" class="card" style="margin-bottom: 1rem;">
-        <h3 th:text="#{users.create}">Crea Nuovo Utente</h3>
-        <form th:action="@{/admin/users/create}" method="post" style="display: flex; gap: 1rem; align-items: flex-end;">
+    <div sec:authorize="hasRole('ADMIN')" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{users.create}">Crea Nuovo Utente
+        </h3>
+        <form th:action="@{/admin/users/create}" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
-                <label th:text="#{login.username}">Username</label>
-                <input type="text" name="username" required style="display: block; width: 100%; padding: 0.5rem;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{login.username}">Username</label>
+                <input type="text" name="username" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
             <div>
-                <label th:text="#{login.password}">Password</label>
-                <input type="password" name="password" required style="display: block; width: 100%; padding: 0.5rem;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{login.password}">Password</label>
+                <input type="password" name="password" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
             <div>
-                <label th:text="#{users.role}">Ruolo</label>
-                <select name="role" style="display: block; width: 100%; padding: 0.5rem;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{users.role}">Ruolo</label>
+                <select name="role"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     <option value="PARTICIPANT" th:text="#{role.participant}">PARTICIPANT</option>
                     <option value="ORGANIZER" th:text="#{role.organizer}">ORGANIZER</option>
                     <option value="ADMIN" th:text="#{role.admin}">ADMIN</option>
                 </select>
             </div>
-            <button type="submit" class="btn" th:text="#{users.create}">Crea Utente</button>
+            <button type="submit"
+                class="inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                th:text="#{users.create}">Crea Utente</button>
         </form>
     </div>
 
-    <div class="card">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; border-bottom: 2px solid var(--border);">
-                    <th style="padding: 0.75rem;">ID</th>
-                    <th style="padding: 0.75rem;" th:text="#{login.username}">Username</th>
-                    <th style="padding: 0.75rem;" th:text="#{users.role}">Ruolo</th>
-                    <th style="padding: 0.75rem;" th:text="#{users.action}">Azione</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="u : ${users}" style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 0.75rem;" th:text="${u.id}">1</td>
-                    <td style="padding: 0.75rem;" th:text="${u.username}">user</td>
-                    <td style="padding: 0.75rem;" th:text="${u.role}">USER</td>
-                    <td style="padding: 0.75rem;">
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <!-- Reset Password (All Admin/Organizer) -->
-                            <form th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post"
-                                style="display: flex; gap: 0.5rem; align-items: center;">
-                                <input type="text" name="newPassword" th:placeholder="#{users.new_pass_ph}" required
-                                    style="width: 100px; padding: 0.25rem; font-size: 0.875rem;">
-                                <button type="submit" class="btn btn-secondary"
-                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem;" th:text="#{users.reset}">
-                                    Reset
-                                </button>
-                            </form>
-
-                            <!-- Organizer: Promote -->
-                            <form sec:authorize="hasRole('ORGANIZER')" th:if="${u.role.name() == 'PARTICIPANT'}"
-                                th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post">
-                                <button type="submit" class="btn"
-                                    style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #28a745;"
-                                    th:onclick="'return confirm(\'' + #{users.confirm.promote} + '\');'"
-                                    th:text="#{users.promote}">
-                                    Promuovi
-                                </button>
-                            </form>
-
-                            <!-- Admin: Change Role & Delete -->
-                            <div sec:authorize="hasRole('ADMIN')" style="display: flex; gap: 0.5rem;">
-                                <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post">
-                                    <select name="role" onchange="this.form.submit()" style="padding: 0.25rem;">
-                                        <option th:selected="${u.role.name() == 'PARTICIPANT'}" value="PARTICIPANT">P
-                                        </option>
-                                        <option th:selected="${u.role.name() == 'ORGANIZER'}" value="ORGANIZER">O
-                                        </option>
-                                        <option th:selected="${u.role.name() == 'ADMIN'}" value="ADMIN">A</option>
-                                    </select>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            ID</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                            th:text="#{login.username}">Username</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                            th:text="#{users.role}">Ruolo</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                            th:text="#{users.action}">Azione</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr th:each="u : ${users}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+                            th:text="${u.id}">1</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100"
+                            th:text="${u.username}">user</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                th:text="${u.role}">USER</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Reset Password (All Admin/Organizer) -->
+                                <form th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post"
+                                    class="flex items-center gap-2">
+                                    <input type="password" name="newPassword" th:placeholder="#{users.new_pass_ph}"
+                                        required
+                                        class="w-32 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                                    <button type="submit"
+                                        class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none transition-colors cursor-pointer"
+                                        th:text="#{users.reset}">Reset</button>
                                 </form>
-                                <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
-                                    <button type="submit" class="btn"
-                                        style="padding: 0.25rem 0.5rem; font-size: 0.875rem; background-color: #dc3545;"
-                                        th:onclick="'return confirm(\'' + #{users.confirm.delete} + '\');'"
-                                        th:text="#{users.delete}">
-                                        X
-                                    </button>
+
+                                <!-- Organizer: Promote -->
+                                <form sec:authorize="hasRole('ORGANIZER')" th:if="${u.role.name() == 'PARTICIPANT'}"
+                                    th:action="@{/admin/users/{id}/promote(id=${u.id})}" method="post" class="inline">
+                                    <button type="submit"
+                                        class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none transition-colors cursor-pointer"
+                                        th:onclick="'return confirm(\'' + #{users.confirm.promote} + '\');'"
+                                        th:text="#{users.promote}">Promuovi</button>
                                 </form>
+
+                                <!-- Admin: Change Role & Delete -->
+                                <div sec:authorize="hasRole('ADMIN')" class="flex items-center gap-2">
+                                    <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post">
+                                        <select name="role" onchange="this.form.submit()"
+                                            class="block w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-xs dark:bg-gray-700 dark:text-white">
+                                            <option th:selected="${u.role.name() == 'PARTICIPANT'}" value="PARTICIPANT">
+                                                Part.</option>
+                                            <option th:selected="${u.role.name() == 'ORGANIZER'}" value="ORGANIZER">Org.
+                                            </option>
+                                            <option th:selected="${u.role.name() == 'ADMIN'}" value="ADMIN">Admin
+                                            </option>
+                                        </select>
+                                    </form>
+                                    <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
+                                        <button type="submit"
+                                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none transition-colors cursor-pointer"
+                                            th:onclick="'return confirm(\'' + #{users.confirm.delete} + '\');'"
+                                            th:text="#{users.delete}">X</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </section>
 

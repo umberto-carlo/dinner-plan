@@ -16,16 +16,21 @@
         <form th:action="@{/admin/users/create}" method="post"
             style="display: flex; flex-direction: column; gap: 0.5rem;">
             <div>
-                <label th:text="#{login.username}">Username</label>
-                <input type="text" name="username" required style="display: block; width: 100%; padding: 0.5rem;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{login.username}">Username</label>
+                <input type="text" name="username" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
             <div>
-                <label th:text="#{login.password}">Password</label>
-                <input type="password" name="password" required style="display: block; width: 100%; padding: 0.5rem;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{login.password}">Password</label>
+                <input type="password" name="password" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
             <div>
                 <label th:text="#{users.role}">Ruolo</label>
-                <select name="role" style="display: block; width: 100%; padding: 0.5rem;">
+                <select name="role"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     <option value="PARTICIPANT" th:text="#{role.participant}">PARTICIPANT</option>
                     <option value="ORGANIZER" th:text="#{role.organizer}">ORGANIZER</option>
                     <option value="ADMIN" th:text="#{role.admin}">ADMIN</option>
@@ -52,7 +57,7 @@
                 <form th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post"
                     style="display: flex; gap: 0.5rem;">
                     <input type="text" name="newPassword" th:placeholder="#{users.new_pass_ph}" required
-                        style="flex-grow: 1; padding: 0.5rem;">
+                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white flex-grow">
                     <button type="submit" class="btn btn-secondary" th:text="#{users.reset}">Reset</button>
                 </form>
 

@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.dto.backup;
 
-import it.ucdm.leisure.dinnerplan.model.DinnerEvent.EventStatus;
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent.EventStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

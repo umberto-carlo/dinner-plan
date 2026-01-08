@@ -1,0 +1,111 @@
+package it.ucdm.leisure.dinnerplan.features.proposal;
+
+import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Service
+public class ProposalCatalogService {
+
+    private final ProposalRepository proposalRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public ProposalCatalogService(ProposalRepository proposalRepository, SimpMessagingTemplate messagingTemplate) {
+        this.proposalRepository = proposalRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @Transactional
+    public void addGlobalProposal(String location, String address, String description) {
+        // Check if exists
+        if (proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address).isPresent()) {
+            return; // Already exists, do nothing
+        }
+
+        Proposal proposal = Proposal.builder()
+                .dinnerEvents(new ArrayList<>())
+                .dates(new ArrayList<>())
+                .location(location)
+                .address(address)
+                .description(description)
+                .build();
+
+        proposalRepository.save(Objects.requireNonNull(proposal));
+
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            messagingTemplate.convertAndSend("/topic/events", "update");
+                        }
+                    });
+        } else {
+            // Fallback for non-transactional contexts (e.g. tests)
+            messagingTemplate.convertAndSend("/topic/events", "update");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProposalSuggestionDTO> getProposalSuggestions() {
+        List<Proposal> allProposals = proposalRepository.findAll();
+        List<ProposalSuggestionDTO> suggestions = new ArrayList<>();
+        java.util.Map<String, ProposalSuggestionDTO> map = new java.util.HashMap<>();
+
+        for (Proposal p : allProposals) {
+            String key = (p.getLocation() + "|" + (p.getAddress() != null ? p.getAddress() : "")).toLowerCase();
+            ProposalSuggestionDTO dto = map.getOrDefault(key, ProposalSuggestionDTO.builder()
+                    .location(p.getLocation())
+                    .address(p.getAddress())
+                    .description(p.getDescription())
+                    .totalLikes(0)
+                    .totalDislikes(0)
+                    .usageCount(0)
+                    .build());
+
+            int eventCount = (p.getDinnerEvents() != null) ? p.getDinnerEvents().size() : 0;
+            dto.setUsageCount(dto.getUsageCount() + eventCount);
+
+            if (p.getRatings() != null) {
+                for (ProposalRating r : p.getRatings()) {
+                    if (r.isLiked())
+                        dto.setTotalLikes(dto.getTotalLikes() + 1);
+                    else
+                        dto.setTotalDislikes(dto.getTotalDislikes() + 1);
+                }
+            }
+
+            if (p.getDescription() != null && !p.getDescription().isBlank()) {
+                dto.setDescription(p.getDescription());
+            }
+            map.put(key, dto);
+        }
+
+        suggestions.addAll(map.values());
+        suggestions.sort((a, b) -> {
+            int likeCompare = Long.compare(b.getTotalLikes(), a.getTotalLikes());
+            if (likeCompare != 0)
+                return likeCompare;
+            return Integer.compare(b.getUsageCount(), a.getUsageCount());
+        });
+
+        tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
+        for (ProposalSuggestionDTO suggestion : suggestions) {
+            try {
+                String json = mapper.writeValueAsString(suggestion);
+                String encoded = java.util.Base64.getEncoder().encodeToString(json.getBytes());
+                suggestion.setEncodedData(encoded);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return suggestions;
+    }
+}

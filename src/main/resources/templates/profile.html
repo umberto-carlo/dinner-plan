@@ -1,43 +1,59 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{profile.title}, ~{::section})}">
-<section>
-    <div style="max-width: 600px; margin: 0 auto;">
-        <div style="margin-bottom: 1rem;">
-            <a th:href="@{/}" style="color: var(--text-secondary); text-decoration: none;">&larr; <span
-                    th:text="#{app.back_dashboard}">Torna alla Dashboard</span></a>
-        </div>
-        <h2 th:text="#{profile.title}">Il tuo Profilo</h2>
+<section class="max-w-2xl mx-auto">
+    <div class="mb-4">
+        <a th:href="@{/}"
+            class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span th:text="#{app.back_dashboard}">Torna alla Dashboard</span>
+        </a>
+    </div>
 
-        <div class="card">
-            <div class="form-group">
-                <label th:text="#{login.username}">Username</label>
-                <div th:text="${user.username}"
-                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">User
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6" th:text="#{profile.title}">Il tuo Profilo</h2>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{login.username}">Username</label>
+                <div class="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600"
+                    th:text="${user.username}">User</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{users.role}">Ruolo</label>
+                <div
+                    class="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
+                    <span th:text="${user.role}">ROLE</span>
                 </div>
             </div>
-            <div class="form-group">
-                <label th:text="#{users.role}">Ruolo</label>
-                <div th:text="${user.role}"
-                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
-                    ROLE</div>
+        </div>
+    </div>
+
+    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{profile.change_pass}">Cambia Password
+    </h3>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div th:if="${success}"
+            class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800"
+            role="alert" th:text="${success}"></div>
+        <div th:if="${error}"
+            class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert"
+            th:text="${error}"></div>
+
+        <form th:action="@{/profile/change-password}" method="post" class="space-y-4">
+            <div>
+                <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{profile.new_pass}">Nuova Password</label>
+                <input type="password" id="newPassword" name="newPassword" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
-        </div>
-
-        <h3 th:text="#{profile.change_pass}">Cambia Password</h3>
-        <div class="card">
-            <div th:if="${success}" class="alert alert-success" style="color: green; margin-bottom: 1rem;"
-                th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-danger" style="color: red; margin-bottom: 1rem;"
-                th:text="${error}"></div>
-
-            <form th:action="@{/profile/change-password}" method="post">
-                <div class="form-group">
-                    <label for="newPassword" th:text="#{profile.new_pass}">Nuova Password</label>
-                    <input type="password" id="newPassword" name="newPassword" required>
-                </div>
-                <button type="submit" class="btn" th:text="#{profile.update}">Aggiorna Password</button>
-            </form>
-        </div>
+            <button type="submit"
+                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                th:text="#{profile.update}">Aggiorna Password</button>
+        </form>
     </div>
 </section>
 

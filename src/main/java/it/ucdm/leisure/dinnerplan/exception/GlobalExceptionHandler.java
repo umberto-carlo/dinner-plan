@@ -25,16 +25,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", ex.getMessage());
-        body.put("path", request.getDescription(false).replace("uri=", ""));
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
+    public org.springframework.web.servlet.view.RedirectView handleLogicalExceptions(RuntimeException ex,
+            jakarta.servlet.http.HttpServletRequest request,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        String referer = request.getHeader("Referer");
+        return new org.springframework.web.servlet.view.RedirectView(referer != null ? referer : "/");
+    }
 
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(Exception.class)
+    public org.springframework.web.servlet.view.RedirectView handleGenericException(Exception ex,
+            jakarta.servlet.http.HttpServletRequest request,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        // Log the error (optional, using sysout for now or rely on aspect)
+        ex.printStackTrace();
+        redirectAttributes.addFlashAttribute("errorMessage", "An unexpected error occurred: " + ex.getMessage());
+        String referer = request.getHeader("Referer");
+        return new org.springframework.web.servlet.view.RedirectView(referer != null ? referer : "/");
     }
 
     @ExceptionHandler(SecurityException.class)

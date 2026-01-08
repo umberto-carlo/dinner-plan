@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.controller.api;
 
-import it.ucdm.leisure.dinnerplan.service.ProposalService;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

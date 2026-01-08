@@ -1,5 +1,7 @@
 package it.ucdm.leisure.dinnerplan;
 
+import it.ucdm.leisure.dinnerplan.features.user.User;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import it.ucdm.leisure.dinnerplan.service.UserService;
+import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
