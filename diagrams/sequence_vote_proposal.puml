@@ -1,0 +1,26 @@
+@startuml
+autonumber
+actor User
+participant "Browser" as Client
+participant "Proposal Controller" as Controller
+participant "Proposal Service" as Service
+participant "Rating Repository" as Repo
+database "Database" as DB
+
+User -> Client: Clicca su Like/Dislike
+Client -> Controller: POST /proposals/{id}/rate
+Controller -> Service: voteProposal(proposalId, userId, rating)
+Service -> Repo: findByUserAndProposal(user, proposal)
+alt Voto Esistente
+    Service -> Repo: save(updatedRating)
+    Repo -> DB: UPDATE proposal_ratings ...
+else Nuovo Voto
+    Service -> Repo: save(newRating)
+    Repo -> DB: INSERT INTO proposal_ratings ...
+end
+DB --> Repo: Result
+Repo --> Service: Updated Rating
+Service --> Controller: Success
+Controller --> Client: HTTP 200 OK (Updated Counts)
+Client -> User: Aggiorna contatori Like/Dislike
+@enduml

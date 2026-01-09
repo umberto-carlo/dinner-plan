@@ -1,0 +1,41 @@
+@startuml
+skinparam componentStyle uml2
+left to right direction
+
+package "Frontend (Browser)" {
+    [Web Client] as Client
+}
+
+package "Backend (Spring Boot)" {
+    
+    package "Features" {
+        [User Feature] as UserFeat
+        [Event Feature] as EventFeat
+        [Proposal Feature] as ProposalFeat
+    }
+
+    component "Security Config" as Security
+    
+    interface "Controller API" as API
+    
+    EventFeat -- API
+    ProposalFeat -- API
+    UserFeat -- API
+
+    Client --> Security : HTTPS Request
+    Security --> API : Authenticated Request
+
+    database "Database (H2/MySQL)" {
+        folder "Tables" {
+            [Users]
+            [Events]
+            [Proposals]
+        }
+    }
+
+    UserFeat --> [Users]
+    EventFeat --> [Events]
+    ProposalFeat --> [Proposals]
+}
+
+@enduml

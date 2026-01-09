@@ -1,0 +1,21 @@
+@startuml
+autonumber
+actor Organizer
+participant "Browser" as Client
+participant "Event Controller" as Controller
+participant "Dinner Event Service" as Service
+participant "Event Repository" as Repo
+database "Database" as DB
+
+Organizer -> Client: Compila form creazione evento
+Client -> Controller: POST /events/create
+Controller -> Service: createDinnerEvent(eventDTO, user)
+Service -> Service: Valida dati evento
+Service -> Repo: save(event)
+Repo -> DB: INSERT INTO dinner_events ...
+DB --> Repo: Event ID
+Repo --> Service: Saved Event
+Service --> Controller: Event ID
+Controller --> Client: Redirect /events/{id}
+Client -> Organizer: Mostra Dettagli Evento
+@enduml

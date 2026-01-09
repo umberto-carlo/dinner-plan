@@ -1,0 +1,72 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class User {
+    - Long id
+    - String username
+    - String password
+    - Role role
+    + getUsername()
+    + getRole()
+}
+
+class DinnerEvent {
+    - Long id
+    - String title
+    - String description
+    - LocalDateTime deadline
+    - EventStatus status
+    + getTitle()
+    + getStatus()
+}
+
+class Proposal {
+    - Long id
+    - String location
+    - String address
+    - String description
+    + getLocation()
+    + getRatings()
+}
+
+class ProposalDate {
+    - Long id
+    - LocalDateTime date
+}
+
+class ProposalRating {
+    - Long id
+    - int rating
+}
+
+class DinnerEventMessage {
+    - Long id
+    - String content
+    - LocalDateTime timestamp
+}
+
+enum Role {
+    USER
+    ORGANIZER
+    ADMIN
+}
+
+enum EventStatus {
+    OPEN
+    CLOSED
+    DECIDED
+}
+
+User "1" -- "*" DinnerEvent : organizza >
+User "*" -- "*" DinnerEvent : partecipa >
+DinnerEvent "*" -- "*" Proposal : include >
+Proposal "1" -- "*" ProposalDate : ha >
+Proposal "1" -- "*" ProposalRating : ha >
+User "1" -- "*" ProposalRating : valuta >
+DinnerEvent "1" -- "*" DinnerEventMessage : ha >
+User "1" -- "*" DinnerEventMessage : scrive >
+
+User ..> Role
+DinnerEvent ..> EventStatus
+
+@enduml

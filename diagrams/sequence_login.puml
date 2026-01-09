@@ -1,0 +1,26 @@
+@startuml
+autonumber
+actor User
+participant "Browser" as Client
+participant "Security Controller" as Controller
+participant "User Service" as Service
+participant "User Repository" as Repo
+database "Database" as DB
+
+User -> Client: Inserisce credenziali (username, password)
+Client -> Controller: POST /login
+Controller -> Service: loadUserByUsername(username)
+Service -> Repo: findByUsername(username)
+Repo -> DB: SELECT * FROM users WHERE username = ?
+DB --> Repo: User Data
+Repo --> Service: User
+Service --> Controller: UserDetails
+Controller -> Controller: Valida Password
+alt Password Valida
+    Controller --> Client: HTTP 200 OK (Session/Token)
+    Client -> User: Reindirizza alla Dashboard
+else Password Errata
+    Controller --> Client: HTTP 401 Unauthorized
+    Client -> User: Mostra errore
+end
+@enduml

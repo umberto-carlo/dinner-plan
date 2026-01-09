@@ -1,0 +1,66 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Ospite" as Guest
+actor "Utente" as User
+actor "Organizzatore" as Organizer
+actor "Amministratore" as Admin
+
+User <|-- Organizer
+User <|-- Admin
+
+rectangle "Applicazione Dinner Plan" {
+    
+    usecase "Login" as UC_Login
+    usecase "Registrazione" as UC_Register
+    
+    Guest --> UC_Login
+    Guest --> UC_Register
+
+    usecase "Visualizza Dashboard" as UC_Dashboard
+    usecase "Visualizza Calendario" as UC_Calendar
+    usecase "Visualizza Profilo" as UC_Profile
+    usecase "Cambia Tema/Lingua" as UC_Settings
+    usecase "Logout" as UC_Logout
+
+    User --> UC_Dashboard
+    User --> UC_Calendar
+    User --> UC_Profile
+    User --> UC_Settings
+    User --> UC_Logout
+
+    package "Gestione Eventi" {
+        usecase "Crea Evento" as UC_CreateEvent
+        usecase "Visualizza Dettagli Evento" as UC_ViewEvent
+        usecase "Aggiungi Proposta all'Evento" as UC_AddProposal
+        usecase "Decidi/Chiudi Evento" as UC_CloseEvent
+        usecase "Crea Evento Smart" as UC_SmartEvent
+    }
+
+    User --> UC_ViewEvent
+
+    Organizer --> UC_CreateEvent
+    Organizer --> UC_AddProposal
+    Organizer --> UC_CloseEvent
+    Organizer --> UC_SmartEvent
+
+    package "Gestione Proposte" {
+        usecase "Vota Proposta (Like/Dislike)" as UC_Vote
+        usecase "Visualizza Classifica Proposte" as UC_Ranking
+    }
+
+    User --> UC_Vote
+    User --> UC_Ranking
+
+    package "Gestione Utenti" {
+        usecase "Visualizza Lista Utenti" as UC_ViewUsers
+        usecase "Gestisci Ruoli Utente" as UC_ManageRoles
+    }
+
+    Organizer --> UC_ViewUsers
+    Admin --> UC_ViewUsers
+    Admin --> UC_ManageRoles
+
+}
+@enduml
