@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
-import it.ucdm.leisure.dinnerplan.features.user.*;
-import it.ucdm.leisure.dinnerplan.features.event.*;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 
 import java.util.*;
 import org.junit.jupiter.api.Test;

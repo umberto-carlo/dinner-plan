@@ -1,7 +1,5 @@
 package it.ucdm.leisure.dinnerplan;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;

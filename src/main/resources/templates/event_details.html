@@ -19,27 +19,7 @@
     </div>
 
     <!-- Header Card -->
-    <div id="event-header-card" th:fragment="eventHeader" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-        <div class="flex justify-between items-start">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2" th:text="${event.title}">Event
-                    Title</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-4" th:text="${event.description}">Description</p>
-                <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
-                    <span class="font-medium" th:text="#{event.by}">Organizer:</span> <span
-                        th:text="${event.organizer.username}">User</span>
-                    <span class="mx-1">|</span>
-                    <span class="font-medium" th:text="#{event.deadline}">Deadline:</span> <span
-                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
-                </div>
-            </div>
-            <div>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                    th:classappend="${event.status.name() == 'OPEN' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
-                    th:text="${event.status}">OPEN</span>
-            </div>
-        </div>
-    </div>
+    <div th:replace="~{fragments/event-header :: eventHeader}"></div>
 
     <!-- Error Message -->
     <div th:if="${errorMessage}"
@@ -48,38 +28,7 @@
     </div>
 
     <!-- Actions Bar -->
-    <div id="event-action-bar" th:fragment="eventActions"
-        class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100" th:text="#{event.proposals}">Proposals</h3>
-        <div class="flex gap-2">
-            <!-- Manage Participants -->
-            <button th:if="${isOrganizer}"
-                onclick="document.getElementById('manage-participants-modal').classList.remove('hidden')"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer text-sm"
-                th:text="${event.status.name() == 'OPEN'} ? #{event.actions.manage_participants} : #{event.actions.view_participants}">
-                Manage Participants
-            </button>
-
-            <!-- Delete Event -->
-            <form th:if="${isOrganizer}" th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
-                class="inline">
-                <button type="submit"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors cursor-pointer text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-md shadow-sm transition-colors"
-                    th:onclick="'return confirm(\'' + #{event.actions.delete_confirm} + '\');'"
-                    th:text="#{event.actions.delete}">
-                    Delete
-                </button>
-            </form>
-
-            <!-- Add Proposal -->
-            <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
-                onclick="document.getElementById('add-proposal-form').classList.remove('hidden')"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer text-sm"
-                th:text="#{event.proposals.add}">
-                Add Proposal
-            </button>
-        </div>
-    </div>
+    <div th:replace="~{fragments/event-actions :: eventActions}"></div>
 
     <!-- Add Proposal Form (Hidden) -->
     <div id="add-proposal-form"
@@ -152,148 +101,7 @@
     </div>
 
     <!-- Proposals List -->
-    <div id="proposal-list-container" th:fragment="proposalList" class="space-y-6">
-        <div th:if="${event.proposals.empty}" class="text-center py-8 text-gray-500 dark:text-gray-400"
-            th:text="#{event.proposals.none}">
-            No proposals yet.
-        </div>
-
-        <div th:each="proposal : ${sortedProposals}"
-            class="bg-white dark:bg-gray-800 rounded-lg shadow border-l-4 border-l-primary-500 overflow-hidden">
-            <div class="p-6 space-y-4">
-                <!-- Header -->
-                <div class="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-2">
-                    <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100" th:text="${proposal.location}">
-                        Location</h4>
-
-                    <!-- Rating Controls -->
-                    <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.proposal.id == proposal.id and currentUser != null}"
-                        class="flex gap-1">
-                        <form
-                            th:action="@{/events/{eventId}/proposals/{proposalId}/rate(eventId=${event.id}, proposalId=${proposal.id})}"
-                            method="post">
-                            <input type="hidden" name="isLiked" value="true">
-                            <button type="submit" class="btn px-2 py-1 text-xs"
-                                th:classappend="${userRating == true} ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">👍</button>
-                        </form>
-                        <form
-                            th:action="@{/events/{eventId}/proposals/{proposalId}/rate(eventId=${event.id}, proposalId=${proposal.id})}"
-                            method="post">
-                            <input type="hidden" name="isLiked" value="false">
-                            <button type="submit" class="btn px-2 py-1 text-xs"
-                                th:classappend="${userRating == false} ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">👎</button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div th:if="${proposal.description}" class="text-sm text-gray-500 dark:text-gray-400 italic"
-                    th:text="${proposal.description}">Description</div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Details & Map -->
-                    <div class="space-y-3">
-                        <div th:if="${proposal.address}"
-                            class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                            <span>📍</span> <span th:text="${proposal.address}">Address</span>
-                        </div>
-                        <div th:if="${proposal.address}"
-                            class="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 h-40">
-                            <iframe width="100%" height="100%" frameborder="0" loading="lazy" allowfullscreen
-                                th:src="'https://maps.google.com/maps?q=' + ${proposal.address} + '&t=&z=15&ie=UTF8&iwloc=&output=embed'">
-                            </iframe>
-                        </div>
-                    </div>
-
-                    <!-- Dates & Votes -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <h5 class="font-bold text-sm text-gray-700 dark:text-gray-300" th:text="#{event.date}">Dates
-                            </h5>
-                            <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-2 py-0 text-xs"
-                                onclick="toggleDateAddForm(this)" title="Add Date">+</button>
-                        </div>
-
-                        <!-- Mini Add Date Form -->
-                        <div
-                            class="hidden mb-2 bg-gray-50 dark:bg-gray-700 p-2 rounded border border-dashed border-gray-300 dark:border-gray-600 add-date-mini-form">
-                            <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
-                                onsubmit="handleAjaxForm(event)">
-                                <input type="hidden" name="location" th:value="${proposal.location}">
-                                <input type="hidden" name="address" th:value="${proposal.address}">
-                                <input type="hidden" name="description" th:value="${proposal.description}">
-                                <div class="flex gap-2">
-                                    <input type="datetime-local" name="dateOption" required
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white text-xs py-1">
-                                    <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer text-xs py-1 px-2">OK</button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="space-y-2">
-                            <div th:each="pDate : ${proposal.dates}" th:if="${pDate.dinnerEvent.id == event.id}"
-                                class="p-3 rounded-md transition-colors"
-                                th:classappend="${#lists.contains(votedProposalDateIds, pDate.id)} ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800 border' : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent'">
-
-                                <div class="flex justify-between items-center mb-1">
-                                    <div class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                                        <span th:text="${#temporals.format(pDate.date, 'dd MMM HH:mm')}">Date</span>
-                                        <span
-                                            th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.id == pDate.id}"
-                                            class="bg-yellow-100 text-yellow-800 text-xs px-1 rounded border border-yellow-200"
-                                            th:text="#{event.winner}">Winner</span>
-                                    </div>
-
-                                    <div th:if="${currentUser != null}" class="flex gap-1">
-                                        <!-- Vote -->
-                                        <form th:if="${event.status.name() == 'OPEN'}"
-                                            th:action="@{/proposals/{id}/vote(id=${pDate.id}, eventId=${event.id})}"
-                                            method="post" onsubmit="handleAjaxForm(event)">
-                                            <button type="submit" class="px-2 py-1 text-xs rounded transition-colors"
-                                                th:classappend="${#lists.contains(votedProposalDateIds, pDate.id)} ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200'"
-                                                th:text="${#lists.contains(votedProposalDateIds, pDate.id)} ? #{event.remove_vote} : #{event.vote}">Vote</button>
-                                        </form>
-                                        <!-- Select -->
-                                        <form th:if="${isOrganizer and event.status.name() == 'OPEN'}"
-                                            th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${pDate.id})}"
-                                            method="post" onsubmit="handleAjaxForm(event)">
-                                            <button type="submit"
-                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer text-xs px-2 py-1"
-                                                onclick="openConfirmationModal(this.form); return false;"
-                                                th:text="#{event.select}">Select</button>
-                                        </form>
-                                        <!-- Delete -->
-                                        <form
-                                            th:if="${isOrganizer and event.status.name() == 'OPEN' and proposal.dates.size() > 1}"
-                                            th:action="@{/proposals/{proposalId}/dates/{dateId}/delete(proposalId=${proposal.id}, dateId=${pDate.id}, eventId=${event.id})}"
-                                            method="post" onsubmit="handleAjaxForm(event)">
-                                            <button type="submit" class="text-red-600 hover:text-red-800 px-1 font-bold"
-                                                onclick="return confirm('Delete date?');">x</button>
-                                        </form>
-                                    </div>
-                                </div>
-
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    <span th:text="#{event.votes}">Votes</span>: <span
-                                        class="font-bold text-gray-900 dark:text-gray-100"
-                                        th:text="${pDate.votes.size()}">0</span>
-                                </div>
-                                <div th:if="${!pDate.votes.isEmpty()}"
-                                    class="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">
-                                    (<span th:each="vote, iterStat : ${pDate.votes}"><span
-                                            th:text="${vote.user.username}"
-                                            th:classappend="${vote.user.username == currentUser.username} ? 'font-bold text-primary-600 dark:text-primary-400' : ''">User</span><span
-                                            th:if="${!iterStat.last}">, </span></span>)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div th:replace="~{fragments/event-proposals :: proposalList}"></div>
 
     <!-- Chat -->
     <div class="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -332,54 +140,7 @@
 
                     <form th:action="@{/events/{id}/update-participants(id=${event.id})}" method="post"
                         id="participantsForm" onsubmit="handleParticipantsSubmit(event)">
-                        <div id="participant-lists-container" th:fragment="participantLists"
-                            class="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr] gap-4 h-[400px]">
-
-                            <!-- Left: Available -->
-                            <div th:if="${event.status.name() == 'OPEN'}"
-                                class="border border-gray-200 dark:border-gray-700 rounded-md flex flex-col">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-2 font-medium text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600"
-                                    th:text="#{participants.to_select}">Available</div>
-                                <div id="left-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-                                    <div th:each="u : ${allUsers}"
-                                        th:if="${u.role.name() != 'ADMIN' and u.username != #authentication.principal.username and !#lists.contains(event.participants, u)}"
-                                        class="user-item p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors"
-                                        th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
-                                        User
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Center controls -->
-                            <div th:if="${event.status.name() == 'OPEN'}"
-                                class="flex flex-row md:flex-col justify-center gap-2">
-                                <button type="button"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
-                                    onclick="moveAllRight()" title="Move All Right">&gt;&gt;</button>
-                                <button type="button"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
-                                    onclick="moveSelectedRight()" title="Move Selected Right">&gt;</button>
-                                <button type="button"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
-                                    onclick="moveSelectedLeft()" title="Move Selected Left">&lt;</button>
-                                <button type="button"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
-                                    onclick="moveAllLeft()" title="Move All Left">&lt;&lt;</button>
-                            </div>
-
-                            <!-- Right: Selected -->
-                            <div class="border border-gray-200 dark:border-gray-700 rounded-md flex flex-col">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-2 font-medium text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600"
-                                    th:text="#{participants.selected}">Selected</div>
-                                <div id="right-list" class="flex-1 overflow-y-auto p-2 space-y-1">
-                                    <div th:each="u : ${allUsers}" th:if="${#lists.contains(event.participants, u)}"
-                                        class="user-item p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors"
-                                        th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
-                                        User
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <div th:replace="~{fragments/event-participants :: participantLists}"></div>
 
                         <div id="hidden-inputs-container"></div>
 
@@ -388,7 +149,7 @@
                                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
                                 onclick="document.getElementById('manage-participants-modal').classList.add('hidden')"
                                 th:text="#{app.close}">Close</button>
-                            <button th:if="${event.status.name() == 'OPEN'}" type="submit"
+                            <button th:if="${event.status?.name() == 'OPEN'}" type="submit"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
                                 th:text="#{app.save}">Save</button>
                         </div>

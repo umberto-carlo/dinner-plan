@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div id="participant-lists-container" th:fragment="participantLists" class="grid gap-4 h-[400px]"
+        th:classappend="${event.status.name() == 'OPEN'} ? 'grid-cols-1 md:grid-cols-[1fr,auto,1fr]' : 'grid-cols-1'">
+
+        <!-- Left: Available -->
+        <div th:if="${event.status.name() == 'OPEN'}"
+            class="border border-gray-200 dark:border-gray-700 rounded-md flex flex-col">
+            <div class="bg-gray-50 dark:bg-gray-700 p-2 font-medium text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600"
+                th:text="#{participants.to_select}">Available</div>
+            <div id="left-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <div th:each="u : ${allUsers}"
+                    th:if="${u.role.name() != 'ADMIN' and u.username != #authentication.principal.username and !#lists.contains(event.participants, u)}"
+                    class="user-item p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                    th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
+                    User
+                </div>
+            </div>
+        </div>
+
+        <!-- Center controls -->
+        <div th:if="${event.status.name() == 'OPEN'}" class="flex flex-row md:flex-col justify-center gap-2">
+            <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
+                onclick="moveAllRight()" title="Move All Right">&gt;&gt;</button>
+            <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
+                onclick="moveSelectedRight()" title="Move Selected Right">&gt;</button>
+            <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
+                onclick="moveSelectedLeft()" title="Move Selected Left">&lt;</button>
+            <button type="button"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3"
+                onclick="moveAllLeft()" title="Move All Left">&lt;&lt;</button>
+        </div>
+
+        <!-- Right: Selected -->
+        <div class="border border-gray-200 dark:border-gray-700 rounded-md flex flex-col">
+            <div class="bg-gray-50 dark:bg-gray-700 p-2 font-medium text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600"
+                th:text="#{participants.selected}">Selected</div>
+            <div id="right-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <div th:each="u : ${allUsers}" th:if="${#lists.contains(event.participants, u)}"
+                    class="user-item p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 transition-colors"
+                    th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
+                    User
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

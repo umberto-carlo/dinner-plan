@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div id="event-header-card" th:fragment="eventHeader" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2" th:text="${event.title}">Event
+                    Title</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-4" th:text="${event.description}">Description</p>
+                <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
+                    <span class="font-medium" th:text="#{event.by}">Organizer:</span> <span
+                        th:text="${event.organizer.username}">User</span>
+                    <span class="mx-1">|</span>
+                    <span class="font-medium" th:text="#{event.deadline}">Deadline:</span> <span
+                        th:text="${#temporals.format(event.deadline, 'dd MMM yyyy HH:mm')}">Date</span>
+                </div>
+            </div>
+            <div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    th:classappend="${event.status.name() == 'OPEN' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
+                    th:text="${event.status}">OPEN</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

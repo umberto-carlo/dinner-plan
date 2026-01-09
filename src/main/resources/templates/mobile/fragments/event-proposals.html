@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div id="proposal-list-container" th:fragment="proposalList">
+        <div th:if="${event.proposals.empty}" style="text-align: center; padding: 2rem; color: var(--text-secondary);"
+            th:text="#{event.proposals.none}">
+            Nessuna proposta aggiunta ancora.
+        </div>
+
+        <div th:each="proposal : ${sortedProposals}"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow border-l-4 border-l-primary-500 overflow-hidden mb-4 p-4">
+            <div class="flex flex-col gap-2">
+
+                <!-- Row 1: Location (Title) -->
+                <div
+                    style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary); border-bottom: 1px solid #eee; padding-bottom: 0.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span th:text="${proposal.location}">Location</span>
+                    <!-- Rating Controls (Decided Event - Proposal Level) -->
+                    <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.proposal.id == proposal.id and currentUser != null}"
+                        style="display: flex; gap: 0.25rem; align-items: center;">
+                        <!-- Like -->
+                        <form
+                            th:action="@{/events/{eventId}/proposals/{proposalId}/rate(eventId=${event.id}, proposalId=${proposal.id})}"
+                            method="post">
+                            <input type="hidden" name="isLiked" value="true">
+                            <button type="submit"
+                                class="inline-flex items-center px-2 py-1 border border-border rounded shadow-sm text-xs font-medium"
+                                th:classappend="${userRating == true} ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'"
+                                title="Mi piace">
+                                👎
+                            </button>
+                        </form>
+                        <!-- Dislike -->
+                        <form
+                            th:action="@{/events/{eventId}/proposals/{proposalId}/rate(eventId=${event.id}, proposalId=${proposal.id})}"
+                            method="post">
+                            <input type="hidden" name="isLiked" value="false">
+                            <button type="submit"
+                                class="inline-flex items-center px-2 py-1 border border-border rounded shadow-sm text-xs font-medium"
+                                th:classappend="${userRating == false} ? 'bg-red-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'"
+                                title="Non mi piace">
+                                👎
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Row 2: Description -->
+                <div th:if="${proposal.description}"
+                    style="font-size: 0.95rem; color: var(--text-secondary); font-style: italic;">
+                    <span th:text="${proposal.description}">Descrizione</span>
+                </div>
+
+                <!-- Row 3: Address/Map + Dates -->
+                <div style="margin-top: 0.5rem;">
+                    <!-- Col 1: Address and Map (Stacked) -->
+                    <div style="margin-bottom: 1rem;">
+                        <div th:if="${proposal.address}" style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            📍 <span th:text="${proposal.address}">Indirizzo</span>
+                        </div>
+                        <div th:if="${proposal.address}">
+                            <a th:href="'https://www.google.com/maps/search/?api=1&query=' + ${proposal.address}"
+                                target="_blank"
+                                class="w-full text-center inline-flex justify-center items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                style="text-decoration: none;">
+                                🗺️ Apri Mappa
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Col 2: Dates and Votes -->
+                    <div>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                            <div style="font-weight: 600; font-size: 0.9rem;" th:text="#{event.date}">Date Disponibili:
+                            </div>
+                            <!-- Add Date Button (Organizer) -->
+                            <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
+                                class="inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700"
+                                onclick="toggleDateAddForm(this)" title="Aggiungi Data">+</button>
+                        </div>
+
+                        <!-- Mini Add Date Form (Hidden) -->
+                        <div class="add-date-mini-form"
+                            style="display: none; margin-bottom: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border: 1px dashed var(--border); border-radius: 4px;">
+                            <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
+                                onsubmit="handleAjaxForm(event)">
+                                <input type="hidden" name="location" th:value="${proposal.location}">
+                                <input type="hidden" name="address" th:value="${proposal.address}">
+                                <input type="hidden" name="description" th:value="${proposal.description}">
+                                <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                                    <input type="datetime-local" name="dateOption" required
+                                        style="font-size: 0.8rem; padding: 0.2rem; width: 100%; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: 3px;">
+                                    <button type="submit"
+                                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                        style="padding: 0.2rem 0.5rem; font-size: 0.8rem; width: 100%;">OK</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div th:each="pDate : ${proposal.dates}" th:if="${pDate.dinnerEvent.id == event.id}"
+                            style="margin-bottom: 0.25rem; background: var(--bg-secondary); border-radius: 4px; padding: 0.35rem;"
+                            th:styleappend="${#lists.contains(votedProposalDateIds, pDate.id)} ? 'border: 2px solid #28a745; background-color: rgba(40, 167, 69, 0.05);' : 'border: 1px solid var(--border);'">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 500;">
+                                    <span th:text="${#temporals.format(pDate.date, 'dd MMM HH:mm')}">Date</span>
+                                    <!-- Winner Badge -->
+                                    <span
+                                        th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.id == pDate.id}"
+                                        style="margin-left: 0.25rem; background: #FFD700; color: #000; padding: 1px 4px; border-radius: 2px; font-size: 0.7rem;"
+                                        th:text="#{event.winner}">🏆</span>
+                                </div>
+
+
+                                <!-- Actions -->
+                                <div th:if="${currentUser != null}" style="display: flex; gap: 0.25rem;">
+                                    <!-- Vote Button -->
+                                    <div th:if="${event.status.name() == 'OPEN'}">
+                                        <form th:action="@{/proposals/{id}/vote(id=${pDate.id}, eventId=${event.id})}"
+                                            method="post" onsubmit="handleAjaxForm(event)">
+                                            <button type="submit" class="px-2 py-1 rounded text-xs font-medium border"
+                                                th:classappend="${#lists.contains(votedProposalDateIds, pDate.id)} ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-800' : 'bg-white text-gray-700 border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'"
+                                                th:text="${#lists.contains(votedProposalDateIds, pDate.id)} ? #{event.remove_vote} : #{event.vote}">
+                                                +/-
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <!-- Select Button (Organizer) -->
+                                    <div th:if="${isOrganizer and event.status.name() == 'OPEN'}">
+                                        <form
+                                            th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${pDate.id})}"
+                                            method="post" onsubmit="handleAjaxForm(event)">
+                                            <button type="submit"
+                                                class="inline-flex items-center px-2 py-1 border border-transparent rounded shadow-sm text-xs font-medium text-white bg-primary-600 hover:bg-primary-700"
+                                                th:onclick="'openConfirmationModal(this.form); return false;'"
+                                                th:text="#{event.select}">
+                                                Scegli
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <!-- Delete Date (Organizer, List > 1) -->
+                                    <div
+                                        th:if="${isOrganizer and event.status.name() == 'OPEN' and proposal.dates.size() > 1}">
+                                        <form
+                                            th:action="@{/proposals/{proposalId}/dates/{dateId}/delete(proposalId=${proposal.id}, dateId=${pDate.id}, eventId=${event.id})}"
+                                            method="post" onsubmit="handleAjaxForm(event)">
+                                            <button type="submit" class="text-red-600 hover:text-red-800 font-bold px-2"
+                                                th:onclick="'return confirm(\'' + #{event.actions.delete_confirm} + '\');'"
+                                                title="Rimuovi Data">
+                                                x
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                <span th:text="#{event.votes}">Voti</span>: <span
+                                    th:text="${pDate.votes.size()}">0</span>
+                            </div>
+                            <div th:if="${!pDate.votes.isEmpty()}"
+                                style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.1rem; font-style: italic;">
+                                (<span th:each="vote, iterStat : ${pDate.votes}"><span th:text="${vote.user.username}"
+                                        th:style="${vote.user.username == currentUser.username} ? 'font-weight: bold; color: var(--primary); text-decoration: underline;' : ''">User</span><span
+                                        th:if="${!iterStat.last}">,
+                                    </span></span>)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

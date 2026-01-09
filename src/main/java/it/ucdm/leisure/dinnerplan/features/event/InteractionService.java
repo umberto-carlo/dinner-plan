@@ -6,7 +6,7 @@ import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
 
-import it.ucdm.leisure.dinnerplan.dto.ChatMessageDTO;
+import it.ucdm.leisure.dinnerplan.features.event.dto.ChatMessageDTO;
 import it.ucdm.leisure.dinnerplan.features.user.*;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.*;

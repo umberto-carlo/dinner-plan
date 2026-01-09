@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
-import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
 
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;

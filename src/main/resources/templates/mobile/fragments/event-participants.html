@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div id="participant-lists-container" th:fragment="participantLists"
+        style="display: flex; gap: 1rem; height: 300px;">
+
+        <!-- Left Column: Available Users (OPEN only) -->
+        <div th:if="${event.status?.name() == 'OPEN'}" class="flex-1 flex flex-col h-full border border-border rounded">
+            <div class="p-2 bg-bg-secondary border-b border-border font-semibold text-sm"
+                th:text="#{participants.to_select}">
+                Da Selezionare
+            </div>
+            <div id="left-list" class="flex-1 overflow-y-auto p-2">
+                <div th:each="u : ${allUsers}"
+                    th:if="${u.role.name() != 'ADMIN' and u.username != #authentication.principal.username and !#lists.contains(event.participants, u)}"
+                    class="user-item p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-gray-700 mb-1"
+                    th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
+                    Username
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column: Controls (OPEN only) -->
+        <div th:if="${event.status?.name() == 'OPEN'}" class="flex flex-col gap-2">
+            <button type="button"
+                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                onclick="moveAllRight()" title="Sposta tutti a destra">
+                &gt;&gt;
+            </button>
+            <button type="button"
+                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                onclick="moveSelectedRight()" title="Sposta selezionati a destra">
+                &gt;
+            </button>
+            <button type="button"
+                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                onclick="moveSelectedLeft()" title="Sposta selezionati a sinistra">
+                &lt;
+            </button>
+            <button type="button"
+                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                onclick="moveAllLeft()" title="Sposta tutti a sinistra">
+                &lt;&lt;
+            </button>
+        </div>
+
+        <!-- Right Column: Selected Participants -->
+        <div class="flex-1 flex flex-col h-full border border-border rounded">
+            <div class="p-2 bg-bg-secondary border-b border-border font-semibold text-sm"
+                th:text="#{participants.selected}">
+                Selezionati
+            </div>
+            <div id="right-list" class="flex-1 overflow-y-auto p-2">
+                <div th:each="u : ${allUsers}" th:if="${#lists.contains(event.participants, u)}"
+                    class="user-item p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-gray-700 mb-1"
+                    th:data-id="${u.id}" th:text="${u.username}" onclick="toggleSelection(this)">
+                    Username
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

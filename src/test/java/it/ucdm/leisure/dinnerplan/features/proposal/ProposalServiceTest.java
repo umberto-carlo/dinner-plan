@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import it.ucdm.leisure.dinnerplan.features.user.*;
-import it.ucdm.leisure.dinnerplan.features.event.*;
 
 import java.time.LocalDateTime;
 import java.util.*;

@@ -57,7 +57,9 @@ public class DinnerController {
             @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
-            model.addAttribute("events", dinnerEventService.getEventsForUser(userDetails.getUsername()));
+            List<it.ucdm.leisure.dinnerplan.features.event.DinnerEvent> eventList = dinnerEventService
+                    .getEventsForUser(userDetails.getUsername());
+            model.addAttribute("events", eventList);
             model.addAttribute("rankedProposals", proposalCatalogService.getProposalSuggestions());
             model.addAttribute("user", user);
             model.addAttribute("isOrganizer", user.getRole() == Role.ORGANIZER);
@@ -150,13 +152,14 @@ public class DinnerController {
         if (event == null)
             return false;
 
-        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> allSuggestions = proposalCatalogService
+        List<it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO> allSuggestions = proposalCatalogService
                 .getProposalSuggestions();
         java.util.Set<String> existingKeys = event.getProposals().stream()
                 .map(p -> (p.getLocation() + "|" + (p.getAddress() != null ? p.getAddress() : "")).toLowerCase())
                 .collect(java.util.stream.Collectors.toSet());
 
-        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> filteredSuggestions = allSuggestions.stream()
+        List<it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO> filteredSuggestions = allSuggestions
+                .stream()
                 .filter(dto -> {
                     String key = (dto.getLocation() + "|" + (dto.getAddress() != null ? dto.getAddress() : ""))
                             .toLowerCase();
@@ -230,9 +233,9 @@ public class DinnerController {
         if (populateBaseEventModel(id, model, userDetails) == null)
             return "redirect:/";
         if (userAgentUtils.isMobile(userAgent)) {
-            return "mobile/event_details :: eventHeader";
+            return "mobile/fragments/event-header :: eventHeader";
         }
-        return "event_details :: eventHeader";
+        return "fragments/event-header :: eventHeader";
     }
 
     @GetMapping("/events/{id}/fragments/actions")
@@ -242,9 +245,9 @@ public class DinnerController {
         if (populateBaseEventModel(id, model, userDetails) == null)
             return "redirect:/";
         if (userAgentUtils.isMobile(userAgent)) {
-            return "mobile/event_details :: eventActions";
+            return "mobile/fragments/event-actions :: eventActions";
         }
-        return "event_details :: eventActions";
+        return "fragments/event-actions :: eventActions";
     }
 
     @GetMapping("/events/{id}/fragments/proposals")
@@ -289,9 +292,9 @@ public class DinnerController {
         }
 
         if (userAgentUtils.isMobile(userAgent)) {
-            return "mobile/event_details :: proposalList";
+            return "mobile/fragments/event-proposals :: proposalList";
         }
-        return "event_details :: proposalList";
+        return "fragments/event-proposals :: proposalList";
     }
 
     @GetMapping("/events/{id}/fragments/participants")
@@ -310,7 +313,7 @@ public class DinnerController {
         if (userAgentUtils.isMobile(userAgent)) {
             return "mobile/event_details :: participantLists";
         }
-        return "event_details :: participantLists";
+        return "fragments/event-participants :: participantLists";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
@@ -321,13 +324,14 @@ public class DinnerController {
             return "redirect:/";
         }
 
-        List<it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO> proposals = new ArrayList<>();
+        List<it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO> proposals = new ArrayList<>();
         tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
         for (String encoded : selectedProposals) {
             try {
                 String json = new String(java.util.Base64.getDecoder().decode(encoded));
-                proposals.add(mapper.readValue(json, it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO.class));
+                proposals.add(mapper.readValue(json,
+                        it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO.class));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -342,7 +346,8 @@ public class DinnerController {
 
     @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/events/create-smart")
-    public String createSmartEvent(@ModelAttribute it.ucdm.leisure.dinnerplan.dto.SmartEventRequest request,
+    public String createSmartEvent(
+            @ModelAttribute it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         // Technically this involves creating event AND proposals.
         // DinnerEventService needs a method for this or we coordinate here.
@@ -414,17 +419,17 @@ public class DinnerController {
 
     @GetMapping("/api/calendar/events")
     @org.springframework.web.bind.annotation.ResponseBody
-    public List<it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO> getCalendarEvents(
+    public List<it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO> getCalendarEvents(
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null)
             return new ArrayList<>();
 
         List<DinnerEvent> events = dinnerEventService.getEventsForUser(userDetails.getUsername());
-        List<it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO> calendarEvents = new ArrayList<>();
+        List<it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO> calendarEvents = new ArrayList<>();
 
         for (DinnerEvent event : events) {
             // Add Deadline
-            calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
+            calendarEvents.add(new it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO(
                     event.getId(),
                     "Deadline: " + event.getTitle() + " ("
                             + event.getDeadline().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) + ")",
@@ -434,7 +439,7 @@ public class DinnerController {
 
             // Add Actual Event Date if decided
             if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null) {
-                calendarEvents.add(new it.ucdm.leisure.dinnerplan.dto.CalendarEventDTO(
+                calendarEvents.add(new it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO(
                         event.getId(),
                         "Cena: " + event.getTitle() + " ("
                                 + event.getSelectedProposalDate().getDate()

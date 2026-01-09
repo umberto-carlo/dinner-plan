@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
-import it.ucdm.leisure.dinnerplan.dto.ProposalSuggestionDTO;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 import io.swagger.v3.oas.annotations.Operation;

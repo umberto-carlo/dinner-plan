@@ -1,10 +1,5 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
-
 import it.ucdm.leisure.dinnerplan.features.event.InteractionService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

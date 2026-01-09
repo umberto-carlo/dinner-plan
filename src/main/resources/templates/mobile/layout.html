@@ -6,81 +6,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} ?: 'Dinner Plan'">Dinner Plan</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2}">
     <link rel="stylesheet" th:href="@{/css/fonts.css}">
 
     <!-- Local Tailwind CSS -->
     <script th:src="@{/js/tailwindcss.js}"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class', // matches 'data-theme' strategy if configured, or class
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <script th:src="@{/js/tailwind-config.js}"></script>
 
     <script th:src="@{/js/stomp.min.js}"></script>
     <script>
-            (function () {
-                const savedTheme = localStorage.getItem('theme');
-                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                const theme = savedTheme === 'system' || !savedTheme ? systemTheme : savedTheme;
-                document.documentElement.setAttribute('data-theme', theme);
-            })();
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme === 'system' || !savedTheme ? systemTheme : savedTheme;
+            document.documentElement.setAttribute('data-theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
     </script>
 </head>
 
-<body>
-    <div class="container">
-        <header class="header" style="flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <a href="/" class="logo" style="font-size: 1.4rem;">DinnerPlan</a>
-                <span sec:authorize="isAuthenticated()" style="font-size: 0.9rem; color: var(--text-secondary);">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div class="container mx-auto p-4 max-w-md">
+        <header class="flex flex-col gap-2 p-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+                <a href="/" class="text-xl font-bold text-primary-600 dark:text-primary-400">DinnerPlan</a>
+                <span sec:authorize="isAuthenticated()" class="text-sm text-gray-500 dark:text-gray-400">
                     <span th:text="#{app.welcome(${#authentication.name})}">Ciao, User!</span>
                 </span>
             </div>
 
-            <div class="nav-links"
-                style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.05);">
-                <span sec:authorize="isAuthenticated()"
-                    style="display: flex; gap: 0.75rem; width: 100%; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; gap: 0.75rem;">
-                        <a th:href="@{/profile}" style="font-weight: 500; text-decoration: none; padding: 0.25rem 0;"
+            <div class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+                <span sec:authorize="isAuthenticated()" class="flex w-full justify-between items-center gap-3">
+                    <div class="flex gap-3">
+                        <a th:href="@{/profile}"
+                            class="font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 py-1"
                             th:text="#{app.profile}">Profilo</a>
                         <a sec:authorize="hasAnyRole('ORGANIZER', 'ADMIN')" th:href="@{/admin/users}"
-                            style="font-weight: 500; text-decoration: none; padding: 0.25rem 0;"
+                            class="font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 py-1"
                             th:text="#{app.users}">Utenti</a>
                     </div>
 
-                    <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
-                        <button type="submit" class="btn btn-secondary"
-                            style="padding: 0.3rem 0.8rem; font-size: 0.85rem;" th:text="#{app.logout}">Esci</button>
+                    <form th:action="@{/logout}" method="post" class="inline m-0">
+                        <button type="submit"
+                            class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
+                            th:text="#{app.logout}">Esci</button>
                     </form>
                 </span>
 
-                <span sec:authorize="!isAuthenticated()"
-                    style="width: 100%; display: flex; justify-content: center; gap: 1rem;">
-                    <a th:href="@{/login}" class="btn btn-secondary" th:text="#{app.login}">Accedi</a>
-                    <a th:href="@{/register}" class="btn" th:text="#{app.register}">Registrati</a>
+                <span sec:authorize="!isAuthenticated()" class="flex w-full justify-center gap-4">
+                    <a th:href="@{/login}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        th:text="#{app.login}">Accedi</a>
+                    <a th:href="@{/register}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+                        th:text="#{app.register}">Registrati</a>
                 </span>
             </div>
         </header>
@@ -91,16 +73,18 @@
     </div>
 
     <footer
-        style="text-align: center; padding: 1rem; border-top: 1px solid var(--border); margin-top: 2rem; color: var(--text-secondary); font-size: 0.9rem;">
+        class="text-center p-4 border-t border-gray-200 dark:border-gray-700 mt-8 text-sm text-gray-500 dark:text-gray-400">
         <span th:text="#{app.footer}">&copy; 2025 Dinner Plan</span> |
-        <a th:href="@{/manual}" style="color: var(--primary-color);" th:text="#{app.manual}">Manuale d'Uso</a>
+        <a th:href="@{/manual}"
+            class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+            th:text="#{app.manual}">Manuale d'Uso</a>
 
-        <div style="margin-top: 1rem; display: flex; justify-content: center; gap: 1.5rem; align-items: center;">
+        <div class="mt-4 flex justify-center gap-6 items-center">
             <!-- Theme Switcher -->
-            <div>
-                <label style="display: inline-block; margin-right: 0.5rem;" th:text="#{app.theme}">Tema:</label>
+            <div class="flex items-center gap-2">
+                <label th:text="#{app.theme}">Tema:</label>
                 <select id="theme-selector" onchange="switchTheme(this.value)"
-                    style="width: auto; padding: 0.25rem; display: inline-block;">
+                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 text-xs">
                     <option value="light" th:text="#{theme.light}">☀️ Light</option>
                     <option value="dark" th:text="#{theme.dark}">🌙 Dark</option>
                     <option value="system" th:text="#{theme.system}">💻 System</option>
@@ -108,8 +92,9 @@
             </div>
 
             <!-- Language Switcher -->
-            <form action="" method="get" style="display: inline-block; margin: 0;">
-                <select name="lang" onchange="this.form.submit()" style="padding: 0.25rem; width: auto;">
+            <form action="" method="get" class="inline m-0">
+                <select name="lang" onchange="this.form.submit()"
+                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 text-xs">
                     <option value="it" th:selected="${#locale.language == 'it'}">Italiano</option>
                     <option value="en" th:selected="${#locale.language == 'en'}">English</option>
                     <option value="sv" th:selected="${#locale.language == 'sv'}">Svenska</option>

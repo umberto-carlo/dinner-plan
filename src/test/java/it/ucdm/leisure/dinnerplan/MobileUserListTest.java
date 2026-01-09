@@ -1,7 +1,5 @@
 package it.ucdm.leisure.dinnerplan;
 
-import it.ucdm.leisure.dinnerplan.features.user.User;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

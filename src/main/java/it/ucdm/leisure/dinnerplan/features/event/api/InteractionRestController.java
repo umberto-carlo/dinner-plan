@@ -1,4 +1,4 @@
-package it.ucdm.leisure.dinnerplan.controller.api;
+package it.ucdm.leisure.dinnerplan.features.event.api;
 
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
 

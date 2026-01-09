@@ -1,4 +1,4 @@
-package it.ucdm.leisure.dinnerplan.dto;
+package it.ucdm.leisure.dinnerplan.features.event.dto;
 
 public class ChatMessageDTO {
     private Long id;

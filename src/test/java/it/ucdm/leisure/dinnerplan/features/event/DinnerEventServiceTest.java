@@ -9,7 +9,6 @@ import static org.mockito.Mockito.*;
 import it.ucdm.leisure.dinnerplan.features.user.*;
 import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRepository;
 
 import java.time.LocalDateTime;

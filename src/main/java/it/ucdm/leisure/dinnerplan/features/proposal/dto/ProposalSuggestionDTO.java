@@ -1,4 +1,4 @@
-package it.ucdm.leisure.dinnerplan.dto;
+package it.ucdm.leisure.dinnerplan.features.proposal.dto;
 
 public class ProposalSuggestionDTO {
     private String location;

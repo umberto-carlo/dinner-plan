@@ -1,4 +1,4 @@
-package it.ucdm.leisure.dinnerplan.controller.api;
+package it.ucdm.leisure.dinnerplan.features.proposal.api;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import io.swagger.v3.oas.annotations.Operation;
