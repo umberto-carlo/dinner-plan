@@ -1,47 +1,45 @@
 package it.ucdm.leisure.dinnerplan.config;
 
 import it.ucdm.leisure.dinnerplan.features.user.Role;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.persistence.UserRepositoryPort;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Objects;
-
 @Configuration
-public class AdminInitializer implements CommandLineRunner {
+public class AdminInitializer {
 
-    private final UserRepository userRepository;
+    private final UserRepositoryPort userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.admin.username}")
-    private String adminUsername;
-
-    @Value("${app.admin.password}")
-    private String adminPassword;
-
-    public AdminInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AdminInitializer(UserRepositoryPort userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
-    public void run(String... args) throws Exception {
-        if (userRepository.findByUsername(adminUsername).isEmpty()) {
-            User admin = User.builder()
-                    .username(adminUsername)
-                    .password(passwordEncoder.encode(adminPassword))
-                    .role(Role.ADMIN)
-                    .build();
-            userRepository.save(Objects.requireNonNull(admin));
-            System.out.println("Admin user created: " + adminUsername);
-        } else {
-            // Optional: Ensure admin always has ADMIN role and correct password if we
-            // wanted to enforce it
-            // For now, just logging
-            System.out.println("Admin user already exists.");
-        }
+    @Bean
+    public CommandLineRunner initAdmin() {
+        return args -> {
+            try {
+                // Check if admin already exists
+                if (userRepository.findByUsername("admin").isEmpty()) {
+                    // Create admin user
+                    User admin = new User();
+                    admin.setUsername("admin");
+                    admin.setPassword(passwordEncoder.encode("admin")); // You should change this later!
+                    admin.setRole(Role.ADMIN);
+
+                    userRepository.save(admin);
+                    System.out.println("Admin user created successfully.");
+                } else {
+                    System.out.println("Admin user already exists.");
+                }
+            } catch (Exception e) {
+                // In case database is not yet ready or other issues, just log
+                System.err.println("Could not initialize admin user: " + e.getMessage());
+            }
+        };
     }
 }

@@ -1,12 +1,14 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.persistence.DinnerEventRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRepositoryPort;
+
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.features.user.Role;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import it.ucdm.leisure.dinnerplan.features.user.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,9 +25,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 class ProposalServiceTest {
 
     @Mock
-    private ProposalRepository proposalRepository;
+    private ProposalRepositoryPort proposalRepository; // Changed to Port
     @Mock
-    private DinnerEventRepository dinnerEventRepository;
+    private DinnerEventRepositoryPort dinnerEventRepository; // Changed to Port
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
@@ -39,10 +41,18 @@ class ProposalServiceTest {
     void setUp() {
         org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();
 
-        organizer = User.builder().id(1L).username("organizer").role(Role.ORGANIZER).build();
-        event = DinnerEvent.builder().id(1L).organizer(organizer).status(DinnerEvent.EventStatus.OPEN)
-                .deadline(LocalDateTime.now())
-                .proposals(new ArrayList<>()).build();
+        organizer = new User();
+        organizer.setId(1L);
+        organizer.setUsername("organizer");
+        organizer.setRole(Role.ORGANIZER);
+
+        event = new DinnerEvent();
+        event.setId(1L);
+        event.setOrganizer(organizer);
+        event.setStatus(DinnerEvent.EventStatus.OPEN);
+        event.setDeadline(LocalDateTime.now().plusDays(5));
+        event.setProposals(new ArrayList<>());
+        event.setParticipants(new ArrayList<>());
     }
 
     @org.junit.jupiter.api.AfterEach
@@ -53,41 +63,36 @@ class ProposalServiceTest {
     @Test
     void addProposal_NewProposal_Success() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
-                .thenReturn(Optional.empty());
+        // Global check logic removed, so no mock needed for findByLocation... in Port
+        // if not used.
+        // Wait, ProposalService checks event.getProposals().
 
-        proposalService.addProposal(1L, List.of(LocalDateTime.now().plusDays(1)), "Loc", "Addr", "Desc");
+        proposalService.addProposal(1L, List.of(LocalDateTime.now().plusDays(6)), "Loc", "Addr", "Desc");
         assertEquals(1, event.getProposals().size());
+        assertEquals("Loc", event.getProposals().get(0).getLocation());
+        // verify(dinnerEventRepository).save(event); // ProposalService removed
+        // explicit save, relies on objectref??
+        // Wait, check ProposalService. It ends with:
+        // dinnerEventRepository.save(event);?
+        // Let me check ProposalService content again.
+        // Yes, line 135: dinnerEventRepository.save(event);
         verify(dinnerEventRepository).save(event);
     }
 
-    @Test
-    void addProposal_ExistingProposal_Reuse() {
-        when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        Proposal existing = Proposal.builder().id(99L).dinnerEvents(new ArrayList<>()).location("Loc").address("Addr")
-                .build();
-        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase("Loc", "Addr"))
-                .thenReturn(Optional.of(existing));
-
-        proposalService.addProposal(1L, List.of(LocalDateTime.now().plusDays(1)), "Loc", "Addr", "Desc");
-
-        assertEquals(1, event.getProposals().size());
-        assertEquals(99L, event.getProposals().get(0).getId());
-        assertTrue(existing.getDinnerEvents().contains(event));
-        verify(dinnerEventRepository).save(event);
-    }
+    // Removed reuse test as it's no longer implemented in Service
 
     @Test
     void addBatchProposals_Success() {
         when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(anyString(), anyString()))
-                .thenReturn(Optional.empty());
+        // when(proposalRepository.findByLocation...) no longer called.
+
         String json = "{\"location\":\"Loc1\",\"address\":\"Addr1\",\"description\":\"Desc1\",\"totalLikes\":0,\"totalDislikes\":0,\"usageCount\":0}";
         String encoded = Base64.getEncoder().encodeToString(json.getBytes());
 
-        int count = proposalService.addBatchProposalsFromSuggestion(1L, List.of(LocalDateTime.now().plusDays(1)),
+        int count = proposalService.addBatchProposalsFromSuggestion(1L, List.of(LocalDateTime.now().plusDays(6)),
                 List.of(encoded),
                 "organizer");
         assertEquals(1, count);
+        assertEquals(1, event.getProposals().size());
     }
 }

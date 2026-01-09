@@ -1,11 +1,13 @@
-package it.ucdm.leisure.dinnerplan.features.user;
+package it.ucdm.leisure.dinnerplan.persistence.sql.entity;
 
+import it.ucdm.leisure.dinnerplan.features.user.Role;
+import it.ucdm.leisure.dinnerplan.model.User;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-public class User {
+public class UserSqlEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,14 +24,22 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    public User() {
+    public UserSqlEntity() {
     }
 
-    public User(Long id, String username, String password, Role role) {
+    public UserSqlEntity(Long id, String username, String password, Role role) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.role = role;
+    }
+
+    public User toDomain() {
+        return new User(this.id, this.username, this.password, this.role);
+    }
+
+    public static UserSqlEntity fromDomain(User user) {
+        return new UserSqlEntity(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
     }
 
     public static UserBuilder builder() {
@@ -94,8 +104,8 @@ public class User {
             return this;
         }
 
-        public User build() {
-            return new User(id, username, password, role);
+        public UserSqlEntity build() {
+            return new UserSqlEntity(id, username, password, role);
         }
     }
 }

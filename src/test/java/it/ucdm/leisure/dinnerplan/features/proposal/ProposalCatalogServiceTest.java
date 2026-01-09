@@ -1,6 +1,9 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.model.ProposalRating;
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRepositoryPort;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,7 +24,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 class ProposalCatalogServiceTest {
 
     @Mock
-    private ProposalRepository proposalRepository;
+    private ProposalRepositoryPort proposalRepository;
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
@@ -30,14 +33,22 @@ class ProposalCatalogServiceTest {
 
     @Test
     void getProposalSuggestions_ReturnsProposalsInCorrectOrder() {
-        Proposal p1 = Proposal.builder().id(1L).location("Loc1").address("Addr1").description("Desc1").build();
-        Proposal p2 = Proposal.builder().id(2L).location("Loc2").address("Addr2").description("Desc2").build();
+        Proposal p1 = new Proposal();
+        p1.setId(1L);
+        p1.setLocation("Loc1");
+        p1.setAddress("Addr1");
+        p1.setDescription("Desc1");
 
-        // p1 used in 2 events, p2 in 0
+        Proposal p2 = new Proposal();
+        p2.setId(2L);
+        p2.setLocation("Loc2");
+        p2.setAddress("Addr2");
+        p2.setDescription("Desc2");
+
+        // p1 used in 1 event, p2 in 0 (ManyToOne)
         DinnerEvent e1 = new DinnerEvent();
-        DinnerEvent e2 = new DinnerEvent();
-        p1.setDinnerEvents(new ArrayList<>(List.of(e1, e2)));
-        p2.setDinnerEvents(new ArrayList<>());
+        p1.setDinnerEvent(e1);
+        p2.setDinnerEvent(null);
 
         // p2 has 5 likes, p1 has 0
         ProposalRating r = new ProposalRating();

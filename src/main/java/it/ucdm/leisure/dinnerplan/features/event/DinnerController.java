@@ -1,8 +1,9 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
 import it.ucdm.leisure.dinnerplan.features.user.Role;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.Proposal;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 
@@ -23,7 +24,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import java.util.List;
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
 @Controller
@@ -57,7 +57,7 @@ public class DinnerController {
             @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
-            List<it.ucdm.leisure.dinnerplan.features.event.DinnerEvent> eventList = dinnerEventService
+            List<DinnerEvent> eventList = dinnerEventService
                     .getEventsForUser(userDetails.getUsername());
             model.addAttribute("events", eventList);
             model.addAttribute("rankedProposals", proposalCatalogService.getProposalSuggestions());
@@ -110,7 +110,7 @@ public class DinnerController {
             @RequestParam String deadline, @RequestParam(required = false) List<Long> participantIds,
             @AuthenticationPrincipal UserDetails userDetails) {
         LocalDateTime dt = LocalDateTime.parse(deadline);
-        DinnerEvent event = dinnerEventService.createEvent(title, description, dt, userDetails.getUsername(),
+        DinnerEvent event = dinnerEventService.createEvent(userDetails.getUsername(), title, description, dt,
                 participantIds);
         return "redirect:/events/" + event.getId();
     }
@@ -170,19 +170,25 @@ public class DinnerController {
         model.addAttribute("recentProposals", filteredSuggestions);
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        Long selectedProposalId = event.getSelectedProposalDate() != null
-                ? event.getSelectedProposalDate().getProposal().getId()
-                : -1L;
+
+        Proposal selectedProposal = null;
+        if (event.getSelectedProposalDate() != null) {
+            final Long selectedDateId = event.getSelectedProposalDate().getId();
+            selectedProposal = sortedProposals.stream()
+                    .filter(p -> p.getDates().stream().anyMatch(d -> d.getId().equals(selectedDateId)))
+                    .findFirst()
+                    .orElse(null);
+        }
+        final Long selectedProposalId = selectedProposal != null ? selectedProposal.getId() : -1L;
+
         sortedProposals.sort((p1, p2) -> {
             if (p1.getId().equals(selectedProposalId))
                 return -1;
             if (p2.getId().equals(selectedProposalId))
                 return 1;
             int v1 = p1.getDates().stream()
-                    .filter(d -> d.getDinnerEvent().getId().equals(id))
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             int v2 = p2.getDates().stream()
-                    .filter(d -> d.getDinnerEvent().getId().equals(id))
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             return Integer.compare(v2, v1);
         });
@@ -197,9 +203,9 @@ public class DinnerController {
         var votedProposalDateIds = votes.stream().map(v -> v.getProposalDate().getId()).toList();
         model.addAttribute("votedProposalDateIds", votedProposalDateIds);
 
-        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null) {
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && selectedProposal != null) {
             interactionService
-                    .getUserRatingForProposal(event.getSelectedProposalDate().getProposal().getId(), user.getId())
+                    .getUserRatingForProposal(selectedProposal.getId(), user.getId())
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
@@ -259,19 +265,25 @@ public class DinnerController {
             return "redirect:/";
 
         List<Proposal> sortedProposals = new ArrayList<>(proposalService.getProposalsForEvent(id));
-        Long selectedProposalId = event.getSelectedProposalDate() != null
-                ? event.getSelectedProposalDate().getProposal().getId()
-                : -1L;
+
+        Proposal selectedProposal = null;
+        if (event.getSelectedProposalDate() != null) {
+            final Long selectedDateId = event.getSelectedProposalDate().getId();
+            selectedProposal = sortedProposals.stream()
+                    .filter(p -> p.getDates().stream().anyMatch(d -> d.getId().equals(selectedDateId)))
+                    .findFirst()
+                    .orElse(null);
+        }
+        final Long selectedProposalId = selectedProposal != null ? selectedProposal.getId() : -1L;
+
         sortedProposals.sort((p1, p2) -> {
             if (p1.getId().equals(selectedProposalId))
                 return -1;
             if (p2.getId().equals(selectedProposalId))
                 return 1;
             int v1 = p1.getDates().stream()
-                    .filter(d -> d.getDinnerEvent().getId().equals(id))
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             int v2 = p2.getDates().stream()
-                    .filter(d -> d.getDinnerEvent().getId().equals(id))
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             return Integer.compare(v2, v1);
         });
@@ -284,10 +296,9 @@ public class DinnerController {
             model.addAttribute("votedProposalDateIds", votedProposalDateIds);
         }
 
-        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null
-                && user != null) {
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && selectedProposal != null && user != null) {
             interactionService
-                    .getUserRatingForProposal(event.getSelectedProposalDate().getProposal().getId(), user.getId())
+                    .getUserRatingForProposal(selectedProposal.getId(), user.getId())
                     .ifPresent(rating -> model.addAttribute("userRating", rating));
         }
 
@@ -375,13 +386,12 @@ public class DinnerController {
         // I need to ensure that method exists in DinnerEventService. I will check/add
         // it.
 
-        it.ucdm.leisure.dinnerplan.features.event.DinnerEvent event = dinnerEventService.createEvent(
+        DinnerEvent event = dinnerEventService.createEvent(
+                userDetails.getUsername(),
                 request.getTitle(),
                 request.getDescription(),
                 LocalDateTime.parse(request.getDeadline()),
-                userDetails.getUsername(),
-                new ArrayList<>() // No participants initially? Smart event usually implies just creation.
-        );
+                new ArrayList<>());
 
         // Oh, createEventWithProposals was atomic in DinnerService.
         // I should probably have duplicated/moved that logic to DinnerEventService.
@@ -439,6 +449,15 @@ public class DinnerController {
 
             // Add Actual Event Date if decided
             if (event.getStatus() == DinnerEvent.EventStatus.DECIDED && event.getSelectedProposalDate() != null) {
+                // Find Proposal for selected date
+                Proposal selectedProposal = event.getProposals().stream()
+                        .filter(p -> p.getDates().stream()
+                                .anyMatch(d -> d.getId().equals(event.getSelectedProposalDate().getId())))
+                        .findFirst()
+                        .orElse(null);
+
+                String location = selectedProposal != null ? selectedProposal.getLocation() : "Unknown Location";
+
                 calendarEvents.add(new it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO(
                         event.getId(),
                         "Cena: " + event.getTitle() + " ("
@@ -447,7 +466,7 @@ public class DinnerController {
                                 + ")",
                         event.getSelectedProposalDate().getDate(),
                         "EVENT",
-                        "Cena presso " + event.getSelectedProposalDate().getProposal().getLocation()));
+                        "Cena presso " + location));
             }
         }
         return calendarEvents;

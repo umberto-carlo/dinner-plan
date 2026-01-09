@@ -1,5 +1,9 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
+import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.model.ProposalRating;
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRepositoryPort;
+
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -13,10 +17,10 @@ import java.util.Objects;
 @Service
 public class ProposalCatalogService {
 
-    private final ProposalRepository proposalRepository;
+    private final ProposalRepositoryPort proposalRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public ProposalCatalogService(ProposalRepository proposalRepository, SimpMessagingTemplate messagingTemplate) {
+    public ProposalCatalogService(ProposalRepositoryPort proposalRepository, SimpMessagingTemplate messagingTemplate) {
         this.proposalRepository = proposalRepository;
         this.messagingTemplate = messagingTemplate;
     }
@@ -28,13 +32,11 @@ public class ProposalCatalogService {
             return; // Already exists, do nothing
         }
 
-        Proposal proposal = Proposal.builder()
-                .dinnerEvents(new ArrayList<>())
-                .dates(new ArrayList<>())
-                .location(location)
-                .address(address)
-                .description(description)
-                .build();
+        Proposal proposal = new Proposal();
+        proposal.setDates(new ArrayList<>());
+        proposal.setLocation(location);
+        proposal.setAddress(address);
+        proposal.setDescription(description);
 
         proposalRepository.save(Objects.requireNonNull(proposal));
 
@@ -69,7 +71,7 @@ public class ProposalCatalogService {
                     .usageCount(0)
                     .build());
 
-            int eventCount = (p.getDinnerEvents() != null) ? p.getDinnerEvents().size() : 0;
+            int eventCount = (p.getDinnerEvent() != null) ? 1 : 0;
             dto.setUsageCount(dto.getUsageCount() + eventCount);
 
             if (p.getRatings() != null) {

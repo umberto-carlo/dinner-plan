@@ -1,6 +1,6 @@
 package it.ucdm.leisure.dinnerplan.features.event.api;
 
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
+import it.ucdm.leisure.dinnerplan.model.DinnerEventMessage;
 
 import it.ucdm.leisure.dinnerplan.features.event.InteractionService;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,19 +1,21 @@
 package it.ucdm.leisure.dinnerplan.features.user;
 
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.persistence.UserRepositoryPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.List;
-import java.util.Objects;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
+    private final UserRepositoryPort userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepositoryPort userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -24,13 +26,12 @@ public class UserService {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        User user = User.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
-                .role(role)
-                .build();
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
 
-        return userRepository.save(Objects.requireNonNull(user));
+        return userRepository.save(user);
     }
 
     public User findByUsername(String username) {
@@ -41,7 +42,7 @@ public class UserService {
     public void changePassword(String username, String newPassword) {
         User user = findByUsername(username);
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(Objects.requireNonNull(user));
+        userRepository.save(user);
     }
 
     public List<User> getAllUsers() {
@@ -49,35 +50,37 @@ public class UserService {
     }
 
     public List<User> getAllUsersExceptAdmins() {
-        return userRepository.findByRoleNot(it.ucdm.leisure.dinnerplan.features.user.Role.ADMIN);
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRole() != Role.ADMIN)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public void resetPassword(Long userId, String newPassword) {
-        User user = userRepository.findById(Objects.requireNonNull(userId))
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(Objects.requireNonNull(user));
+        userRepository.save(user);
     }
 
     @Transactional
     public void promoteUserToOrganizer(Long userId) {
-        User user = userRepository.findById(Objects.requireNonNull(userId))
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setRole(Role.ORGANIZER);
-        userRepository.save(Objects.requireNonNull(user));
+        userRepository.save(user);
     }
 
     @Transactional
     public void deleteUser(Long userId) {
-        userRepository.deleteById(Objects.requireNonNull(userId));
+        userRepository.deleteById(userId);
     }
 
     @Transactional
     public void updateUserRole(Long userId, Role role) {
-        User user = userRepository.findById(Objects.requireNonNull(userId))
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setRole(role);
-        userRepository.save(Objects.requireNonNull(user));
+        userRepository.save(user);
     }
 }

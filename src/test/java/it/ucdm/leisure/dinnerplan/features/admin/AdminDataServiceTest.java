@@ -3,9 +3,13 @@ package it.ucdm.leisure.dinnerplan.features.admin;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import it.ucdm.leisure.dinnerplan.features.user.*;
-import it.ucdm.leisure.dinnerplan.features.event.*;
-import it.ucdm.leisure.dinnerplan.features.proposal.*;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaDinnerEventMessageRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaDinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaProposalDateRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaProposalRatingRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaProposalRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaUserRepository;
+import it.ucdm.leisure.dinnerplan.persistence.sql.JpaVoteRepository;
 
 import java.io.ByteArrayInputStream;
 
@@ -25,19 +29,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AdminDataServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private JpaUserRepository userRepository;
     @Mock
-    private DinnerEventRepository dinnerEventRepository;
+    private JpaDinnerEventRepository dinnerEventRepository;
     @Mock
-    private ProposalRepository proposalRepository;
+    private JpaProposalRepository proposalRepository;
     @Mock
-    private ProposalDateRepository proposalDateRepository;
+    private JpaProposalDateRepository proposalDateRepository;
     @Mock
-    private ProposalRatingRepository proposalRatingRepository;
+    private JpaProposalRatingRepository proposalRatingRepository;
     @Mock
-    private VoteRepository voteRepository;
+    private JpaVoteRepository voteRepository;
     @Mock
-    private DinnerEventMessageRepository messageRepository;
+    private JpaDinnerEventMessageRepository messageRepository;
     @Mock
     private BackupMapper backupMapper;
 

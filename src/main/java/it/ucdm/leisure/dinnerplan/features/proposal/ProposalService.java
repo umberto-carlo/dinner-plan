@@ -1,9 +1,11 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.model.ProposalDate;
+import it.ucdm.leisure.dinnerplan.persistence.DinnerEventRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRepositoryPort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +18,12 @@ import java.util.Objects;
 @Service
 public class ProposalService {
 
-    private final ProposalRepository proposalRepository;
-    private final DinnerEventRepository dinnerEventRepository;
+    private final ProposalRepositoryPort proposalRepository;
+    private final DinnerEventRepositoryPort dinnerEventRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
-    public ProposalService(ProposalRepository proposalRepository, DinnerEventRepository dinnerEventRepository,
+    public ProposalService(ProposalRepositoryPort proposalRepository, DinnerEventRepositoryPort dinnerEventRepository,
             SimpMessagingTemplate messagingTemplate) {
         this.proposalRepository = proposalRepository;
         this.dinnerEventRepository = dinnerEventRepository;
@@ -29,7 +31,7 @@ public class ProposalService {
     }
 
     public List<Proposal> getProposalsForEvent(Long eventId) {
-        return proposalRepository.findAllByDinnerEventsId(eventId);
+        return proposalRepository.findAllByDinnerEventId(eventId);
     }
 
     @Transactional
@@ -43,31 +45,24 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        // Check if proposal already exists in DB (Global Uniqueness)
-        Proposal proposal = proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address)
+        // Check if proposal already exists FOR THIS EVENT
+        Proposal proposal = event.getProposals().stream()
+                .filter(p -> p.getLocation().equalsIgnoreCase(location) &&
+                        (address == null || p.getAddress().equalsIgnoreCase(address)))
+                .findFirst()
                 .orElse(null);
 
         if (proposal == null) {
-            proposal = Proposal.builder()
-                    .dinnerEvents(new ArrayList<>(List.of(event)))
-                    .location(location)
-                    .address(address)
-                    .description(description)
-                    .dates(new ArrayList<>())
-                    .build();
+            proposal = new Proposal();
+            proposal.setDinnerEvent(event);
+            proposal.setLocation(location);
+            proposal.setAddress(address);
+            proposal.setDescription(description);
+            proposal.setDates(new ArrayList<>());
+
             event.getProposals().add(proposal);
+            // Proposal will be saved via cascade or we can save it explicitly if needed
         } else {
-            // Found existing global proposal. Check if it's already linked to this event.
-            // If the proposal is not associated with the event, we associate them.
-            if (!proposal.getDinnerEvents().contains(event)) {
-                proposal.getDinnerEvents().add(event);
-                event.getProposals().add(proposal);
-            }
-            // Also, update description if the new one is provided and significant?
-            // Requirement says "transparently use existing". Usually implies keeping
-            // existing data or merging.
-            // We'll keep existing description to avoid overriding with potentially less
-            // info, or update if empty.
             if ((proposal.getDescription() == null || proposal.getDescription().isBlank()) && description != null
                     && !description.isBlank()) {
                 proposal.setDescription(description);
@@ -89,14 +84,38 @@ public class ProposalService {
                             "Impossibile aggiungere una data precedente alla scadenza dell'evento ("
                                     + event.getDeadline().format(formatter) + ")");
                 }
+                Proposal finalProposal = proposal;
                 boolean exists = proposal.getDates().stream()
-                        .anyMatch(existing -> existing.getDate().isEqual(d) && existing.getDinnerEvent().equals(event));
+                        .anyMatch(existing -> existing.getDate().isEqual(d));
                 if (!exists) {
-                    proposal.getDates()
-                            .add(ProposalDate.builder().date(d).proposal(proposal).dinnerEvent(event).build());
+                    ProposalDate newDate = new ProposalDate();
+                    newDate.setDate(d);
+                    newDate.setProposal(finalProposal);
+                    // newDate.setDinnerEvent(event); // Not needed as derived? But if mapped:
+                    // ProposalDate doesn't have dinnerEvent field?
+                    // Wait, ProposalDateSqlEntity had it. ProposalDate Domain?
+                    // Previous step 1517: ProposalDate Domain does NOT have dinnerEvent field.
+                    // So we don't set it.
+
+                    proposal.getDates().add(newDate);
                 }
             }
         }
+
+        // Ensure changes to proposal are saved?
+        // If proposal is new, we need to save it?
+        // `event.getProposals().add(proposal)`
+        // `dinnerEventRepository.save(event)` should cascade to proposals.
+        // But `SqlDinnerEventAdapter` implementation:
+        // `DinnerEventSqlEntity.fromDomain(event)`
+        // -> `proposals.stream().map(ProposalSqlEntity::fromDomain)`
+        // `fromDomain` creates new `ProposalSqlEntity` with ID (if present) or null.
+        // JPA `save` will cascade persist/merge.
+        // So saving event should be enough IF cascading is set on
+        // `DinnerEventSqlEntity.proposals`.
+        // `DinnerEventSqlEntity` has `@ManyToMany(cascade = { CascadeType.PERSIST,
+        // CascadeType.MERGE })`.
+        // YES.
 
         dinnerEventRepository.save(event);
 
@@ -132,8 +151,6 @@ public class ProposalService {
     public int addBatchProposalsFromSuggestion(Long eventId, List<LocalDateTime> dateOptions,
             List<String> encodedProposals, String username) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
-        // Reuse validation logic effectively via helper or direct call
-        // For simplicity, re-fetch validation context
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 

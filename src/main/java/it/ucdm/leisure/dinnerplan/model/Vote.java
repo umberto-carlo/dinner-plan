@@ -1,27 +1,10 @@
-package it.ucdm.leisure.dinnerplan.features.proposal;
+package it.ucdm.leisure.dinnerplan.model;
 
-import it.ucdm.leisure.dinnerplan.features.user.User;
+import lombok.Builder;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "votes", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "proposal_date_id" })
-})
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Vote {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "proposal_date_id", nullable = false)
     private ProposalDate proposalDate;
 
     public Vote() {
@@ -33,6 +16,8 @@ public class Vote {
         this.proposalDate = proposalDate;
     }
 
+    // Builder pattern implementation manually or using Lombok if available
+    // Assuming Lombok is available due to .builder() usage in code
     public static VoteBuilder builder() {
         return new VoteBuilder();
     }
@@ -53,7 +38,6 @@ public class Vote {
         this.user = user;
     }
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
     public ProposalDate getProposalDate() {
         return proposalDate;
     }

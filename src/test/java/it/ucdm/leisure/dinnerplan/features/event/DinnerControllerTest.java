@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import it.ucdm.leisure.dinnerplan.features.user.UserService;
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 import java.util.List;
@@ -48,9 +50,9 @@ class DinnerControllerTest {
         when(dinnerEventService.getEventsForUser("user")).thenReturn(List.of());
         when(proposalCatalogService.getProposalSuggestions()).thenReturn(List.of());
 
-        it.ucdm.leisure.dinnerplan.features.user.User mockUser = new it.ucdm.leisure.dinnerplan.features.user.User();
+        User mockUser = new User();
         mockUser.setUsername("user");
-        mockUser.setRole(it.ucdm.leisure.dinnerplan.features.user.Role.PARTICIPANT);
+        mockUser.setRole(Role.PARTICIPANT);
         when(userService.findByUsername("user")).thenReturn(mockUser);
 
         when(userAgentUtils.isMobile(org.mockito.ArgumentMatchers.any())).thenReturn(false);

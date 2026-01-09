@@ -1,13 +1,13 @@
 package it.ucdm.leisure.dinnerplan.features.admin;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
-import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
+import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.model.DinnerEventMessage;
+import it.ucdm.leisure.dinnerplan.model.Vote;
+import it.ucdm.leisure.dinnerplan.model.ProposalRating;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.ProposalDate;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
 
 import it.ucdm.leisure.dinnerplan.dto.backup.*;
 
@@ -33,17 +33,18 @@ public class BackupMapper {
     public DinnerEventBackupDTO toBackupDTO(DinnerEvent event) {
         if (event == null)
             return null;
-        return DinnerEventBackupDTO.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .description(event.getDescription())
-                .deadline(event.getDeadline())
-                .organizerId(event.getOrganizer().getId())
-                .status(event.getStatus())
-                .selectedProposalDateId(
-                        event.getSelectedProposalDate() != null ? event.getSelectedProposalDate().getId() : null)
-                .participantIds(event.getParticipants().stream().map(User::getId).collect(Collectors.toList()))
-                .build();
+        DinnerEventBackupDTO dto = new DinnerEventBackupDTO();
+        dto.setId(event.getId());
+        dto.setTitle(event.getTitle());
+        dto.setDescription(event.getDescription());
+        dto.setDeadline(event.getDeadline());
+        dto.setStatus(event.getStatus());
+        dto.setOrganizer(event.getOrganizer().getUsername());
+        dto.setParticipants(event.getParticipants().stream().map(User::getUsername).collect(Collectors.toList()));
+        if (event.getProposals() != null) {
+            dto.setProposalIds(event.getProposals().stream().map(Proposal::getId).collect(Collectors.toSet()));
+        }
+        return dto;
     }
 
     public ProposalBackupDTO toBackupDTO(Proposal proposal) {
@@ -54,8 +55,8 @@ public class BackupMapper {
                 .location(proposal.getLocation())
                 .address(proposal.getAddress())
                 .description(proposal.getDescription())
-                .dinnerEventIds(
-                        proposal.getDinnerEvents().stream().map(DinnerEvent::getId).collect(Collectors.toList()))
+                .dinnerEventIds(proposal.getDinnerEvent() != null ? List.of(proposal.getDinnerEvent().getId())
+                        : java.util.Collections.emptyList())
                 .build();
     }
 
@@ -66,7 +67,9 @@ public class BackupMapper {
                 .id(pd.getId())
                 .date(pd.getDate())
                 .proposalId(pd.getProposal().getId())
-                .dinnerEventId(pd.getDinnerEvent() != null ? pd.getDinnerEvent().getId() : null)
+                .dinnerEventId((pd.getProposal() != null && pd.getProposal().getDinnerEvent() != null)
+                        ? pd.getProposal().getDinnerEvent().getId()
+                        : null)
                 .build();
     }
 

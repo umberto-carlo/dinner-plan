@@ -1,50 +1,20 @@
-package it.ucdm.leisure.dinnerplan.features.event;
+package it.ucdm.leisure.dinnerplan.model;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
-
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "dinner_events")
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class DinnerEvent {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String title;
-
     private String description;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organizer_id", nullable = false)
     private User organizer;
-
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    @JoinTable(name = "event_proposals", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "proposal_id"))
     private List<Proposal> proposals = new ArrayList<>();
-
     private LocalDateTime deadline;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "selected_proposal_date_id")
     private ProposalDate selectedProposalDate;
-
-    @ManyToMany
-    @JoinTable(name = "event_participants", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> participants = new ArrayList<>();
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DinnerEventMessage> messages = new ArrayList<>();
-
-    @Enumerated(EnumType.STRING)
     private EventStatus status;
 
     public enum EventStatus {
@@ -115,6 +85,10 @@ public class DinnerEvent {
         this.proposals = proposals;
     }
 
+    public void addProposal(Proposal proposal) {
+        this.proposals.add(proposal);
+    }
+
     public LocalDateTime getDeadline() {
         return deadline;
     }
@@ -145,6 +119,10 @@ public class DinnerEvent {
 
     public void setMessages(List<DinnerEventMessage> messages) {
         this.messages = messages;
+    }
+
+    public void addMessage(DinnerEventMessage message) {
+        this.messages.add(message);
     }
 
     public EventStatus getStatus() {

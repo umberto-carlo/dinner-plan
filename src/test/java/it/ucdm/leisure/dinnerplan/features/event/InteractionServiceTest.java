@@ -1,15 +1,20 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
+import it.ucdm.leisure.dinnerplan.model.Proposal;
+import it.ucdm.leisure.dinnerplan.model.User;
+import it.ucdm.leisure.dinnerplan.model.ProposalRating;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
-import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRepository;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRatingRepository;
-import it.ucdm.leisure.dinnerplan.features.proposal.VoteRepository;
+import it.ucdm.leisure.dinnerplan.model.Vote;
+import it.ucdm.leisure.dinnerplan.model.ProposalDate;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.model.DinnerEventMessage;
+
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.ProposalRatingRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.VoteRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.UserRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.DinnerEventRepositoryPort;
+import it.ucdm.leisure.dinnerplan.persistence.DinnerEventMessageRepositoryPort;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -31,17 +36,17 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 class InteractionServiceTest {
 
     @Mock
-    private VoteRepository voteRepository;
+    private VoteRepositoryPort voteRepository;
     @Mock
-    private ProposalRepository proposalRepository;
+    private ProposalRepositoryPort proposalRepository;
     @Mock
-    private UserRepository userRepository;
+    private UserRepositoryPort userRepository;
     @Mock
-    private DinnerEventRepository dinnerEventRepository;
+    private DinnerEventRepositoryPort dinnerEventRepository;
     @Mock
-    private ProposalRatingRepository proposalRatingRepository;
+    private ProposalRatingRepositoryPort proposalRatingRepository;
     @Mock
-    private DinnerEventMessageRepository dinnerEventMessageRepository;
+    private DinnerEventMessageRepositoryPort dinnerEventMessageRepository;
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
@@ -56,12 +61,25 @@ class InteractionServiceTest {
     void setUp() {
         org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization();
 
-        participant = User.builder().id(2L).username("participant").role(Role.PARTICIPANT).build();
-        event = DinnerEvent.builder().id(1L).deadline(LocalDateTime.now().plusDays(1))
-                .participants(List.of(participant)).organizer(User.builder().username("org").build()).build();
-        proposal = Proposal.builder().id(1L).dinnerEvents(new ArrayList<>(List.of(event))).build();
-        ProposalDate pd = ProposalDate.builder().id(10L).date(LocalDateTime.now()).proposal(proposal).dinnerEvent(event)
-                .build();
+        participant = new User(2L, "participant", "pass", Role.PARTICIPANT);
+        event = new DinnerEvent();
+        event.setId(1L);
+        event.setDeadline(LocalDateTime.now().plusDays(1));
+        event.setParticipants(new ArrayList<>(List.of(participant)));
+        User org = new User();
+        org.setUsername("org");
+        event.setOrganizer(org);
+
+        proposal = new Proposal();
+        proposal.setId(1L);
+        proposal.setDinnerEvent(event);
+
+        ProposalDate pd = new ProposalDate();
+        pd.setId(10L);
+        pd.setDate(LocalDateTime.now());
+        pd.setProposal(proposal);
+        // pd.setDinnerEvent(event); // Not available or needed via proposal
+
         proposal.setDates(List.of(pd));
         event.setProposals(new ArrayList<>(List.of(proposal)));
     }
@@ -77,8 +95,12 @@ class InteractionServiceTest {
 
         ProposalDate pd = proposal.getDates().get(0);
 
-        when(proposalRepository.findAll()).thenReturn(List.of(proposal));
+        when(proposalRepository.findAll()).thenReturn(List.of(proposal)); // InteractionService might verify event
+                                                                          // membership
+        // Wait, castVote implementation might need Proposal Repository?
+        // Let's assume implementation uses findByUserAndProposalDate from VoteRepo
         when(voteRepository.findByUserAndProposalDate(participant, pd)).thenReturn(Optional.empty());
+        when(dinnerEventRepository.findById(1L)).thenReturn(Optional.of(event));
 
         interactionService.castVote(10L, "participant");
         verify(voteRepository).save(any(Vote.class));
@@ -107,6 +129,6 @@ class InteractionServiceTest {
         });
 
         interactionService.addMessage(1L, "participant", "Hello");
-        verify(messagingTemplate).convertAndSend(anyString(), any(Object.class));
+        verify(messagingTemplate).convertAndSend(anyString(), (Object) any());
     }
 }

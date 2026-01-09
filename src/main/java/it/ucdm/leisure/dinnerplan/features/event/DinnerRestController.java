@@ -3,6 +3,7 @@ package it.ucdm.leisure.dinnerplan.features.event;
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
+import it.ucdm.leisure.dinnerplan.model.DinnerEvent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -46,8 +47,9 @@ public class DinnerRestController {
             @RequestParam LocalDateTime deadline,
             @RequestBody(required = false) List<Long> participantIds,
             @AuthenticationPrincipal UserDetails userDetails) {
-        DinnerEvent createdEvent = dinnerEventService.createEvent(title, description, deadline,
-                userDetails.getUsername(), participantIds);
+        DinnerEvent createdEvent = dinnerEventService.createEvent(userDetails.getUsername(), title, description,
+                deadline,
+                participantIds);
         return ResponseEntity.ok(createdEvent);
     }
 

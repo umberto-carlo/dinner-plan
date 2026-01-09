@@ -1,40 +1,19 @@
-package it.ucdm.leisure.dinnerplan.features.proposal;
+package it.ucdm.leisure.dinnerplan.model;
 
-import it.ucdm.leisure.dinnerplan.features.user.User;
-
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "proposal_ratings", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "proposal_id" })
-})
-@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class ProposalRating {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "proposal_id", nullable = false)
-    private Proposal proposal;
-
-    @Column(nullable = false)
     private boolean isLiked;
+    private User user;
+    private Proposal proposal;
 
     public ProposalRating() {
     }
 
-    public ProposalRating(Long id, User user, Proposal proposal, boolean isLiked) {
+    public ProposalRating(Long id, boolean isLiked, User user, Proposal proposal) {
         this.id = id;
+        this.isLiked = isLiked;
         this.user = user;
         this.proposal = proposal;
-        this.isLiked = isLiked;
     }
 
     public static ProposalRatingBuilder builder() {
@@ -49,23 +28,6 @@ public class ProposalRating {
         this.id = id;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    public Proposal getProposal() {
-        return proposal;
-    }
-
-    public void setProposal(Proposal proposal) {
-        this.proposal = proposal;
-    }
-
     public boolean isLiked() {
         return isLiked;
     }
@@ -74,14 +36,35 @@ public class ProposalRating {
         isLiked = liked;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Proposal getProposal() {
+        return proposal;
+    }
+
+    public void setProposal(Proposal proposal) {
+        this.proposal = proposal;
+    }
+
     public static class ProposalRatingBuilder {
         private Long id;
+        private boolean isLiked;
         private User user;
         private Proposal proposal;
-        private boolean isLiked;
 
         public ProposalRatingBuilder id(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public ProposalRatingBuilder isLiked(boolean isLiked) {
+            this.isLiked = isLiked;
             return this;
         }
 
@@ -95,13 +78,8 @@ public class ProposalRating {
             return this;
         }
 
-        public ProposalRatingBuilder isLiked(boolean isLiked) {
-            this.isLiked = isLiked;
-            return this;
-        }
-
         public ProposalRating build() {
-            return new ProposalRating(id, user, proposal, isLiked);
+            return new ProposalRating(id, isLiked, user, proposal);
         }
     }
 }
