@@ -3,11 +3,10 @@ package it.ucdm.leisure.dinnerplan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@org.springframework.boot.autoconfigure.SpringBootApplication
 public class DinnerPlanApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DinnerPlanApplication.class, args);
 	}
-
 }
