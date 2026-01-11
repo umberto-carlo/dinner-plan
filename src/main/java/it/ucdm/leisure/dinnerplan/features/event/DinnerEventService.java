@@ -3,6 +3,7 @@ package it.ucdm.leisure.dinnerplan.features.event;
 import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
+import it.ucdm.leisure.dinnerplan.service.EmailService;
 
 import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -23,13 +24,15 @@ public class DinnerEventService {
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserService userService;
+    private final EmailService emailService;
 
     public DinnerEventService(DinnerEventRepository dinnerEventRepository, UserRepository userRepository,
-            SimpMessagingTemplate messagingTemplate, UserService userService) {
+            SimpMessagingTemplate messagingTemplate, UserService userService, EmailService emailService) {
         this.dinnerEventRepository = dinnerEventRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     public List<DinnerEvent> getEventsForUser(String username) {
@@ -91,6 +94,17 @@ public class DinnerEventService {
             for (User p : participants) {
                 messagingTemplate.convertAndSendToUser(Objects.requireNonNull(p.getUsername()),
                         "/topic/dashboard-updates", "REFRESH");
+
+                // Send Email Notification
+                if (p.getEmail() != null && !p.getEmail().isEmpty()) {
+                    String subject = "Sei stato invitato a un nuovo evento!";
+                    String text = "Ciao " + p.getUsername() + ",\n\n" +
+                            "Sei stato invitato all'evento: " + title + "\n" +
+                            "Organizzato da: " + organizer.getUsername() + "\n" +
+                            "Scadenza sondaggio: " + deadline + "\n\n" +
+                            "Accedi all'app per votare: http://localhost:8080"; // TODO: Configure base URL
+                    emailService.sendSimpleMessage(p.getEmail(), subject, text);
+                }
             }
         }
         return saved;

@@ -19,13 +19,14 @@ public class UserService {
     }
 
     @Transactional
-    public User registerUser(String username, String password, Role role) {
+    public User registerUser(String username, String email, String password, Role role) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
 
         User user = User.builder()
                 .username(username)
+                .email(email)
                 .password(passwordEncoder.encode(password))
                 .role(role)
                 .build();

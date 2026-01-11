@@ -21,6 +21,17 @@
     <!-- Header Card -->
     <div th:replace="~{fragments/event-header :: eventHeader}"></div>
 
+    <div class="mb-4 flex justify-end">
+        <a th:href="@{/events/{id}/ics(id=${event.id})}" target="_blank"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none transition-colors">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Add to Calendar
+        </a>
+    </div>
+
     <!-- Error Message -->
     <div th:if="${errorMessage}"
         class="mb-6 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4 text-red-800 dark:text-red-200">

@@ -14,6 +14,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
+    private String email;
+
     @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(nullable = false)
     private String password;
@@ -25,9 +28,10 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String username, String password, Role role) {
+    public User(Long id, String username, String email, String password, Role role) {
         this.id = id;
         this.username = username;
+        this.email = email;
         this.password = password;
         this.role = role;
     }
@@ -52,6 +56,14 @@ public class User {
         this.username = username;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -71,6 +83,7 @@ public class User {
     public static class UserBuilder {
         private Long id;
         private String username;
+        private String email;
         private String password;
         private Role role;
 
@@ -81,6 +94,11 @@ public class User {
 
         public UserBuilder username(String username) {
             this.username = username;
+            return this;
+        }
+
+        public UserBuilder email(String email) {
+            this.email = email;
             return this;
         }
 
@@ -95,7 +113,7 @@ public class User {
         }
 
         public User build() {
-            return new User(id, username, password, role);
+            return new User(id, username, email, password, role);
         }
     }
 }

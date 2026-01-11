@@ -79,8 +79,10 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/users/create")
-    public String createUser(@RequestParam String username, @RequestParam String password, @RequestParam String role) {
-        userService.registerUser(username, password, it.ucdm.leisure.dinnerplan.features.user.Role.valueOf(role));
+    public String createUser(@RequestParam String username, @RequestParam String email, @RequestParam String password,
+            @RequestParam String role) {
+        userService.registerUser(username, email, password,
+                it.ucdm.leisure.dinnerplan.features.user.Role.valueOf(role));
         return "redirect:/admin/users";
     }
 
