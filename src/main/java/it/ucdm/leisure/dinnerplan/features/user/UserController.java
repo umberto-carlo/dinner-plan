@@ -44,9 +44,36 @@ public class UserController {
             java.util.Locale locale) {
         try {
             userService.changePassword(userDetails.getUsername(), newPassword);
-            model.addAttribute("success", messageSource.getMessage("profile.password_success", null, locale));
+            model.addAttribute("passwordSuccess", messageSource.getMessage("profile.password_success", null, locale));
         } catch (Exception e) {
-            model.addAttribute("error", messageSource.getMessage("profile.password_error", null, locale));
+            model.addAttribute("passwordError", messageSource.getMessage("profile.password_error", null, locale));
+        }
+        // Reload user to keep consistency
+        User user = userService.findByUsername(userDetails.getUsername());
+        model.addAttribute("user", user);
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/profile";
+        }
+        return "profile";
+    }
+
+    @PostMapping("/profile/update-email")
+    public String updateEmail(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String newEmail,
+            Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent,
+            java.util.Locale locale) {
+        try {
+            userService.updateEmail(userDetails.getUsername(), newEmail);
+            model.addAttribute("emailSuccess", messageSource.getMessage("profile.email_success", null, locale));
+        } catch (IllegalArgumentException e) {
+            if ("Email already exists".equals(e.getMessage())) {
+                model.addAttribute("emailError", messageSource.getMessage("profile.email_exists", null, locale));
+            } else {
+                model.addAttribute("emailError", messageSource.getMessage("profile.email_error", null, locale));
+            }
+        } catch (Exception e) {
+            model.addAttribute("emailError", messageSource.getMessage("profile.email_error", null, locale));
         }
         // Reload user to keep consistency
         User user = userService.findByUsername(userDetails.getUsername());

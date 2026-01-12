@@ -8,11 +8,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mail.javamail.JavaMailSender;
 
 import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
+import org.springframework.context.MessageSource;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -30,6 +32,12 @@ public class MobileProfileTest {
 
     @MockitoBean
     private UserAgentUtils userAgentUtils;
+
+    @MockitoBean
+    private MessageSource messageSource;
+
+    @MockitoBean
+    private JavaMailSender javaMailSender;
 
     @Test
     @WithMockUser(username = "user")

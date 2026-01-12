@@ -17,20 +17,45 @@
             </div>
             <div class="form-group">
                 <label th:text="#{users.role}" style="font-size: 0.9rem;">Ruolo</label>
-                <div th:text="${user.role}"
+                <div th:text="#{ 'role.' + ${user.role.name().toLowerCase()} }"
                     style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">
                     ROLE</div>
             </div>
+            <div class="form-group" style="margin-top: 0.5rem;">
+                <label th:text="#{profile.email}" style="font-size: 0.9rem;">Email</label>
+                <div th:text="${user.email}"
+                    style="padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-weight: 500;">
+                    Email</div>
+            </div>
+        </div>
+
+        <h3 th:text="#{profile.update_email}" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Aggiorna Email</h3>
+        <div class="card" style="margin-bottom: 1rem;">
+            <div th:if="${emailSuccess}" class="alert alert-success"
+                style="color: green; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid green; border-radius: 4px; font-size: 0.9rem;"
+                th:text="${emailSuccess}"></div>
+            <div th:if="${emailError}" class="alert alert-danger"
+                style="color: red; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid red; border-radius: 4px; font-size: 0.9rem;"
+                th:text="${emailError}"></div>
+            <form th:action="@{/profile/update-email}" method="post">
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label for="newEmail" th:text="#{profile.email}" style="font-size: 0.9rem;">Email</label>
+                    <input type="email" id="newEmail" name="newEmail" th:value="${user.email}"
+                        style="width: 100%; padding: 0.5rem;">
+                </div>
+                <button type="submit" class="btn" th:text="#{profile.update_email}" style="width: 100%;">Aggiorna
+                    Email</button>
+            </form>
         </div>
 
         <h3 th:text="#{profile.change_pass}" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Cambia Password</h3>
         <div class="card">
-            <div th:if="${success}" class="alert alert-success"
+            <div th:if="${passwordSuccess}" class="alert alert-success"
                 style="color: green; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid green; border-radius: 4px; font-size: 0.9rem;"
-                th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-danger"
+                th:text="${passwordSuccess}"></div>
+            <div th:if="${passwordError}" class="alert alert-danger"
                 style="color: red; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid red; border-radius: 4px; font-size: 0.9rem;"
-                th:text="${error}"></div>
+                th:text="${passwordError}"></div>
 
             <form th:action="@{/profile/change-password}" method="post">
                 <div class="form-group" style="margin-bottom: 0.75rem;">

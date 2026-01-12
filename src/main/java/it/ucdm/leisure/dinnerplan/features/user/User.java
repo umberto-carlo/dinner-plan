@@ -14,7 +14,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String email;
 
     @com.fasterxml.jackson.annotation.JsonIgnore

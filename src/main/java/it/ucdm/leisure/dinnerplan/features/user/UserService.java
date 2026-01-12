@@ -26,7 +26,7 @@ public class UserService {
 
         User user = User.builder()
                 .username(username)
-                .email(email)
+                .email((email == null || email.trim().isEmpty()) ? null : email)
                 .password(passwordEncoder.encode(password))
                 .role(role)
                 .build();
@@ -43,6 +43,20 @@ public class UserService {
         User user = findByUsername(username);
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(Objects.requireNonNull(user));
+    }
+
+    @Transactional
+    public void updateEmail(String username, String newEmail) {
+        User user = findByUsername(username);
+        String processedNewEmail = (newEmail == null || newEmail.trim().isEmpty()) ? null : newEmail;
+
+        if (!Objects.equals(user.getEmail(), processedNewEmail)) {
+            if (processedNewEmail != null && userRepository.findByEmail(processedNewEmail).isPresent()) {
+                throw new IllegalArgumentException("Email already exists");
+            }
+            user.setEmail(processedNewEmail);
+            userRepository.save(Objects.requireNonNull(user));
+        }
     }
 
     public List<User> getAllUsers() {

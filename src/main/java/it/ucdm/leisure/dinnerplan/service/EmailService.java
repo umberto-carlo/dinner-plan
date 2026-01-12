@@ -18,7 +18,12 @@ public class EmailService {
         this.emailSender = emailSender;
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void sendSimpleMessage(String to, String subject, String text) {
+        if (to == null || to.trim().isEmpty()) {
+            logger.warn("Skipping email sending: recipient email is null or empty. Subject: {}", subject);
+            return;
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("noreply@dinnerplan.com"); // Configure this property or use a default
@@ -27,8 +32,8 @@ public class EmailService {
             message.setText(text);
             emailSender.send(message);
             logger.info("Email sent to: {}", to);
-        } catch (Exception e) {
-            logger.error("Failed to send email to: {}", to, e);
+        } catch (Throwable t) {
+            logger.error("Best-effort email sending failed to: {}. Error: {}", to, t.getMessage());
         }
     }
 }
