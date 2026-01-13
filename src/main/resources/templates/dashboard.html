@@ -56,7 +56,7 @@
                             </div>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                 th:classappend="${event.status?.name() == 'OPEN' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
-                                th:text="${event.status}">OPEN</span>
+                                th:text="#{${'event.status.' + event.status}}">OPEN</span>
                         </div>
 
                         <div class="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
@@ -223,6 +223,17 @@
                     <button
                         class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer px-3 py-1"
                         onclick="changeMonth(1)"><span th:text="#{calendar.next}">Next</span> &rarr;</button>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <a th:href="@{/api/calendar/export}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span th:text="#{calendar.export}">Scarica Calendario Completo (ICS)</span>
+                    </a>
                 </div>
 
                 <div id="calendar-grid" class="grid grid-cols-7 gap-2">

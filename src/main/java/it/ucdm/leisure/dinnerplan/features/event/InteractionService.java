@@ -1,15 +1,16 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
-
 import it.ucdm.leisure.dinnerplan.features.event.dto.ChatMessageDTO;
-import it.ucdm.leisure.dinnerplan.features.user.*;
-
-import it.ucdm.leisure.dinnerplan.features.proposal.*;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
+import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
+import it.ucdm.leisure.dinnerplan.features.proposal.VoteRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRatingRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDateRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRepository;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -30,18 +31,22 @@ public class InteractionService {
     private final DinnerEventRepository dinnerEventRepository;
     private final ProposalRatingRepository proposalRatingRepository;
     private final DinnerEventMessageRepository dinnerEventMessageRepository;
+    private final ProposalDateRepository proposalDateRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public InteractionService(VoteRepository voteRepository, ProposalRepository proposalRepository,
             UserRepository userRepository, DinnerEventRepository dinnerEventRepository,
             ProposalRatingRepository proposalRatingRepository,
-            DinnerEventMessageRepository dinnerEventMessageRepository, SimpMessagingTemplate messagingTemplate) {
+            DinnerEventMessageRepository dinnerEventMessageRepository,
+            ProposalDateRepository proposalDateRepository,
+            SimpMessagingTemplate messagingTemplate) {
         this.voteRepository = voteRepository;
         this.proposalRepository = proposalRepository;
         this.userRepository = userRepository;
         this.dinnerEventRepository = dinnerEventRepository;
         this.proposalRatingRepository = proposalRatingRepository;
         this.dinnerEventMessageRepository = dinnerEventMessageRepository;
+        this.proposalDateRepository = proposalDateRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -49,10 +54,7 @@ public class InteractionService {
     public void castVote(Long proposalDateId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        ProposalDate proposalDate = proposalRepository.findAll().stream()
-                .flatMap(p -> p.getDates().stream())
-                .filter(pd -> pd.getId().equals(proposalDateId))
-                .findFirst()
+        ProposalDate proposalDate = proposalDateRepository.findById(proposalDateId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid proposal date Id"));
 
         if (LocalDateTime.now().isAfter(proposalDate.getDinnerEvent().getDeadline())) {
@@ -94,10 +96,7 @@ public class InteractionService {
             throw new IllegalStateException("Only organizer can decide the event");
         }
 
-        ProposalDate proposalDate = proposalRepository.findAll().stream()
-                .flatMap(p -> p.getDates().stream())
-                .filter(pd -> pd.getId().equals(proposalDateId))
-                .findFirst()
+        ProposalDate proposalDate = proposalDateRepository.findById(proposalDateId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid proposal date Id"));
 
         if (!proposalDate.getDinnerEvent().getId().equals(eventId)) {

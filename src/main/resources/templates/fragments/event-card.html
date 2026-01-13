@@ -16,7 +16,7 @@
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                     th:classappend="${event.status?.name() == 'OPEN' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}"
-                    th:text="${event.status}">OPEN</span>
+                    th:text="#{${'event.status.' + event.status}}">OPEN</span>
             </div>
 
             <div class="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">

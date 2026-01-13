@@ -2,11 +2,14 @@ package it.ucdm.leisure.dinnerplan.features.event;
 
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.user.User;
-
+import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
+import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
+import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
+import it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest;
+import it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO;
 
-import it.ucdm.leisure.dinnerplan.features.user.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-
 import java.util.List;
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
 
 @Controller
 public class DinnerController {
@@ -57,7 +57,7 @@ public class DinnerController {
             @RequestHeader(value = "User-Agent", required = false) String userAgent) {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
-            List<it.ucdm.leisure.dinnerplan.features.event.DinnerEvent> eventList = dinnerEventService
+            List<DinnerEvent> eventList = dinnerEventService
                     .getEventsForUser(userDetails.getUsername());
             model.addAttribute("events", eventList);
             model.addAttribute("rankedProposals", proposalCatalogService.getProposalSuggestions());
@@ -347,7 +347,7 @@ public class DinnerController {
     @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/events/create-smart")
     public String createSmartEvent(
-            @ModelAttribute it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest request,
+            @ModelAttribute SmartEventRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         // Technically this involves creating event AND proposals.
         // DinnerEventService needs a method for this or we coordinate here.
@@ -418,14 +418,13 @@ public class DinnerController {
     }
 
     @GetMapping("/api/calendar/events")
-    @org.springframework.web.bind.annotation.ResponseBody
-    public List<it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO> getCalendarEvents(
+    public @org.springframework.web.bind.annotation.ResponseBody List<CalendarEventDTO> getCalendarEvents(
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null)
             return new ArrayList<>();
 
         List<DinnerEvent> events = dinnerEventService.getEventsForUser(userDetails.getUsername());
-        List<it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO> calendarEvents = new ArrayList<>();
+        List<CalendarEventDTO> calendarEvents = new ArrayList<>();
 
         for (DinnerEvent event : events) {
             // Add Deadline

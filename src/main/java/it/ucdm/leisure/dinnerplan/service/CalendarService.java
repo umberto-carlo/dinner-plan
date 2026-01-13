@@ -11,10 +11,24 @@ import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
 public class CalendarService {
 
     public String generateIcsContent(DinnerEvent event) {
+        return generateIcsContent(java.util.List.of(event));
+    }
+
+    public String generateIcsContent(java.util.List<DinnerEvent> events) {
         StringBuilder builder = new StringBuilder();
         builder.append("BEGIN:VCALENDAR\n");
         builder.append("VERSION:2.0\n");
         builder.append("PRODID:-//DinnerPlan//NONSGML v1.0//EN\n");
+
+        for (DinnerEvent event : events) {
+            appendEvent(builder, event);
+        }
+
+        builder.append("END:VCALENDAR\n");
+        return builder.toString();
+    }
+
+    private void appendEvent(StringBuilder builder, DinnerEvent event) {
         builder.append("BEGIN:VEVENT\n");
         builder.append("UID:").append(event.getId()).append("@dinnerplan.com\n");
         builder.append("DTSTAMP:").append(formatDate(LocalDateTime.now())).append("\n");
@@ -43,7 +57,6 @@ public class CalendarService {
                 }
                 builder.append("DESCRIPTION:").append(desc.toString()).append("\n");
             } else {
-                builder.append("SUMMARY:").append(event.getTitle()).append("\n");
                 builder.append("DESCRIPTION:").append(event.getDescription() != null ? event.getDescription() : "")
                         .append("\n");
             }
@@ -52,16 +65,11 @@ public class CalendarService {
             LocalDateTime start = event.getDeadline() != null ? event.getDeadline() : LocalDateTime.now();
             builder.append("DTSTART:").append(formatDate(start)).append("\n");
             builder.append("DTEND:").append(formatDate(start.plusHours(2))).append("\n");
-            builder.append("SUMMARY:").append(event.getTitle()).append("\n");
             builder.append("DESCRIPTION:").append(event.getDescription() != null ? event.getDescription() : "")
                     .append("\n");
         }
-
         builder.append("SUMMARY:").append(event.getTitle()).append("\n");
         builder.append("END:VEVENT\n");
-        builder.append("END:VCALENDAR\n");
-
-        return builder.toString();
     }
 
     private String formatDate(LocalDateTime date) {

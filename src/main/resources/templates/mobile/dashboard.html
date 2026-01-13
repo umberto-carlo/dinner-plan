@@ -82,7 +82,7 @@
                             Descrizione</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
                             <span th:text="${event.organizer.username}">User</span>
-                            | <span th:text="${event.status}">OPEN</span>
+                            | <span th:text="#{${'event.status.' + event.status}}">OPEN</span>
                         </div>
                     </div>
                     <div class="border-t border-gray-100 dark:border-gray-700 pt-2 flex justify-between items-center">

@@ -12,7 +12,7 @@
                 <h2 th:text="${event.title}" style="margin-bottom: 0; font-size: 1.25rem;">Event Title</h2>
                 <span
                     class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
-                    th:text="${event.status}" style="font-size: 0.8rem;">OPEN</span>
+                    th:text="#{${'event.status.' + event.status}}" style="font-size: 0.8rem;">OPEN</span>
             </div>
 
             <p th:text="${event.description}"
