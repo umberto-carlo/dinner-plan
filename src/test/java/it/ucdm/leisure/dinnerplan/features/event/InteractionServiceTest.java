@@ -10,6 +10,7 @@ import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRepository;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRatingRepository;
 import it.ucdm.leisure.dinnerplan.features.proposal.VoteRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDateRepository;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -44,6 +45,8 @@ class InteractionServiceTest {
     private DinnerEventMessageRepository dinnerEventMessageRepository;
     @Mock
     private SimpMessagingTemplate messagingTemplate;
+    @Mock
+    private ProposalDateRepository proposalDateRepository;
 
     @InjectMocks
     private InteractionService interactionService;
@@ -77,7 +80,7 @@ class InteractionServiceTest {
 
         ProposalDate pd = proposal.getDates().get(0);
 
-        when(proposalRepository.findAll()).thenReturn(List.of(proposal));
+        when(proposalDateRepository.findById(10L)).thenReturn(Optional.of(pd));
         when(voteRepository.findByUserAndProposalDate(participant, pd)).thenReturn(Optional.empty());
 
         interactionService.castVote(10L, "participant");
