@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Manuale Utente', ~{::section})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(#{manual.page.title}, ~{::section})}">
 <section class="max-w-4xl mx-auto space-y-6">
     <div class="mb-4">
         <a th:href="@{/}"
@@ -18,7 +18,7 @@
         <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{manual.intro.title}">Introduzione
         </h2>
         <p class="text-gray-600 dark:text-gray-300 leading-relaxed" th:utext="#{manual.intro.text}">
-            Text...
+            Testo di introduzione...
         </p>
     </div>
 
@@ -26,15 +26,15 @@
         <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4" th:text="#{manual.users.title}">Per Tutti
             gli Utenti</h2>
         <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
-            <li th:utext="#{manual.users.registration}">Registration</li>
+            <li th:utext="#{manual.users.registration}">Registrazione</li>
             <li th:utext="#{manual.users.dashboard}">Dashboard</li>
-            <li th:utext="#{manual.users.calendar}">Calendar</li>
-            <li th:utext="#{manual.users.event_details}">Event Details</li>
+            <li th:utext="#{manual.users.calendar}">Calendario</li>
+            <li th:utext="#{manual.users.event_details}">Dettagli Evento</li>
             <li th:utext="#{manual.users.chat}">Chat</li>
-            <li th:utext="#{manual.users.maps}">Maps</li>
-            <li th:utext="#{manual.users.vote}">Vote</li>
-            <li th:utext="#{manual.users.final_rating}">Final Rating</li>
-            <li th:utext="#{manual.users.profile}">Profile</li>
+            <li th:utext="#{manual.users.maps}">Mappe</li>
+            <li th:utext="#{manual.users.vote}">Votazione</li>
+            <li th:utext="#{manual.users.final_rating}">Valutazione Finale</li>
+            <li th:utext="#{manual.users.profile}">Profilo</li>
             <li th:utext="#{manual.users.mobile}">Mobile</li>
         </ul>
     </div>
@@ -45,16 +45,16 @@
         <p class="mb-4 text-gray-600 dark:text-gray-300" th:text="#{manual.organizers.text}">Oltre alle funzionalità
             base...</p>
         <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
-            <li th:utext="#{manual.organizers.create_event}">Create Event</li>
-            <li th:utext="#{manual.organizers.manage_participants}">Manage Participants</li>
-            <li th:utext="#{manual.organizers.add_proposal}">Add Proposals</li>
-            <li th:utext="#{manual.organizers.global_proposals}">Global Proposals</li>
-            <li th:utext="#{manual.organizers.create_smart}">Create Smart Event</li>
-            <li th:utext="#{manual.organizers.add_to_event}">Add To Event</li>
-            <li th:utext="#{manual.organizers.smart_suggestions}">Smart Suggestions</li>
-            <li th:utext="#{manual.organizers.close_event}">Close Event</li>
-            <li th:utext="#{manual.organizers.manage_users}">Manage Users</li>
-            <li th:utext="#{manual.organizers.admin_tools}">Admin Tools</li>
+            <li th:utext="#{manual.organizers.create_event}">Creazione Evento</li>
+            <li th:utext="#{manual.organizers.manage_participants}">Gestione Partecipanti</li>
+            <li th:utext="#{manual.organizers.add_proposal}">Aggiunta Proposte</li>
+            <li th:utext="#{manual.organizers.global_proposals}">Proposte Globali</li>
+            <li th:utext="#{manual.organizers.create_smart}">Creazione Evento Smart</li>
+            <li th:utext="#{manual.organizers.add_to_event}">Aggiunta a Evento</li>
+            <li th:utext="#{manual.organizers.smart_suggestions}">Suggerimenti Smart</li>
+            <li th:utext="#{manual.organizers.close_event}">Chiusura Evento</li>
+            <li th:utext="#{manual.organizers.manage_users}">Gestione Utenti</li>
+            <li th:utext="#{manual.organizers.admin_tools}">Strumenti Admin</li>
         </ul>
     </div>
 </section>
