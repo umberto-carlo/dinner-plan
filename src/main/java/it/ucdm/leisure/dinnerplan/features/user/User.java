@@ -24,6 +24,12 @@ public class User {
     @Column(nullable = true)
     private String address;
 
+    @Column(nullable = true)
+    private Double latitude;
+
+    @Column(nullable = true)
+    private Double longitude;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -31,13 +37,15 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String username, String email, String password, Role role, String address) {
+    public User(Long id, String username, String email, String password, Role role, String address, Double latitude, Double longitude) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
         this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public static UserBuilder builder() {
@@ -76,6 +84,22 @@ public class User {
         this.address = address;
     }
 
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -99,6 +123,8 @@ public class User {
         private String password;
         private Role role;
         private String address;
+        private Double latitude;
+        private Double longitude;
 
         public UserBuilder id(Long id) {
             this.id = id;
@@ -130,8 +156,18 @@ public class User {
             return this;
         }
 
+        public UserBuilder latitude(Double latitude) {
+            this.latitude = latitude;
+            return this;
+        }
+
+        public UserBuilder longitude(Double longitude) {
+            this.longitude = longitude;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, email, password, role, address);
+            return new User(id, username, email, password, role, address, latitude, longitude);
         }
     }
 }

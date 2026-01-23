@@ -466,4 +466,13 @@ public class DinnerController {
         interactionService.rateProposal(eventId, proposalId, userDetails.getUsername(), isLiked);
         return "redirect:/events/" + eventId;
     }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/events/{id}/add-central-proposal")
+    public String addCentralProposal(@PathVariable Long id,
+            @RequestParam("dateOption") String dateOption,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        proposalService.addCentralProposal(id, List.of(LocalDateTime.parse(dateOption)));
+        return "redirect:/events/" + id;
+    }
 }

@@ -25,6 +25,12 @@ public class Proposal {
 
     private String address;
 
+    @Column(nullable = true)
+    private Double latitude;
+
+    @Column(nullable = true)
+    private Double longitude;
+
     private String description;
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -36,12 +42,14 @@ public class Proposal {
     public Proposal() {
     }
 
-    public Proposal(Long id, List<DinnerEvent> dinnerEvents, String location, String address,
+    public Proposal(Long id, List<DinnerEvent> dinnerEvents, String location, String address, Double latitude, Double longitude,
             String description, List<ProposalDate> dates, Set<ProposalRating> ratings) {
         this.id = id;
         this.dinnerEvents = dinnerEvents != null ? dinnerEvents : new ArrayList<>();
         this.location = location;
         this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.description = description;
         this.dates = dates != null ? dates : new ArrayList<>();
         this.ratings = ratings != null ? ratings : new HashSet<>();
@@ -92,6 +100,22 @@ public class Proposal {
         this.address = address;
     }
 
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -117,6 +141,8 @@ public class Proposal {
         private List<DinnerEvent> dinnerEvents = new ArrayList<>();
         private String location;
         private String address;
+        private Double latitude;
+        private Double longitude;
         private String description;
         private List<ProposalDate> dates = new ArrayList<>();
         private Set<ProposalRating> ratings = new HashSet<>();
@@ -146,6 +172,16 @@ public class Proposal {
             return this;
         }
 
+        public ProposalBuilder latitude(Double latitude) {
+            this.latitude = latitude;
+            return this;
+        }
+
+        public ProposalBuilder longitude(Double longitude) {
+            this.longitude = longitude;
+            return this;
+        }
+
         public ProposalBuilder description(String description) {
             this.description = description;
             return this;
@@ -157,7 +193,7 @@ public class Proposal {
         }
 
         public Proposal build() {
-            return new Proposal(id, dinnerEvents, location, address, description, dates, ratings);
+            return new Proposal(id, dinnerEvents, location, address, latitude, longitude, description, dates, ratings);
         }
     }
 }

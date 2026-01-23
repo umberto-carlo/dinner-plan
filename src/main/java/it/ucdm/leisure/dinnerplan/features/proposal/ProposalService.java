@@ -1,9 +1,14 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
+import it.ucdm.leisure.dinnerplan.features.geocode.Coordinates;
+import it.ucdm.leisure.dinnerplan.features.geocode.GeocodingService;
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,24 +17,181 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Service
 public class ProposalService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProposalService.class);
     private final ProposalRepository proposalRepository;
     private final DinnerEventRepository dinnerEventRepository;
+    private final UserRepository userRepository; // Needed to save user coordinates
+    private final GeocodingService geocodingService;
     private final SimpMessagingTemplate messagingTemplate;
     private final tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
     public ProposalService(ProposalRepository proposalRepository, DinnerEventRepository dinnerEventRepository,
-            SimpMessagingTemplate messagingTemplate) {
+                           UserRepository userRepository, GeocodingService geocodingService, SimpMessagingTemplate messagingTemplate) {
         this.proposalRepository = proposalRepository;
         this.dinnerEventRepository = dinnerEventRepository;
+        this.userRepository = userRepository;
+        this.geocodingService = geocodingService;
         this.messagingTemplate = messagingTemplate;
     }
 
     public List<Proposal> getProposalsForEvent(Long eventId) {
         return proposalRepository.findAllByDinnerEventsId(eventId);
+    }
+
+    @Transactional
+    public void addCentralProposal(Long eventId, List<LocalDateTime> dateOptions) {
+        DinnerEvent event = dinnerEventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + eventId));
+
+        if (event.getStatus() == DinnerEvent.EventStatus.DECIDED) {
+            throw new IllegalStateException("Event is already decided");
+        }
+
+        List<User> usersToConsider = new ArrayList<>(event.getParticipants());
+        usersToConsider.add(event.getOrganizer());
+
+        List<Coordinates> coordinates = new ArrayList<>();
+        for (User user : usersToConsider) {
+            if (user.getAddress() != null && !user.getAddress().isBlank()) {
+                // Check if user already has coordinates
+                if (user.getLatitude() != null && user.getLongitude() != null) {
+                    logger.debug("Using cached coordinates for user {}", user.getUsername());
+                    coordinates.add(new Coordinates(user.getLatitude(), user.getLongitude()));
+                } else {
+                    // Lazy migration: Geocode and save
+                    logger.info("Geocoding address for user {}: {}", user.getUsername(), user.getAddress());
+                    try {
+                        Coordinates userCoordinates = geocodingService.getCoordinates(user.getAddress());
+                        if (userCoordinates != null) {
+                            coordinates.add(userCoordinates);
+                            // Save for future use - Reload user to ensure we are updating the persistent entity
+                            try {
+                                User persistentUser = userRepository.findById(user.getId()).orElse(user);
+                                persistentUser.setLatitude(userCoordinates.getLatitude());
+                                persistentUser.setLongitude(userCoordinates.getLongitude());
+                                userRepository.save(persistentUser);
+                                logger.info("Saved coordinates for user {}", user.getUsername());
+                            } catch (Exception e) {
+                                logger.error("Failed to save coordinates for user {}", user.getUsername(), e);
+                            }
+                        } else {
+                            logger.warn("Could not geocode address for user {}: {}", user.getUsername(), user.getAddress());
+                        }
+                    } catch (Exception e) {
+                        logger.error("Unexpected error geocoding user {}: {}", user.getUsername(), user.getAddress(), e);
+                        // Continue to next user, excluding this one
+                    }
+                }
+            }
+        }
+
+        if (coordinates.size() < 2) {
+            logger.warn("Not enough users with valid addresses to find a central point for eventId: {}", eventId);
+            return;
+        }
+
+        double lat = 0;
+        double lon = 0;
+        for (Coordinates c : coordinates) {
+            lat += c.getLatitude();
+            lon += c.getLongitude();
+        }
+        Coordinates center = new Coordinates(lat / coordinates.size(), lon / coordinates.size());
+        logger.info("Calculated center point for eventId {}: {}", eventId, center);
+
+        // Note: Loading all proposals is not scalable for large datasets.
+        // Ideally, use a spatial query to filter candidates within a bounding box first.
+        List<Proposal> candidateProposals = proposalRepository.findAll().stream()
+                .filter(p -> p.getDinnerEvents().stream().noneMatch(e -> e.getId().equals(eventId)))
+                .toList();
+
+        if (candidateProposals.isEmpty()) {
+            logger.warn("No candidate proposals found to add to eventId: {}", eventId);
+            return;
+        }
+
+        Proposal closestProposal = null;
+        double minDistance = Double.MAX_VALUE;
+
+        for (Proposal proposal : candidateProposals) {
+            if (proposal.getAddress() == null || proposal.getAddress().isBlank()) {
+                continue;
+            }
+            
+            Coordinates proposalCoordinates = null;
+            
+            // Check if proposal already has coordinates
+            if (proposal.getLatitude() != null && proposal.getLongitude() != null) {
+                logger.debug("Using cached coordinates for proposal {}", proposal.getLocation());
+                proposalCoordinates = new Coordinates(proposal.getLatitude(), proposal.getLongitude());
+            } else {
+                // Lazy migration for proposals
+                logger.info("Geocoding address for proposal {}: {}", proposal.getLocation(), proposal.getAddress());
+                try {
+                    proposalCoordinates = geocodingService.getCoordinates(proposal.getAddress());
+                    if (proposalCoordinates != null) {
+                        // Save for future use
+                        try {
+                            proposal.setLatitude(proposalCoordinates.getLatitude());
+                            proposal.setLongitude(proposalCoordinates.getLongitude());
+                            proposalRepository.save(proposal);
+                            logger.info("Saved coordinates for proposal {}", proposal.getLocation());
+                        } catch (Exception e) {
+                            logger.error("Failed to save coordinates for proposal {}", proposal.getLocation(), e);
+                        }
+                    } else {
+                        logger.warn("Could not geocode address for proposal {}: {}", proposal.getLocation(), proposal.getAddress());
+                    }
+                } catch (Exception e) {
+                    logger.error("Unexpected error geocoding proposal {}: {}", proposal.getLocation(), proposal.getAddress(), e);
+                    // Continue to next proposal
+                }
+            }
+            
+            if (proposalCoordinates != null) {
+                // Use Haversine formula for correct spherical distance
+                double distance = calculateHaversineDistance(
+                        center.getLatitude(), center.getLongitude(),
+                        proposalCoordinates.getLatitude(), proposalCoordinates.getLongitude()
+                );
+                
+                logger.debug("Distance from center to proposal '{}' is {} km", proposal.getLocation(), distance);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestProposal = proposal;
+                }
+            }
+        }
+
+        if (closestProposal != null) {
+            logger.info("Found closest proposal '{}' ({} km away) for eventId: {}", 
+                    closestProposal.getLocation(), String.format("%.2f", minDistance), eventId);
+            addProposal(eventId, dateOptions, closestProposal.getLocation(), closestProposal.getAddress(), closestProposal.getDescription());
+        } else {
+            logger.warn("Could not find any suitable central proposal for eventId: {}", eventId);
+        }
+    }
+
+    /**
+     * Calculates the distance between two points on Earth using the Haversine formula.
+     * @return Distance in Kilometers
+     */
+    private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radius of the earth in km
+
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        return R * c;
     }
 
     @Transactional
@@ -55,19 +217,45 @@ public class ProposalService {
                     .description(description)
                     .dates(new ArrayList<>())
                     .build();
+            
+            // Geocode new proposal immediately
+            if (address != null && !address.isBlank()) {
+                try {
+                    Coordinates coords = geocodingService.getCoordinates(address);
+                    if (coords != null) {
+                        proposal.setLatitude(coords.getLatitude());
+                        proposal.setLongitude(coords.getLongitude());
+                    }
+                } catch (Exception e) {
+                    logger.error("Unexpected error geocoding new proposal {}: {}", location, address, e);
+                    // Continue saving proposal without coordinates
+                }
+            }
+            
             event.getProposals().add(proposal);
         } else {
             // Found existing global proposal. Check if it's already linked to this event.
-            // If the proposal is not associated with the event, we associate them.
             if (!proposal.getDinnerEvents().contains(event)) {
                 proposal.getDinnerEvents().add(event);
                 event.getProposals().add(proposal);
             }
-            // Also, update description if the new one is provided and significant?
-            // Requirement says "transparently use existing". Usually implies keeping
-            // existing data or merging.
-            // We'll keep existing description to avoid overriding with potentially less
-            // info, or update if empty.
+            
+            // Check if existing proposal needs geocoding (lazy fix for existing ones accessed via addProposal)
+            if (proposal.getAddress() != null && !proposal.getAddress().isBlank() && 
+                (proposal.getLatitude() == null || proposal.getLongitude() == null)) {
+                try {
+                    Coordinates coords = geocodingService.getCoordinates(proposal.getAddress());
+                    if (coords != null) {
+                        proposal.setLatitude(coords.getLatitude());
+                        proposal.setLongitude(coords.getLongitude());
+                        // Will be saved when event is saved due to cascade/transaction
+                    }
+                } catch (Exception e) {
+                    logger.error("Unexpected error geocoding existing proposal {}: {}", location, address, e);
+                    // Continue
+                }
+            }
+
             if ((proposal.getDescription() == null || proposal.getDescription().isBlank()) && description != null
                     && !description.isBlank()) {
                 proposal.setDescription(description);
@@ -132,8 +320,6 @@ public class ProposalService {
     public int addBatchProposalsFromSuggestion(Long eventId, List<LocalDateTime> dateOptions,
             List<String> encodedProposals, String username) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
-        // Reuse validation logic effectively via helper or direct call
-        // For simplicity, re-fetch validation context
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
 
@@ -158,7 +344,7 @@ public class ProposalService {
                 addProposal(eventId, List.of(date), dto.getLocation(), dto.getAddress(), dto.getDescription());
                 addedCount++;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error processing batch proposal", e);
             }
         }
         return addedCount;

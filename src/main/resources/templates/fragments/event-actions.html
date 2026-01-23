@@ -25,6 +25,14 @@
                 </button>
             </form>
 
+            <!-- Add Central Proposal -->
+            <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
+                onclick="document.getElementById('add-central-proposal-modal').classList.remove('hidden')"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-secondary-600 hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 transition-colors cursor-pointer text-sm"
+                th:text="#{event.actions.add_central_proposal}">
+                Add Central Proposal
+            </button>
+
             <!-- Add Proposal -->
             <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
                 onclick="document.getElementById('add-proposal-form').classList.remove('hidden')"

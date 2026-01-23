@@ -1,5 +1,9 @@
 package it.ucdm.leisure.dinnerplan.features.user;
 
+import it.ucdm.leisure.dinnerplan.features.geocode.Coordinates;
+import it.ucdm.leisure.dinnerplan.features.geocode.GeocodingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.Objects;
@@ -10,12 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GeocodingService geocodingService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, GeocodingService geocodingService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.geocodingService = geocodingService;
     }
 
     @Transactional
@@ -63,8 +70,43 @@ public class UserService {
     public void updateAddress(String username, String newAddress) {
         User user = findByUsername(username);
         String processedAddress = (newAddress == null || newAddress.trim().isEmpty()) ? null : newAddress;
-        user.setAddress(processedAddress);
-        userRepository.save(Objects.requireNonNull(user));
+        
+        // Update if address changed OR if address is present but coordinates are missing (force refresh)
+        boolean addressChanged = !Objects.equals(user.getAddress(), processedAddress);
+        boolean coordinatesMissing = processedAddress != null && (user.getLatitude() == null || user.getLongitude() == null);
+
+        if (addressChanged || coordinatesMissing) {
+            user.setAddress(processedAddress);
+
+            // If the address has changed, the old coordinates are definitely invalid.
+            // Reset them immediately.
+            if (addressChanged) {
+                user.setLatitude(null);
+                user.setLongitude(null);
+            }
+
+            if (processedAddress != null) {
+                try {
+                    Coordinates coords = geocodingService.getCoordinates(processedAddress);
+                    if (coords != null) {
+                        user.setLatitude(coords.getLatitude());
+                        user.setLongitude(coords.getLongitude());
+                    } else {
+                        logger.warn("Geocoding failed for address: {}", processedAddress);
+                        // No need to reset here, they are already null if addressChanged was true.
+                        // If address didn't change but coords were missing, they stay missing.
+                    }
+                } catch (Exception e) {
+                    logger.error("Unexpected error during geocoding for user {}", username, e);
+                    // Coordinates remain null (safe state)
+                }
+            } else {
+                // Address removed, ensure coords are null
+                user.setLatitude(null);
+                user.setLongitude(null);
+            }
+            userRepository.save(Objects.requireNonNull(user));
+        }
     }
 
     public List<User> getAllUsers() {
