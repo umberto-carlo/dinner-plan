@@ -85,6 +85,27 @@ public class UserController {
         return "profile";
     }
 
+    @PostMapping("/profile/update-address")
+    public String updateAddress(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String newAddress,
+            Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent,
+            java.util.Locale locale) {
+        try {
+            userService.updateAddress(userDetails.getUsername(), newAddress);
+            model.addAttribute("addressSuccess", messageSource.getMessage("profile.address_success", null, locale));
+        } catch (Exception e) {
+            model.addAttribute("addressError", messageSource.getMessage("profile.address_error", null, locale));
+        }
+        // Reload user to keep consistency
+        User user = userService.findByUsername(userDetails.getUsername());
+        model.addAttribute("user", user);
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/profile";
+        }
+        return "profile";
+    }
+
     @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @GetMapping("/admin/users")
     public String listUsers(@AuthenticationPrincipal UserDetails userDetails, Model model,

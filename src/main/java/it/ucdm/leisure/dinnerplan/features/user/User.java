@@ -21,6 +21,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = true)
+    private String address;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -28,12 +31,13 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String username, String email, String password, Role role) {
+    public User(Long id, String username, String email, String password, Role role, String address) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.address = address;
     }
 
     public static UserBuilder builder() {
@@ -64,6 +68,14 @@ public class User {
         this.email = email;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -86,6 +98,7 @@ public class User {
         private String email;
         private String password;
         private Role role;
+        private String address;
 
         public UserBuilder id(Long id) {
             this.id = id;
@@ -112,8 +125,13 @@ public class User {
             return this;
         }
 
+        public UserBuilder address(String address) {
+            this.address = address;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, email, password, role);
+            return new User(id, username, email, password, role, address);
         }
     }
 }

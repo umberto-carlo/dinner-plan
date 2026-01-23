@@ -59,6 +59,14 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public void updateAddress(String username, String newAddress) {
+        User user = findByUsername(username);
+        String processedAddress = (newAddress == null || newAddress.trim().isEmpty()) ? null : newAddress;
+        user.setAddress(processedAddress);
+        userRepository.save(Objects.requireNonNull(user));
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
