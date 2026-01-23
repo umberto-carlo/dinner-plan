@@ -13,6 +13,14 @@
                 Gestisci Partecipanti
             </button>
 
+            <!-- Add Central Proposal (Organizer only) -->
+            <button th:if="${isOrganizer and event.status.name() == 'OPEN' and canAddCentralProposal}"
+                onclick="document.getElementById('add-central-proposal-modal').style.display='block'"
+                class="w-full text-center inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-secondary-600 hover:bg-secondary-700"
+                th:text="#{event.actions.add_central_proposal}">
+                Aggiungi Proposta Centrale
+            </button>
+
             <!-- Only Organizer can add proposals AND event must be OPEN -->
             <button th:if="${isOrganizer and event.status.name() == 'OPEN'}"
                 onclick="document.getElementById('add-proposal-form').style.display='block'"

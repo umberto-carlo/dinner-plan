@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Controller
 public class DinnerController {
@@ -141,6 +142,18 @@ public class DinnerController {
             model.addAttribute("event", event);
             model.addAttribute("currentUser", user);
             model.addAttribute("isOrganizer", isOrganizer);
+
+            // Check if we can add a central proposal
+            if (isOrganizer) {
+                long usersWithAddressCount = Stream.concat(event.getParticipants().stream(), Stream.of(event.getOrganizer()))
+                        .filter(u -> u.getAddress() != null && !u.getAddress().isBlank())
+                        .distinct()
+                        .count();
+                model.addAttribute("canAddCentralProposal", usersWithAddressCount >= 2);
+            } else {
+                model.addAttribute("canAddCentralProposal", false);
+            }
+
             return event;
         }
         return null;
