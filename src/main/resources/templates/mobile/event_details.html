@@ -81,8 +81,7 @@
             </select>
         </div>
 
-        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
-            onsubmit="handleAjaxForm(event, 'add-proposal-form')">
+        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label th:text="#{event.date}">Data e Ora</label>
@@ -109,6 +108,27 @@
                 <label for="propDescription" th:text="#{dashboard.description}">Descrizione</label>
                 <input type="text" id="propDescription" name="description"
                     th:placeholder="#{create.placeholder.description}">
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem;" th:text="#{profile.dietary}">Dietary Preferences</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="dietary_OMNIVORE" name="dietaryPreferences" value="OMNIVORE">
+                        <label for="dietary_OMNIVORE" style="margin-left: 0.5rem;" th:text="#{register.dietary.OMNIVORE}">Omnivore</label>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="dietary_VEGETARIAN" name="dietaryPreferences" value="VEGETARIAN">
+                        <label for="dietary_VEGETARIAN" style="margin-left: 0.5rem;" th:text="#{register.dietary.VEGETARIAN}">Vegetarian</label>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="dietary_VEGAN" name="dietaryPreferences" value="VEGAN">
+                        <label for="dietary_VEGAN" style="margin-left: 0.5rem;" th:text="#{register.dietary.VEGAN}">Vegan</label>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="checkbox" id="dietary_CELIAC" name="dietaryPreferences" value="CELIAC">
+                        <label for="dietary_CELIAC" style="margin-left: 0.5rem;" th:text="#{register.dietary.CELIAC}">Celiac</label>
+                    </div>
+                </div>
             </div>
             <div style="display: flex; gap: 0.5rem;">
                 <button type="submit"
