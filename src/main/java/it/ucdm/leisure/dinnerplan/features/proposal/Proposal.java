@@ -36,7 +36,7 @@ public class Proposal {
 
     private String description;
 
-    @ElementCollection(targetClass = DietaryPreference.class)
+    @ElementCollection(targetClass = DietaryPreference.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "proposal_dietary_preferences", joinColumns = @JoinColumn(name = "proposal_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "dietary_preference")

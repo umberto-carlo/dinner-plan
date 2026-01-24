@@ -1,10 +1,10 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
-
+import it.ucdm.leisure.dinnerplan.features.user.User;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public class DinnerEvent {
     @JoinColumn(name = "selected_proposal_date_id")
     private ProposalDate selectedProposalDate;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "event_participants", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private List<User> participants = new ArrayList<>();
 

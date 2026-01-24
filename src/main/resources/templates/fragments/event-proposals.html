@@ -54,11 +54,11 @@
                     th:text="${proposal.description}">Description</div>
 
                 <!-- Incompatible Participants Warning -->
-                <div th:with="incompatibleUsers=${proposal.getIncompatibleParticipants(event)}"
-                     th:if="${!#lists.isEmpty(incompatibleUsers)}"
+                <!-- Debug info: ID=[[${proposal.id}]] Size=[[${incompatibleUsersMap != null ? incompatibleUsersMap.get(proposal.id)?.size() : 'MAP_NULL'}]] -->
+                <div th:if="${incompatibleUsersMap != null and incompatibleUsersMap.containsKey(proposal.id) and !incompatibleUsersMap.get(proposal.id).isEmpty()}"
                      class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
                     <span class="font-bold">⚠️ Attenzione:</span> Questa proposta non è compatibile con le preferenze alimentari di:
-                    <span th:each="user, iterStat : ${incompatibleUsers}" class="font-medium">
+                    <span th:each="user, iterStat : ${incompatibleUsersMap.get(proposal.id)}" class="font-medium">
                         <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
                     </span>
                 </div>

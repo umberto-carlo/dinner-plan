@@ -18,9 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -197,6 +195,13 @@ public class DinnerController {
             return Integer.compare(v2, v1);
         });
         model.addAttribute("sortedProposals", sortedProposals);
+        
+        // Pre-calculate incompatible users map
+        Map<Long, List<User>> incompatibleUsersMap = new HashMap<>();
+        for (Proposal p : sortedProposals) {
+            incompatibleUsersMap.put(p.getId(), p.getIncompatibleParticipants(event));
+        }
+        model.addAttribute("incompatibleUsersMap", incompatibleUsersMap);
 
         User user = (User) model.getAttribute("currentUser");
         if (user == null) {
@@ -286,6 +291,13 @@ public class DinnerController {
             return Integer.compare(v2, v1);
         });
         model.addAttribute("sortedProposals", sortedProposals);
+        
+        // Pre-calculate incompatible users map
+        Map<Long, List<User>> incompatibleUsersMap = new HashMap<>();
+        for (Proposal p : sortedProposals) {
+            incompatibleUsersMap.put(p.getId(), p.getIncompatibleParticipants(event));
+        }
+        model.addAttribute("incompatibleUsersMap", incompatibleUsersMap);
 
         User user = (User) model.getAttribute("currentUser");
         if (user != null) {
