@@ -488,4 +488,12 @@ public class DinnerController {
         proposalService.addCentralProposal(id, List.of(LocalDateTime.parse(dateOption)));
         return "redirect:/events/" + id;
     }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/events/{id}/extend-deadline")
+    public String extendDeadline(@PathVariable Long id, @RequestParam("newDeadline") String newDeadline,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        dinnerEventService.extendDeadline(id, LocalDateTime.parse(newDeadline), userDetails.getUsername());
+        return "redirect:/events/" + id;
+    }
 }

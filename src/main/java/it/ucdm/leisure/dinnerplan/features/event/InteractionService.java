@@ -61,8 +61,8 @@ public class InteractionService {
             throw new IllegalStateException("Voting is closed");
         }
 
-        if (proposalDate.getDinnerEvent().getStatus() == DinnerEvent.EventStatus.DECIDED) {
-            throw new IllegalStateException("Event is already decided");
+        if (proposalDate.getDinnerEvent().getStatus() == DinnerEvent.EventStatus.DECIDED || proposalDate.getDinnerEvent().getStatus() == DinnerEvent.EventStatus.CLOSED) {
+            throw new IllegalStateException("Event is already decided or closed");
         }
 
         Optional<Vote> existingVote = voteRepository.findByUserAndProposalDate(user, proposalDate);

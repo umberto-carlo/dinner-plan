@@ -106,7 +106,7 @@
                                                 th:text="${#lists.contains(votedProposalDateIds, pDate.id)} ? #{event.remove_vote} : #{event.vote}">Vote</button>
                                         </form>
                                         <!-- Select -->
-                                        <form th:if="${isOrganizer and event.status.name() == 'OPEN'}"
+                                        <form th:if="${isOrganizer and (event.status.name() == 'OPEN' or event.status.name() == 'CLOSED')}"
                                             th:action="@{/events/{id}/select-proposal(id=${event.id}, proposalId=${pDate.id})}"
                                             method="post" onsubmit="handleAjaxForm(event)">
                                             <button type="submit"

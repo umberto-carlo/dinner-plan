@@ -2,6 +2,7 @@ package it.ucdm.leisure.dinnerplan.features.event;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,6 +175,52 @@ public class DinnerEventService {
                     @Override
                     public void afterCommit() {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "DELETED");
+                        messagingTemplate.convertAndSend("/topic/dashboard-updates", "REFRESH");
+                    }
+                });
+    }
+
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void closeExpiredEvents() {
+        List<DinnerEvent> expiredEvents = dinnerEventRepository.findByStatusAndDeadlineBefore(
+                DinnerEvent.EventStatus.OPEN, LocalDateTime.now());
+
+        for (DinnerEvent event : expiredEvents) {
+            if (event.getSelectedProposalDate() == null) {
+                event.setStatus(DinnerEvent.EventStatus.CLOSED);
+                dinnerEventRepository.save(event);
+                messagingTemplate.convertAndSend("/topic/events/" + event.getId(), "update");
+            }
+        }
+        if (!expiredEvents.isEmpty()) {
+            messagingTemplate.convertAndSend("/topic/dashboard-updates", "REFRESH");
+        }
+    }
+
+    @Transactional
+    public void extendDeadline(Long eventId, LocalDateTime newDeadline, String username) {
+        DinnerEvent event = getEventById(Objects.requireNonNull(eventId));
+
+        if (!event.getOrganizer().getUsername().equals(username)) {
+            throw new SecurityException("Only organizer can extend deadline");
+        }
+
+        if (newDeadline.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("New deadline must be in the future");
+        }
+
+        event.setDeadline(newDeadline);
+        if (event.getStatus() == DinnerEvent.EventStatus.CLOSED) {
+            event.setStatus(DinnerEvent.EventStatus.OPEN);
+        }
+        dinnerEventRepository.save(event);
+
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
                         messagingTemplate.convertAndSend("/topic/dashboard-updates", "REFRESH");
                     }
                 });
