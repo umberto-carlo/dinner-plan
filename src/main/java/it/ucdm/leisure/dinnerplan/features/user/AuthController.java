@@ -26,7 +26,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@RequestParam String username, @RequestParam String email, @RequestParam String password,
+    public String registerUser(@RequestParam String username, @RequestParam(required = false) String email, @RequestParam String password,
+            @RequestParam(required = false) String address,
             @RequestParam(required = false) String dietaryPreference,
             Model model) {
         try {
@@ -34,8 +35,13 @@ public class AuthController {
             if (dietaryPreference != null && !dietaryPreference.isEmpty()) {
                 preference = DietaryPreference.valueOf(dietaryPreference);
             }
-            userService.registerUser(username, email, password,
+            User user = userService.registerUser(username, email, password,
                     it.ucdm.leisure.dinnerplan.features.user.Role.PARTICIPANT, preference);
+            
+            if (address != null && !address.trim().isEmpty()) {
+                userService.updateAddress(user.getUsername(), address);
+            }
+
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
