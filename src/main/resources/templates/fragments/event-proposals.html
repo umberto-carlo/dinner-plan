@@ -13,8 +13,21 @@
             <div class="p-6 space-y-4">
                 <!-- Header -->
                 <div class="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-2">
-                    <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100" th:text="${proposal.location}">
-                        Location</h4>
+                    <div class="flex items-center gap-2">
+                        <h4 class="text-xl font-bold text-gray-900 dark:text-gray-100" th:text="${proposal.location}">
+                            Location</h4>
+                        <!-- Dietary Icons -->
+                        <div class="flex gap-1">
+                            <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
+                                class="text-lg" th:title="#{register.dietary.OMNIVORE}">🍖</span>
+                            <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
+                                class="text-lg" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
+                            <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
+                                class="text-lg" th:title="#{register.dietary.VEGAN}">🌱</span>
+                            <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
+                                class="text-lg" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
+                        </div>
+                    </div>
 
                     <!-- Rating Controls -->
                     <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.proposal.id == proposal.id and currentUser != null}"
@@ -39,6 +52,16 @@
                 <!-- Description -->
                 <div th:if="${proposal.description}" class="text-sm text-gray-500 dark:text-gray-400 italic"
                     th:text="${proposal.description}">Description</div>
+
+                <!-- Incompatible Participants Warning -->
+                <div th:with="incompatibleUsers=${proposal.getIncompatibleParticipants(event)}"
+                     th:if="${!#lists.isEmpty(incompatibleUsers)}"
+                     class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
+                    <span class="font-bold">⚠️ Attenzione:</span> Questa proposta non è compatibile con le preferenze alimentari di:
+                    <span th:each="user, iterStat : ${incompatibleUsers}" class="font-medium">
+                        <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
+                    </span>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Details & Map -->

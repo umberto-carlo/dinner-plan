@@ -5,11 +5,11 @@ import it.ucdm.leisure.dinnerplan.features.geocode.GeocodingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.List;
-import java.util.Objects;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserService {
@@ -26,7 +26,7 @@ public class UserService {
     }
 
     @Transactional
-    public User registerUser(String username, String email, String password, Role role) {
+    public User registerUser(String username, String email, String password, Role role, DietaryPreference dietaryPreference) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
@@ -36,6 +36,7 @@ public class UserService {
                 .email((email == null || email.trim().isEmpty()) ? null : email)
                 .password(passwordEncoder.encode(password))
                 .role(role)
+                .dietaryPreference(dietaryPreference != null ? dietaryPreference : DietaryPreference.OMNIVORE)
                 .build();
 
         return userRepository.save(Objects.requireNonNull(user));
@@ -107,6 +108,13 @@ public class UserService {
             }
             userRepository.save(Objects.requireNonNull(user));
         }
+    }
+
+    @Transactional
+    public void updateDietaryPreference(String username, DietaryPreference preference) {
+        User user = findByUsername(username);
+        user.setDietaryPreference(preference != null ? preference : DietaryPreference.OMNIVORE);
+        userRepository.save(Objects.requireNonNull(user));
     }
 
     public List<User> getAllUsers() {

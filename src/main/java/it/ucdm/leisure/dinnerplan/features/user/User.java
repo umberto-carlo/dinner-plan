@@ -34,10 +34,14 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DietaryPreference dietaryPreference = DietaryPreference.OMNIVORE;
+
     public User() {
     }
 
-    public User(Long id, String username, String email, String password, Role role, String address, Double latitude, Double longitude) {
+    public User(Long id, String username, String email, String password, Role role, String address, Double latitude, Double longitude, DietaryPreference dietaryPreference) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -46,6 +50,7 @@ public class User {
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.dietaryPreference = dietaryPreference != null ? dietaryPreference : DietaryPreference.OMNIVORE;
     }
 
     public static UserBuilder builder() {
@@ -116,6 +121,14 @@ public class User {
         this.role = role;
     }
 
+    public DietaryPreference getDietaryPreference() {
+        return dietaryPreference;
+    }
+
+    public void setDietaryPreference(DietaryPreference dietaryPreference) {
+        this.dietaryPreference = dietaryPreference;
+    }
+
     public static class UserBuilder {
         private Long id;
         private String username;
@@ -125,6 +138,7 @@ public class User {
         private String address;
         private Double latitude;
         private Double longitude;
+        private DietaryPreference dietaryPreference;
 
         public UserBuilder id(Long id) {
             this.id = id;
@@ -166,8 +180,13 @@ public class User {
             return this;
         }
 
+        public UserBuilder dietaryPreference(DietaryPreference dietaryPreference) {
+            this.dietaryPreference = dietaryPreference;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, email, password, role, address, latitude, longitude);
+            return new User(id, username, email, password, role, address, latitude, longitude, dietaryPreference);
         }
     }
 }

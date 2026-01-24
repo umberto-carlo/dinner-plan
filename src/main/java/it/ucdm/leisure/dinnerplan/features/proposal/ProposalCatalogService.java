@@ -1,7 +1,7 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
-
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class ProposalCatalogService {
@@ -22,7 +23,7 @@ public class ProposalCatalogService {
     }
 
     @Transactional
-    public void addGlobalProposal(String location, String address, String description) {
+    public void addGlobalProposal(String location, String address, String description, Set<DietaryPreference> dietaryPreferences) {
         // Check if exists
         if (proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address).isPresent()) {
             return; // Already exists, do nothing
@@ -34,6 +35,7 @@ public class ProposalCatalogService {
                 .location(location)
                 .address(address)
                 .description(description)
+                .dietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>())
                 .build();
 
         proposalRepository.save(Objects.requireNonNull(proposal));
@@ -48,6 +50,32 @@ public class ProposalCatalogService {
                     });
         } else {
             // Fallback for non-transactional contexts (e.g. tests)
+            messagingTemplate.convertAndSend("/topic/events", "update");
+        }
+    }
+    
+    @Transactional
+    public void addGlobalProposal(String location, String address, String description) {
+        addGlobalProposal(location, address, description, null);
+    }
+
+    @Transactional
+    public void updateGlobalProposalDietary(String location, String address, Set<DietaryPreference> dietaryPreferences) {
+        Proposal proposal = proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address)
+                .orElseThrow(() -> new IllegalArgumentException("Proposal not found"));
+        
+        proposal.setDietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>());
+        proposalRepository.save(proposal);
+
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            messagingTemplate.convertAndSend("/topic/events", "update");
+                        }
+                    });
+        } else {
             messagingTemplate.convertAndSend("/topic/events", "update");
         }
     }
@@ -67,6 +95,7 @@ public class ProposalCatalogService {
                     .totalLikes(0)
                     .totalDislikes(0)
                     .usageCount(0)
+                    .dietaryPreferences(new java.util.HashSet<>())
                     .build());
 
             int eventCount = (p.getDinnerEvents() != null) ? p.getDinnerEvents().size() : 0;
@@ -84,6 +113,11 @@ public class ProposalCatalogService {
             if (p.getDescription() != null && !p.getDescription().isBlank()) {
                 dto.setDescription(p.getDescription());
             }
+            
+            if (p.getDietaryPreferences() != null) {
+                dto.getDietaryPreferences().addAll(p.getDietaryPreferences());
+            }
+
             map.put(key, dto);
         }
 

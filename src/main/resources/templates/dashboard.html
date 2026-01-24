@@ -133,6 +133,28 @@
                         <input type="text" id="gp-description" name="description"
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                            th:text="#{profile.dietary}">Dietary Preferences</label>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="gp_dietary_OMNIVORE" name="dietaryPreferences" value="OMNIVORE" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="gp_dietary_OMNIVORE" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.OMNIVORE}">Omnivore</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="gp_dietary_VEGETARIAN" name="dietaryPreferences" value="VEGETARIAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="gp_dietary_VEGETARIAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGETARIAN}">Vegetarian</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="gp_dietary_VEGAN" name="dietaryPreferences" value="VEGAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="gp_dietary_VEGAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGAN}">Vegan</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="gp_dietary_CELIAC" name="dietaryPreferences" value="CELIAC" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="gp_dietary_CELIAC" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.CELIAC}">Celiac</label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex justify-end gap-3">
                         <button type="button" onclick="toggleGlobalProposalForm()"
                             class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer text-sm"
@@ -172,8 +194,30 @@
                         </div>
 
                         <div class="flex-grow min-w-0">
-                            <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate"
-                                th:text="${prop.location}">Location</h4>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate"
+                                    th:text="${prop.location}">Location</h4>
+                                <!-- Dietary Icons -->
+                                <div class="flex gap-1 items-center">
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
+                                        class="text-lg" th:title="#{register.dietary.OMNIVORE}">🍖</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
+                                        class="text-lg" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
+                                        class="text-lg" th:title="#{register.dietary.VEGAN}">🌱</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
+                                        class="text-lg" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
+
+                                    <!-- Edit Dietary Preferences Button -->
+                                    <button th:if="${isOrganizer}" type="button"
+                                        class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                                        th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                        th:data-preferences="${#strings.listJoin(prop.dietaryPreferences, ',')}"
+                                        onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
+                                        ✏️
+                                    </button>
+                                </div>
+                            </div>
                             <p class="text-sm text-gray-500 dark:text-gray-400 truncate" th:text="${prop.address}">
                                 Address</p>
                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate"
@@ -351,6 +395,57 @@
         </div>
     </div>
 
+    <!-- Update Dietary Modal -->
+    <div id="update-dietary-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onclick="document.getElementById('update-dietary-modal').style.display='none'"></div>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4"
+                    th:text="#{profile.update_dietary}">Update Dietary</h3>
+                <form th:action="@{/proposals/update-dietary}" method="post">
+                    <input type="hidden" id="ud-location" name="location">
+                    <input type="hidden" id="ud-address" name="address">
+
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            <strong id="ud-display-loc" class="text-gray-900 dark:text-gray-100">Location</strong>
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="ud_dietary_OMNIVORE" name="dietaryPreferences" value="OMNIVORE" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="ud_dietary_OMNIVORE" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.OMNIVORE}">Omnivore</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="ud_dietary_VEGETARIAN" name="dietaryPreferences" value="VEGETARIAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="ud_dietary_VEGETARIAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGETARIAN}">Vegetarian</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="ud_dietary_VEGAN" name="dietaryPreferences" value="VEGAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="ud_dietary_VEGAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGAN}">Vegan</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="ud_dietary_CELIAC" name="dietaryPreferences" value="CELIAC" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                                <label for="ud_dietary_CELIAC" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.CELIAC}">Celiac</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                            onclick="document.getElementById('update-dietary-modal').style.display='none'"
+                            th:text="#{app.cancel}">Cancel</button>
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                            th:text="#{app.save}">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Notifications -->
     <div th:if="${errorMessage}"
         class="fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4 shadow-lg flex items-start">
@@ -432,6 +527,26 @@
             document.getElementById('ate-description').value = btn.getAttribute('data-description');
             document.getElementById('ate-display-loc').textContent = btn.getAttribute('data-location');
             document.getElementById('add-to-event-modal').style.display = 'block';
+        }
+
+        function openUpdateDietaryModal(btn) {
+            document.getElementById('ud-location').value = btn.getAttribute('data-location');
+            document.getElementById('ud-address').value = btn.getAttribute('data-address');
+            document.getElementById('ud-display-loc').textContent = btn.getAttribute('data-location');
+
+            // Reset checkboxes
+            document.querySelectorAll('#update-dietary-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+            // Set current preferences
+            const prefs = btn.getAttribute('data-preferences');
+            if (prefs) {
+                prefs.split(',').forEach(p => {
+                    const cb = document.getElementById('ud_dietary_' + p.trim());
+                    if (cb) cb.checked = true;
+                });
+            }
+
+            document.getElementById('update-dietary-modal').style.display = 'block';
         }
 
         function openBatchAddModal() {

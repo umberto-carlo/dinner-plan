@@ -1,30 +1,27 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
+import it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO;
+import it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest;
+import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
+import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.user.UserService;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.utils.UserAgentUtils;
-import it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest;
-import it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO;
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Controller
@@ -494,6 +491,27 @@ public class DinnerController {
     public String extendDeadline(@PathVariable Long id, @RequestParam("newDeadline") String newDeadline,
             @AuthenticationPrincipal UserDetails userDetails) {
         dinnerEventService.extendDeadline(id, LocalDateTime.parse(newDeadline), userDetails.getUsername());
+        return "redirect:/events/" + id;
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/events/{id}/add-proposal")
+    public String addProposal(@PathVariable Long id, @RequestParam String location, @RequestParam String address,
+            @RequestParam(required = false) String description, @RequestParam String dateOption,
+            @RequestParam(required = false) List<String> dietaryPreferences,
+            @AuthenticationPrincipal UserDetails userDetails,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        if (dietaryPreferences == null || dietaryPreferences.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Devi selezionare almeno una preferenza alimentare.");
+            return "redirect:/events/" + id;
+        }
+
+        Set<DietaryPreference> preferences = dietaryPreferences.stream()
+                .map(DietaryPreference::valueOf)
+                .collect(Collectors.toSet());
+
+        proposalService.addProposal(id, List.of(LocalDateTime.parse(dateOption)), location, address, description, preferences);
         return "redirect:/events/" + id;
     }
 }

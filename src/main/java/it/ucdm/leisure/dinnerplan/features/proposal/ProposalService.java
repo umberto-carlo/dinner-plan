@@ -1,10 +1,11 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
 import it.ucdm.leisure.dinnerplan.features.geocode.Coordinates;
 import it.ucdm.leisure.dinnerplan.features.geocode.GeocodingService;
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.User;
 import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.Set;
 
 @Service
 public class ProposalService {
@@ -171,7 +172,7 @@ public class ProposalService {
         if (closestProposal != null) {
             logger.info("Found closest proposal '{}' ({} km away) for eventId: {}", 
                     closestProposal.getLocation(), String.format("%.2f", minDistance), eventId);
-            addProposal(eventId, dateOptions, closestProposal.getLocation(), closestProposal.getAddress(), closestProposal.getDescription());
+            addProposal(eventId, dateOptions, closestProposal.getLocation(), closestProposal.getAddress(), closestProposal.getDescription(), closestProposal.getDietaryPreferences());
         } else {
             logger.warn("Could not find any suitable central proposal for eventId: {}", eventId);
         }
@@ -196,7 +197,7 @@ public class ProposalService {
 
     @Transactional
     public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
-            String description) {
+            String description, Set<DietaryPreference> dietaryPreferences) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + eventId));
@@ -216,6 +217,7 @@ public class ProposalService {
                     .address(address)
                     .description(description)
                     .dates(new ArrayList<>())
+                    .dietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>())
                     .build();
             
             // Geocode new proposal immediately
@@ -260,6 +262,11 @@ public class ProposalService {
                     && !description.isBlank()) {
                 proposal.setDescription(description);
             }
+            
+            // Update dietary preferences if provided
+            if (dietaryPreferences != null && !dietaryPreferences.isEmpty()) {
+                proposal.setDietaryPreferences(dietaryPreferences);
+            }
         }
 
         if (dateOptions != null) {
@@ -295,6 +302,12 @@ public class ProposalService {
                         messagingTemplate.convertAndSend("/topic/events/" + eventId, "update");
                     }
                 });
+    }
+
+    @Transactional
+    public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
+            String description) {
+        addProposal(eventId, dateOptions, location, address, description, null);
     }
 
     @Transactional
@@ -367,6 +380,14 @@ public class ProposalService {
                 .orElseThrow(() -> new IllegalArgumentException("Date not found in proposal"));
 
         proposal.getDates().remove(dateToRemove);
+        proposalRepository.save(proposal);
+    }
+    
+    @Transactional
+    public void updateProposalDietaryPreferences(Long proposalId, Set<DietaryPreference> preferences) {
+        Proposal proposal = proposalRepository.findById(Objects.requireNonNull(proposalId))
+                .orElseThrow(() -> new IllegalArgumentException("Proposal not found"));
+        proposal.setDietaryPreferences(preferences != null ? preferences : new java.util.HashSet<>());
         proposalRepository.save(proposal);
     }
 }

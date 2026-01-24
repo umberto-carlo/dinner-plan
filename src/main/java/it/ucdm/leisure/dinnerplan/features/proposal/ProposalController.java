@@ -1,15 +1,20 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
 import it.ucdm.leisure.dinnerplan.features.event.InteractionService;
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class ProposalController {
@@ -26,25 +31,41 @@ public class ProposalController {
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
-    @PostMapping("/events/{id}/add-proposal")
-    public String addProposal(@PathVariable Long id, @RequestParam("dateOption") List<String> dateOptions,
-            @RequestParam String location,
-            @RequestParam String address, @RequestParam String description) {
-        List<LocalDateTime> dts = new ArrayList<>();
-        for (String d : dateOptions) {
-            if (!d.isBlank()) {
-                dts.add(LocalDateTime.parse(d));
-            }
+    @PostMapping("/proposals/add")
+    public String addGlobalProposal(@RequestParam String location, @RequestParam String address,
+            @RequestParam String description, @RequestParam(required = false) List<String> dietaryPreferences,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        if (dietaryPreferences == null || dietaryPreferences.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Devi selezionare almeno una preferenza alimentare.");
+            return "redirect:/";
         }
-        proposalService.addProposal(id, dts, location, address, description);
-        return "redirect:/events/" + id;
+
+        Set<DietaryPreference> preferences = dietaryPreferences.stream()
+                .map(DietaryPreference::valueOf)
+                .collect(Collectors.toSet());
+
+        proposalCatalogService.addGlobalProposal(location, address, description, preferences);
+        return "redirect:/";
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
-    @PostMapping("/proposals/add")
-    public String addGlobalProposal(@RequestParam String location, @RequestParam String address,
-            @RequestParam String description) {
-        proposalCatalogService.addGlobalProposal(location, address, description);
+    @PostMapping("/proposals/update-dietary")
+    public String updateProposalDietary(@RequestParam String location, @RequestParam String address,
+            @RequestParam(required = false) List<String> dietaryPreferences,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        if (dietaryPreferences == null || dietaryPreferences.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Devi selezionare almeno una preferenza alimentare.");
+            return "redirect:/";
+        }
+
+        Set<DietaryPreference> preferences = dietaryPreferences.stream()
+                .map(DietaryPreference::valueOf)
+                .collect(Collectors.toSet());
+
+        proposalCatalogService.updateGlobalProposalDietary(location, address, preferences);
+        redirectAttributes.addFlashAttribute("successMessage", "Preferenze alimentari aggiornate con successo.");
         return "redirect:/";
     }
 

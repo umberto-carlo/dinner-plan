@@ -1,12 +1,15 @@
 package it.ucdm.leisure.dinnerplan.features.proposal;
 
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
+import it.ucdm.leisure.dinnerplan.features.user.User;
 import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "proposals")
@@ -33,6 +36,12 @@ public class Proposal {
 
     private String description;
 
+    @ElementCollection(targetClass = DietaryPreference.class)
+    @CollectionTable(name = "proposal_dietary_preferences", joinColumns = @JoinColumn(name = "proposal_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dietary_preference")
+    private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
+
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProposalDate> dates = new ArrayList<>();
 
@@ -43,7 +52,7 @@ public class Proposal {
     }
 
     public Proposal(Long id, List<DinnerEvent> dinnerEvents, String location, String address, Double latitude, Double longitude,
-            String description, List<ProposalDate> dates, Set<ProposalRating> ratings) {
+            String description, List<ProposalDate> dates, Set<ProposalRating> ratings, Set<DietaryPreference> dietaryPreferences) {
         this.id = id;
         this.dinnerEvents = dinnerEvents != null ? dinnerEvents : new ArrayList<>();
         this.location = location;
@@ -53,6 +62,7 @@ public class Proposal {
         this.description = description;
         this.dates = dates != null ? dates : new ArrayList<>();
         this.ratings = ratings != null ? ratings : new HashSet<>();
+        this.dietaryPreferences = dietaryPreferences != null ? dietaryPreferences : new HashSet<>();
     }
 
     public static ProposalBuilder builder() {
@@ -132,8 +142,25 @@ public class Proposal {
         this.ratings = ratings;
     }
 
+    public Set<DietaryPreference> getDietaryPreferences() {
+        return dietaryPreferences;
+    }
+
+    public void setDietaryPreferences(Set<DietaryPreference> dietaryPreferences) {
+        this.dietaryPreferences = dietaryPreferences;
+    }
+
     public boolean hasVotes() {
         return dates != null && dates.stream().anyMatch(d -> d.getVotes() != null && !d.getVotes().isEmpty());
+    }
+
+    public List<User> getIncompatibleParticipants(DinnerEvent event) {
+        if (event == null || event.getParticipants() == null) {
+            return new ArrayList<>();
+        }
+        return event.getParticipants().stream()
+                .filter(p -> p.getDietaryPreference() != DietaryPreference.OMNIVORE && !dietaryPreferences.contains(p.getDietaryPreference()))
+                .collect(Collectors.toList());
     }
 
     public static class ProposalBuilder {
@@ -146,6 +173,7 @@ public class Proposal {
         private String description;
         private List<ProposalDate> dates = new ArrayList<>();
         private Set<ProposalRating> ratings = new HashSet<>();
+        private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
 
         public ProposalBuilder id(Long id) {
             this.id = id;
@@ -192,8 +220,13 @@ public class Proposal {
             return this;
         }
 
+        public ProposalBuilder dietaryPreferences(Set<DietaryPreference> dietaryPreferences) {
+            this.dietaryPreferences = dietaryPreferences;
+            return this;
+        }
+
         public Proposal build() {
-            return new Proposal(id, dinnerEvents, location, address, latitude, longitude, description, dates, ratings);
+            return new Proposal(id, dinnerEvents, location, address, latitude, longitude, description, dates, ratings, dietaryPreferences);
         }
     }
 }

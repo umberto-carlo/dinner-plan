@@ -106,6 +106,28 @@ public class UserController {
         return "profile";
     }
 
+    @PostMapping("/profile/update-dietary-preference")
+    public String updateDietaryPreference(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String dietaryPreference,
+            Model model,
+            @org.springframework.web.bind.annotation.RequestHeader(value = "User-Agent", required = false) String userAgent,
+            java.util.Locale locale) {
+        try {
+            DietaryPreference preference = DietaryPreference.valueOf(dietaryPreference);
+            userService.updateDietaryPreference(userDetails.getUsername(), preference);
+            model.addAttribute("dietarySuccess", messageSource.getMessage("profile.dietary_success", null, locale));
+        } catch (Exception e) {
+            model.addAttribute("dietaryError", messageSource.getMessage("profile.dietary_error", null, locale));
+        }
+        // Reload user to keep consistency
+        User user = userService.findByUsername(userDetails.getUsername());
+        model.addAttribute("user", user);
+
+        if (userAgentUtils.isMobile(userAgent)) {
+            return "mobile/profile";
+        }
+        return "profile";
+    }
+
     @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @GetMapping("/admin/users")
     public String listUsers(@AuthenticationPrincipal UserDetails userDetails, Model model,
@@ -130,7 +152,7 @@ public class UserController {
     public String createUser(@RequestParam String username, @RequestParam String email, @RequestParam String password,
             @RequestParam String role) {
         userService.registerUser(username, email, password,
-                it.ucdm.leisure.dinnerplan.features.user.Role.valueOf(role));
+                it.ucdm.leisure.dinnerplan.features.user.Role.valueOf(role), DietaryPreference.OMNIVORE);
         return "redirect:/admin/users";
     }
 

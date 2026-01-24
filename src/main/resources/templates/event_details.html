@@ -62,8 +62,7 @@
             </select>
         </div>
 
-        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post"
-            onsubmit="handleAjaxForm(event, 'add-proposal-form')">
+        <form th:action="@{/events/{id}/add-proposal(id=${event.id})}" method="post">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -99,6 +98,28 @@
                 <input type="text" id="propDescription" name="description"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white w-full"
                     th:placeholder="#{create.placeholder.description}">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    th:text="#{profile.dietary}">Dietary Preferences</label>
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="dietary_OMNIVORE" name="dietaryPreferences" value="OMNIVORE" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="dietary_OMNIVORE" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.OMNIVORE}">Omnivore</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="dietary_VEGETARIAN" name="dietaryPreferences" value="VEGETARIAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="dietary_VEGETARIAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGETARIAN}">Vegetarian</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="dietary_VEGAN" name="dietaryPreferences" value="VEGAN" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="dietary_VEGAN" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.VEGAN}">Vegan</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="dietary_CELIAC" name="dietaryPreferences" value="CELIAC" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="dietary_CELIAC" class="ml-2 block text-sm text-gray-900 dark:text-gray-100" th:text="#{register.dietary.CELIAC}">Celiac</label>
+                    </div>
+                </div>
             </div>
             <div class="flex gap-2">
                 <button type="submit"
@@ -438,7 +459,7 @@
             });
         }
 
-        function handleAjaxForm(event, hideModalId) {
+        function handleAjaxForm(event, hideModalId, reloadOnSuccess) {
             event.preventDefault();
             const overlay = document.getElementById('loading-overlay');
             overlay.classList.remove('hidden');
@@ -449,13 +470,34 @@
 
             fetch(form.action, { method: 'POST', body: formData })
                 .then(response => {
-                    if (!response.ok && !response.redirected) {
+                    if (response.redirected) {
+                        window.location.href = response.url; // Follow redirect manually
+                        return;
+                    }
+                    if (!response.ok) {
                         alert('Failed');
                         overlay.classList.add('hidden'); overlay.classList.remove('flex');
                     }
                     if (hideModalId) document.getElementById(hideModalId).classList.add('hidden');
-                    // Wait for WS
-                    setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 2000);
+
+                    if (reloadOnSuccess) {
+                         // If we don't follow redirect, we might want to reload or wait for WS
+                         // But for add proposal which redirects to GET /events/{id} with flash attributes,
+                         // we MUST follow the redirect to see the flash message.
+                         // The fetch API follows redirects transparently by default, but returns the FINAL response.
+                         // If the final response is the HTML of the page, we might need to replace the document.
+                         // However, standard AJAX form handling usually expects JSON or partial updates.
+                         // Since our controller returns a redirect, fetch follows it and returns the page content.
+                         // To show the flash message, we should probably just reload the page if it was a redirect.
+
+                         // Actually, fetch follows redirects automatically. response.url will be the final URL.
+                         // If we are on /events/1 and we post to /events/1/add-proposal, it redirects back to /events/1.
+                         // We can just reload the window to show the new state + flash message.
+                         window.location.reload();
+                    } else {
+                        // Wait for WS
+                        setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 2000);
+                    }
                 }).catch(e => {
                     console.error(e);
                     overlay.classList.add('hidden'); overlay.classList.remove('flex');

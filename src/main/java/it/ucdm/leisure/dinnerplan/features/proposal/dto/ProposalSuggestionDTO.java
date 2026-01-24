@@ -1,5 +1,10 @@
 package it.ucdm.leisure.dinnerplan.features.proposal.dto;
 
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class ProposalSuggestionDTO {
     private String location;
     private String address;
@@ -7,6 +12,7 @@ public class ProposalSuggestionDTO {
     private long totalLikes;
     private long totalDislikes;
     private int usageCount;
+    private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
 
     private String encodedData;
 
@@ -14,13 +20,14 @@ public class ProposalSuggestionDTO {
     }
 
     public ProposalSuggestionDTO(String location, String address, String description, long totalLikes,
-            long totalDislikes, int usageCount) {
+            long totalDislikes, int usageCount, Set<DietaryPreference> dietaryPreferences) {
         this.location = location;
         this.address = address;
         this.description = description;
         this.totalLikes = totalLikes;
         this.totalDislikes = totalDislikes;
         this.usageCount = usageCount;
+        this.dietaryPreferences = dietaryPreferences != null ? dietaryPreferences : new HashSet<>();
     }
 
     public static ProposalSuggestionDTOBuilder builder() {
@@ -83,6 +90,14 @@ public class ProposalSuggestionDTO {
         this.usageCount = usageCount;
     }
 
+    public Set<DietaryPreference> getDietaryPreferences() {
+        return dietaryPreferences;
+    }
+
+    public void setDietaryPreferences(Set<DietaryPreference> dietaryPreferences) {
+        this.dietaryPreferences = dietaryPreferences;
+    }
+
     // Builder class update
     public static class ProposalSuggestionDTOBuilder {
         private String location;
@@ -91,6 +106,7 @@ public class ProposalSuggestionDTO {
         private long totalLikes;
         private long totalDislikes;
         private int usageCount;
+        private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
         private String encodedData;
 
         public ProposalSuggestionDTOBuilder location(String location) {
@@ -123,6 +139,11 @@ public class ProposalSuggestionDTO {
             return this;
         }
 
+        public ProposalSuggestionDTOBuilder dietaryPreferences(Set<DietaryPreference> dietaryPreferences) {
+            this.dietaryPreferences = dietaryPreferences;
+            return this;
+        }
+
         public ProposalSuggestionDTOBuilder encodedData(String encodedData) {
             this.encodedData = encodedData;
             return this;
@@ -130,7 +151,7 @@ public class ProposalSuggestionDTO {
 
         public ProposalSuggestionDTO build() {
             ProposalSuggestionDTO dto = new ProposalSuggestionDTO(location, address, description, totalLikes,
-                    totalDislikes, usageCount);
+                    totalDislikes, usageCount, dietaryPreferences);
             dto.setEncodedData(encodedData);
             return dto;
         }

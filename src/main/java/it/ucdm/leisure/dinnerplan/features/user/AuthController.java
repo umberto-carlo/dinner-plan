@@ -27,10 +27,15 @@ public class AuthController {
 
     @PostMapping("/register")
     public String registerUser(@RequestParam String username, @RequestParam String email, @RequestParam String password,
+            @RequestParam(required = false) String dietaryPreference,
             Model model) {
         try {
+            DietaryPreference preference = DietaryPreference.OMNIVORE;
+            if (dietaryPreference != null && !dietaryPreference.isEmpty()) {
+                preference = DietaryPreference.valueOf(dietaryPreference);
+            }
             userService.registerUser(username, email, password,
-                    it.ucdm.leisure.dinnerplan.features.user.Role.PARTICIPANT);
+                    it.ucdm.leisure.dinnerplan.features.user.Role.PARTICIPANT, preference);
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
