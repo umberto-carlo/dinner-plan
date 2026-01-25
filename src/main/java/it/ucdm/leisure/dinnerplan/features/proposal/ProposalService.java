@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProposalService {
@@ -55,6 +56,12 @@ public class ProposalService {
 
         List<User> usersToConsider = new ArrayList<>(event.getParticipants());
         usersToConsider.add(event.getOrganizer());
+
+        // Collect dietary preferences of all participants
+        Set<DietaryPreference> requiredPreferences = usersToConsider.stream()
+                .map(User::getDietaryPreference)
+                .filter(pref -> pref != DietaryPreference.OMNIVORE)
+                .collect(Collectors.toSet());
 
         List<Coordinates> coordinates = new ArrayList<>();
         for (User user : usersToConsider) {
@@ -116,14 +123,32 @@ public class ProposalService {
             return;
         }
 
-        Proposal closestProposal = null;
+        Proposal bestProposal = null;
         double minDistance = Double.MAX_VALUE;
+        long maxSatisfiedPreferences = -1;
 
         for (Proposal proposal : candidateProposals) {
             if (proposal.getAddress() == null || proposal.getAddress().isBlank()) {
                 continue;
             }
-            
+
+            // Calculate how many required preferences this proposal satisfies
+            long satisfiedCount = 0;
+            if (requiredPreferences.isEmpty()) {
+                satisfiedCount = Long.MAX_VALUE; // All satisfied if none required
+            } else {
+                satisfiedCount = requiredPreferences.stream()
+                        .filter(pref -> proposal.getDietaryPreferences().contains(pref))
+                        .count();
+            }
+
+            // If we found a proposal that satisfies fewer preferences than the current best, skip it
+            // unless we haven't found any proposal yet.
+            // We prioritize satisfying preferences over distance.
+            if (maxSatisfiedPreferences != -1 && satisfiedCount < maxSatisfiedPreferences) {
+                continue;
+            }
+
             Coordinates proposalCoordinates = null;
             
             // Check if proposal already has coordinates
@@ -161,18 +186,29 @@ public class ProposalService {
                         proposalCoordinates.getLatitude(), proposalCoordinates.getLongitude()
                 );
                 
-                logger.debug("Distance from center to proposal '{}' is {} km", proposal.getLocation(), distance);
-                if (distance < minDistance) {
+                logger.debug("Distance from center to proposal '{}' is {} km. Satisfied prefs: {}", 
+                        proposal.getLocation(), distance, satisfiedCount);
+
+                // Logic to update best proposal:
+                // 1. If this proposal satisfies MORE preferences than the current best, it becomes the new best (regardless of distance).
+                // 2. If it satisfies the SAME number of preferences, check if it is closer.
+                if (satisfiedCount > maxSatisfiedPreferences) {
+                    maxSatisfiedPreferences = satisfiedCount;
                     minDistance = distance;
-                    closestProposal = proposal;
+                    bestProposal = proposal;
+                } else if (satisfiedCount == maxSatisfiedPreferences) {
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        bestProposal = proposal;
+                    }
                 }
             }
         }
 
-        if (closestProposal != null) {
-            logger.info("Found closest proposal '{}' ({} km away) for eventId: {}", 
-                    closestProposal.getLocation(), String.format("%.2f", minDistance), eventId);
-            addProposal(eventId, dateOptions, closestProposal.getLocation(), closestProposal.getAddress(), closestProposal.getDescription(), closestProposal.getDietaryPreferences());
+        if (bestProposal != null) {
+            logger.info("Found best proposal '{}' ({} km away, satisfied prefs: {}) for eventId: {}", 
+                    bestProposal.getLocation(), String.format("%.2f", minDistance), maxSatisfiedPreferences, eventId);
+            addProposal(eventId, dateOptions, bestProposal.getLocation(), bestProposal.getAddress(), bestProposal.getDescription(), bestProposal.getDietaryPreferences());
         } else {
             logger.warn("Could not find any suitable central proposal for eventId: {}", eventId);
         }
