@@ -5,6 +5,7 @@ import it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest;
 import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalDTO;
 import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.user.User;
@@ -194,7 +195,22 @@ public class DinnerController {
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             return Integer.compare(v2, v1);
         });
-        model.addAttribute("sortedProposals", sortedProposals);
+        
+        // Convert to DTOs and calculate distance
+        User currentUser = (User) model.getAttribute("currentUser");
+        List<ProposalDTO> proposalDTOs = new ArrayList<>();
+        for (Proposal p : sortedProposals) {
+            ProposalDTO dto = new ProposalDTO(p);
+            if (currentUser != null && currentUser.getLatitude() != null && currentUser.getLongitude() != null 
+                    && p.getLatitude() != null && p.getLongitude() != null) {
+                double distance = calculateHaversineDistance(currentUser.getLatitude(), currentUser.getLongitude(), 
+                        p.getLatitude(), p.getLongitude());
+                dto.setDistanceFromUser(distance);
+            }
+            proposalDTOs.add(dto);
+        }
+        
+        model.addAttribute("sortedProposals", proposalDTOs);
         
         // Pre-calculate incompatible users map
         Map<Long, List<User>> incompatibleUsersMap = new HashMap<>();
@@ -290,7 +306,21 @@ public class DinnerController {
                     .mapToInt(d -> d.getVotes().size()).max().orElse(0);
             return Integer.compare(v2, v1);
         });
-        model.addAttribute("sortedProposals", sortedProposals);
+        
+        // Convert to DTOs and calculate distance
+        User currentUser = (User) model.getAttribute("currentUser");
+        List<ProposalDTO> proposalDTOs = new ArrayList<>();
+        for (Proposal p : sortedProposals) {
+            ProposalDTO dto = new ProposalDTO(p);
+            if (currentUser != null && currentUser.getLatitude() != null && currentUser.getLongitude() != null 
+                    && p.getLatitude() != null && p.getLongitude() != null) {
+                double distance = calculateHaversineDistance(currentUser.getLatitude(), currentUser.getLongitude(), 
+                        p.getLatitude(), p.getLongitude());
+                dto.setDistanceFromUser(distance);
+            }
+            proposalDTOs.add(dto);
+        }
+        model.addAttribute("sortedProposals", proposalDTOs);
         
         // Pre-calculate incompatible users map
         Map<Long, List<User>> incompatibleUsersMap = new HashMap<>();
@@ -525,5 +555,16 @@ public class DinnerController {
 
         proposalService.addProposal(id, List.of(LocalDateTime.parse(dateOption)), location, address, description, preferences);
         return "redirect:/events/" + id;
+    }
+
+    private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radius of the earth in km
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }
