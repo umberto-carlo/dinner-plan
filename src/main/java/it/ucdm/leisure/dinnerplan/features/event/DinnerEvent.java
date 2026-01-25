@@ -44,6 +44,9 @@ public class DinnerEvent {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DinnerEventMessage> messages = new ArrayList<>();
 
+    @OneToMany(mappedBy = "dinnerEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProposalDate> proposalDates = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     private EventStatus status;
 
@@ -145,6 +148,14 @@ public class DinnerEvent {
 
     public void setMessages(List<DinnerEventMessage> messages) {
         this.messages = messages;
+    }
+
+    public List<ProposalDate> getProposalDates() {
+        return proposalDates;
+    }
+
+    public void setProposalDates(List<ProposalDate> proposalDates) {
+        this.proposalDates = proposalDates;
     }
 
     public EventStatus getStatus() {

@@ -1,23 +1,18 @@
 package it.ucdm.leisure.dinnerplan.features.event;
 
+import it.ucdm.leisure.dinnerplan.features.user.Role;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
+import it.ucdm.leisure.dinnerplan.features.user.UserService;
+import it.ucdm.leisure.dinnerplan.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
-import it.ucdm.leisure.dinnerplan.features.user.UserService;
-import it.ucdm.leisure.dinnerplan.features.user.Role;
-import it.ucdm.leisure.dinnerplan.service.EmailService;
-
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class DinnerEventService {
@@ -168,7 +163,13 @@ public class DinnerEventService {
             throw new SecurityException("Only organizer or admin can delete event");
         }
 
-        dinnerEventRepository.delete(event); // event is @NonNull? Yes from valid Optional.
+        // Manually clear associations that might cause FK constraints if not handled by cascade
+        event.getProposals().clear();
+        event.getParticipants().clear();
+        event.setSelectedProposalDate(null);
+        
+        dinnerEventRepository.save(event);
+        dinnerEventRepository.delete(event);
 
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
                 new org.springframework.transaction.support.TransactionSynchronization() {
