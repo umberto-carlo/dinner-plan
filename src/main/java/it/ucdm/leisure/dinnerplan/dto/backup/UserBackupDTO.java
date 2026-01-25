@@ -1,5 +1,6 @@
 package it.ucdm.leisure.dinnerplan.dto.backup;
 
+import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,4 +17,8 @@ public class UserBackupDTO {
     private String email;
     private String password;
     private Role role;
+    private String address;
+    private Double latitude;
+    private Double longitude;
+    private DietaryPreference dietaryPreference;
 }

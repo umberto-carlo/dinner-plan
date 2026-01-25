@@ -1,23 +1,18 @@
 package it.ucdm.leisure.dinnerplan.features.admin;
 
-import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
-import it.ucdm.leisure.dinnerplan.features.user.User;
-import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
-import it.ucdm.leisure.dinnerplan.features.proposal.Vote;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalRating;
-import it.ucdm.leisure.dinnerplan.features.proposal.ProposalDate;
+import it.ucdm.leisure.dinnerplan.dto.backup.*;
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
-
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessage;
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEventMessageRepository;
+import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
+import it.ucdm.leisure.dinnerplan.features.proposal.*;
+import it.ucdm.leisure.dinnerplan.features.user.User;
+import it.ucdm.leisure.dinnerplan.features.user.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
-import it.ucdm.leisure.dinnerplan.dto.backup.*;
-import it.ucdm.leisure.dinnerplan.features.user.*;
-import it.ucdm.leisure.dinnerplan.features.event.*;
-import it.ucdm.leisure.dinnerplan.features.proposal.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -171,8 +166,13 @@ public class AdminDataService {
         for (UserBackupDTO dto : userDTOs) {
             User user = new User();
             user.setUsername(dto.getUsername());
+            user.setEmail(dto.getEmail());
             user.setPassword(dto.getPassword());
             user.setRole(dto.getRole());
+            user.setAddress(dto.getAddress());
+            user.setLatitude(dto.getLatitude());
+            user.setLongitude(dto.getLongitude());
+            user.setDietaryPreference(dto.getDietaryPreference());
             user = userRepository.save(user);
             userMap.put(dto.getId(), user);
         }
@@ -216,7 +216,10 @@ public class AdminDataService {
             Proposal proposal = new Proposal();
             proposal.setLocation(dto.getLocation());
             proposal.setAddress(dto.getAddress());
+            proposal.setLatitude(dto.getLatitude());
+            proposal.setLongitude(dto.getLongitude());
             proposal.setDescription(dto.getDescription());
+            proposal.setDietaryPreferences(dto.getDietaryPreferences());
 
             // Link to Events (ManyToMany)
             List<DinnerEvent> events = new ArrayList<>();
