@@ -6,9 +6,12 @@ Dinner Plan is a Spring Boot application designed to simplify the organization o
 
 ## 🌟 Key Features
 
-*   **Dinner Organization**: Create events, set deadlines, and manage guest lists (Organizer/Participant roles).
-*   **Proposals & Voting**: Participants can propose locations/menus and vote for their favorites.
+*   **Dinner Organization**: Create events, set deadlines, and manage guest lists.
+*   **Proposals & Voting**: Participants can propose locations/menus and vote.
+*   **Geocoding & Maps**: Automatic address resolution for proposals.
 *   **Real-time Chat**: Integrated WebSocket chat for every dinner event.
+*   **Email Notifications**: Automatic invitations and reminders via email.
+*   **Calendar Export**: Add confirmed events to your personal calendar (.ics).
 *   **Role-Based Access**: Granular permissions for Admin, Organizer, and Participant.
 *   **Mobile-First UI**: Responsive design optimized for mobile usage.
 
@@ -19,24 +22,28 @@ The project follows a standard Spring Boot layered architecture with some advanc
 *   **Backend**: Java 25, Spring Boot 4.0.1
 *   **Security**: Spring Security (BCrypt, Custom UserDetails, Role-based auth)
 *   **Database**: Apache Derby (Embedded) / H2 ready
-*   **Frontend**: Server-side rendering with Thymeleaf + Vanilla CSS
+*   **Frontend**: Thymeleaf + Tailwind CSS (Runtime) + Vanilla CSS
 *   **Real-time**: Spring WebSocket (STOMP)
+*   **Internationalization**: Multi-language support (IT, EN, SV)
+*   **API Documentation**: OpenAPI 3 (Swagger UI)
+*   **External Services**: Geocoding (Photon/ArcGIS), SMTP Mail
 
 ### Project Structure (Current)
 ```
 src/main/java/it/ucdm/leisure/dinnerplan/
-├── config/       # Security & WebSocket configuration
-├── controller/   # REST & MVC Controllers
-├── service/      # Business Logic
-├── model/        # JPA Entities
-├── repository/   # Spring Data Repositories
+├── config/       # Security, WebSocket & App configuration
+├── features/     # Feature-based modules (User, Event, Proposal, Geocode)
+├── service/      # Shared Services (Email, Calendar)
+├── controller/   # Global Controllers
+├── dto/          # Data Transfer Objects
+├── utils/        # Utility classes
 └── exception/    # Error Handling
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   JDK 21+ (Java 25 recommended)
+*   JDK 25
 *   Maven 3.8+
 
 ### Installation
@@ -65,6 +72,21 @@ src/main/java/it/ucdm/leisure/dinnerplan/
 *(If enabled in `AdminInitializer`)*
 *   **Admin**: `admin` / `password`
 *   **User**: `user` / `password`
+
+## ⚙️ Configuration
+
+### Proxy Support
+The application supports running behind an HTTP proxy. Configure the following properties in `application.properties`:
+
+```properties
+# Proxy Host and Port
+proxy.host=your-proxy-host
+proxy.port=8080
+
+# Optional Proxy Authentication
+proxy.username=user
+proxy.password=pass
+```
 
 ## 🛠️ Development
 

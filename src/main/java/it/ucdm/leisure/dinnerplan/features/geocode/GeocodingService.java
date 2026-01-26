@@ -17,8 +17,12 @@ import tools.jackson.databind.ObjectMapper;
 public class GeocodingService {
 
     private static final Logger logger = LoggerFactory.getLogger(GeocodingService.class);
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public GeocodingService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Value("${geocoding.url}")
     private String photonUrl;
@@ -50,7 +54,7 @@ public class GeocodingService {
         // Strategy 4: ArcGIS with relaxed address
         if (!relaxedAddress.equals(address)) {
              coordinates = tryArcGIS(relaxedAddress);
-             if (coordinates != null) return coordinates;
+          return coordinates;
         }
 
         return null;
