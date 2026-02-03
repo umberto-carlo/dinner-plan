@@ -36,6 +36,15 @@ public class Proposal {
 
     private String description;
 
+    @Column(nullable = true)
+    private String email;
+
+    @Column(nullable = true)
+    private String phoneNumber;
+
+    @Column(nullable = true)
+    private String website;
+
     @ElementCollection(targetClass = DietaryPreference.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "proposal_dietary_preferences", joinColumns = @JoinColumn(name = "proposal_id"))
     @Enumerated(EnumType.STRING)
@@ -52,7 +61,7 @@ public class Proposal {
     }
 
     public Proposal(Long id, List<DinnerEvent> dinnerEvents, String location, String address, Double latitude, Double longitude,
-            String description, List<ProposalDate> dates, Set<ProposalRating> ratings, Set<DietaryPreference> dietaryPreferences) {
+            String description, String email, String phoneNumber, String website, List<ProposalDate> dates, Set<ProposalRating> ratings, Set<DietaryPreference> dietaryPreferences) {
         this.id = id;
         this.dinnerEvents = dinnerEvents != null ? dinnerEvents : new ArrayList<>();
         this.location = location;
@@ -60,6 +69,9 @@ public class Proposal {
         this.latitude = latitude;
         this.longitude = longitude;
         this.description = description;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.website = website;
         this.dates = dates != null ? dates : new ArrayList<>();
         this.ratings = ratings != null ? ratings : new HashSet<>();
         this.dietaryPreferences = dietaryPreferences != null ? dietaryPreferences : new HashSet<>();
@@ -134,6 +146,30 @@ public class Proposal {
         this.description = description;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
     public Set<ProposalRating> getRatings() {
         return ratings;
     }
@@ -171,6 +207,9 @@ public class Proposal {
         private Double latitude;
         private Double longitude;
         private String description;
+        private String email;
+        private String phoneNumber;
+        private String website;
         private List<ProposalDate> dates = new ArrayList<>();
         private Set<ProposalRating> ratings = new HashSet<>();
         private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
@@ -215,6 +254,21 @@ public class Proposal {
             return this;
         }
 
+        public ProposalBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public ProposalBuilder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public ProposalBuilder website(String website) {
+            this.website = website;
+            return this;
+        }
+
         public ProposalBuilder ratings(Set<ProposalRating> ratings) {
             this.ratings = ratings;
             return this;
@@ -226,7 +280,7 @@ public class Proposal {
         }
 
         public Proposal build() {
-            return new Proposal(id, dinnerEvents, location, address, latitude, longitude, description, dates, ratings, dietaryPreferences);
+            return new Proposal(id, dinnerEvents, location, address, latitude, longitude, description, email, phoneNumber, website, dates, ratings, dietaryPreferences);
         }
     }
 }

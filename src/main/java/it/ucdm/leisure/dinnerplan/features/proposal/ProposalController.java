@@ -33,7 +33,11 @@ public class ProposalController {
     @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/proposals/add")
     public String addGlobalProposal(@RequestParam String location, @RequestParam String address,
-            @RequestParam String description, @RequestParam(required = false) List<String> dietaryPreferences,
+            @RequestParam String description, 
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) String website,
+            @RequestParam(required = false) List<String> dietaryPreferences,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         
         if (dietaryPreferences == null || dietaryPreferences.isEmpty()) {
@@ -45,7 +49,7 @@ public class ProposalController {
                 .map(DietaryPreference::valueOf)
                 .collect(Collectors.toSet());
 
-        proposalCatalogService.addGlobalProposal(location, address, description, preferences);
+        proposalCatalogService.addGlobalProposal(location, address, description, email, phoneNumber, website, preferences);
         return "redirect:/";
     }
 
@@ -70,13 +74,29 @@ public class ProposalController {
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
+    @PostMapping("/proposals/update-details")
+    public String updateProposalDetails(@RequestParam String location, @RequestParam String address,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) String website,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        
+        proposalCatalogService.updateGlobalProposalDetails(location, address, email, phoneNumber, website);
+        redirectAttributes.addFlashAttribute("successMessage", "Dettagli proposta aggiornati con successo.");
+        return "redirect:/";
+    }
+
+    @PreAuthorize("hasRole('ORGANIZER')")
     @PostMapping("/proposals/add-to-event")
     public String addSuggestionToEvent(@RequestParam Long eventId, @RequestParam String location,
             @RequestParam String address, @RequestParam String description, @RequestParam String dateOption,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) String website,
             @AuthenticationPrincipal UserDetails userDetails,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         LocalDateTime dt = LocalDateTime.parse(dateOption);
-        proposalService.addProposalFromSuggestion(eventId, List.of(dt), location, address, description,
+        proposalService.addProposalFromSuggestion(eventId, List.of(dt), location, address, description, email, phoneNumber, website,
                 userDetails.getUsername());
         redirectAttributes.addFlashAttribute("successMessage", "Proposta aggiunta all'evento con successo.");
         return "redirect:/";

@@ -23,7 +23,7 @@ public class ProposalCatalogService {
     }
 
     @Transactional
-    public void addGlobalProposal(String location, String address, String description, Set<DietaryPreference> dietaryPreferences) {
+    public void addGlobalProposal(String location, String address, String description, String email, String phoneNumber, String website, Set<DietaryPreference> dietaryPreferences) {
         // Check if exists
         if (proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address).isPresent()) {
             return; // Already exists, do nothing
@@ -35,28 +35,25 @@ public class ProposalCatalogService {
                 .location(location)
                 .address(address)
                 .description(description)
+                .email(email)
+                .phoneNumber(phoneNumber)
+                .website(website)
                 .dietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>())
                 .build();
 
         proposalRepository.save(Objects.requireNonNull(proposal));
 
-        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
-            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                    new org.springframework.transaction.support.TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            messagingTemplate.convertAndSend("/topic/events", "update");
-                        }
-                    });
-        } else {
-            // Fallback for non-transactional contexts (e.g. tests)
-            messagingTemplate.convertAndSend("/topic/events", "update");
-        }
+        notifyUpdate();
+    }
+    
+    @Transactional
+    public void addGlobalProposal(String location, String address, String description, Set<DietaryPreference> dietaryPreferences) {
+        addGlobalProposal(location, address, description, null, null, null, dietaryPreferences);
     }
     
     @Transactional
     public void addGlobalProposal(String location, String address, String description) {
-        addGlobalProposal(location, address, description, null);
+        addGlobalProposal(location, address, description, null, null, null, null);
     }
 
     @Transactional
@@ -67,6 +64,23 @@ public class ProposalCatalogService {
         proposal.setDietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>());
         proposalRepository.save(proposal);
 
+        notifyUpdate();
+    }
+
+    @Transactional
+    public void updateGlobalProposalDetails(String location, String address, String email, String phoneNumber, String website) {
+        Proposal proposal = proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address)
+                .orElseThrow(() -> new IllegalArgumentException("Proposal not found"));
+        
+        proposal.setEmail(email);
+        proposal.setPhoneNumber(phoneNumber);
+        proposal.setWebsite(website);
+        proposalRepository.save(proposal);
+
+        notifyUpdate();
+    }
+
+    private void notifyUpdate() {
         if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
             org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
                     new org.springframework.transaction.support.TransactionSynchronization() {
@@ -92,6 +106,9 @@ public class ProposalCatalogService {
                     .location(p.getLocation())
                     .address(p.getAddress())
                     .description(p.getDescription())
+                    .email(p.getEmail())
+                    .phoneNumber(p.getPhoneNumber())
+                    .website(p.getWebsite())
                     .totalLikes(0)
                     .totalDislikes(0)
                     .usageCount(0)
@@ -110,9 +127,13 @@ public class ProposalCatalogService {
                 }
             }
 
+            // Update details if present in current proposal instance (assuming latest is best, or merge logic)
             if (p.getDescription() != null && !p.getDescription().isBlank()) {
                 dto.setDescription(p.getDescription());
             }
+            if (p.getEmail() != null && !p.getEmail().isBlank()) dto.setEmail(p.getEmail());
+            if (p.getPhoneNumber() != null && !p.getPhoneNumber().isBlank()) dto.setPhoneNumber(p.getPhoneNumber());
+            if (p.getWebsite() != null && !p.getWebsite().isBlank()) dto.setWebsite(p.getWebsite());
             
             if (p.getDietaryPreferences() != null) {
                 dto.getDietaryPreferences().addAll(p.getDietaryPreferences());

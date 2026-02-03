@@ -57,7 +57,6 @@ public class ProposalService {
         List<User> usersToConsider = new ArrayList<>(event.getParticipants());
         usersToConsider.add(event.getOrganizer());
 
-        // Collect dietary preferences of all participants
         Set<DietaryPreference> requiredPreferences = usersToConsider.stream()
                 .map(User::getDietaryPreference)
                 .filter(pref -> pref != DietaryPreference.OMNIVORE)
@@ -66,18 +65,15 @@ public class ProposalService {
         List<Coordinates> coordinates = new ArrayList<>();
         for (User user : usersToConsider) {
             if (user.getAddress() != null && !user.getAddress().isBlank()) {
-                // Check if user already has coordinates
                 if (user.getLatitude() != null && user.getLongitude() != null) {
                     logger.debug("Using cached coordinates for user {}", user.getUsername());
                     coordinates.add(new Coordinates(user.getLatitude(), user.getLongitude()));
                 } else {
-                    // Lazy migration: Geocode and save
                     logger.info("Geocoding address for user {}: {}", user.getUsername(), user.getAddress());
                     try {
                         Coordinates userCoordinates = geocodingService.getCoordinates(user.getAddress());
                         if (userCoordinates != null) {
                             coordinates.add(userCoordinates);
-                            // Save for future use - Reload user to ensure we are updating the persistent entity
                             try {
                                 User persistentUser = userRepository.findById(user.getId()).orElse(user);
                                 persistentUser.setLatitude(userCoordinates.getLatitude());
@@ -92,7 +88,6 @@ public class ProposalService {
                         }
                     } catch (Exception e) {
                         logger.error("Unexpected error geocoding user {}: {}", user.getUsername(), user.getAddress(), e);
-                        // Continue to next user, excluding this one
                     }
                 }
             }
@@ -112,8 +107,6 @@ public class ProposalService {
         Coordinates center = new Coordinates(lat / coordinates.size(), lon / coordinates.size());
         logger.info("Calculated center point for eventId {}: {}", eventId, center);
 
-        // Note: Loading all proposals is not scalable for large datasets.
-        // Ideally, use a spatial query to filter candidates within a bounding box first.
         List<Proposal> candidateProposals = proposalRepository.findAll().stream()
                 .filter(p -> p.getDinnerEvents().stream().noneMatch(e -> e.getId().equals(eventId)))
                 .toList();
@@ -132,36 +125,29 @@ public class ProposalService {
                 continue;
             }
 
-            // Calculate how many required preferences this proposal satisfies
             long satisfiedCount = 0;
             if (requiredPreferences.isEmpty()) {
-                satisfiedCount = Long.MAX_VALUE; // All satisfied if none required
+                satisfiedCount = Long.MAX_VALUE;
             } else {
                 satisfiedCount = requiredPreferences.stream()
                         .filter(pref -> proposal.getDietaryPreferences().contains(pref))
                         .count();
             }
 
-            // If we found a proposal that satisfies fewer preferences than the current best, skip it
-            // unless we haven't found any proposal yet.
-            // We prioritize satisfying preferences over distance.
             if (maxSatisfiedPreferences != -1 && satisfiedCount < maxSatisfiedPreferences) {
                 continue;
             }
 
             Coordinates proposalCoordinates = null;
             
-            // Check if proposal already has coordinates
             if (proposal.getLatitude() != null && proposal.getLongitude() != null) {
                 logger.debug("Using cached coordinates for proposal {}", proposal.getLocation());
                 proposalCoordinates = new Coordinates(proposal.getLatitude(), proposal.getLongitude());
             } else {
-                // Lazy migration for proposals
                 logger.info("Geocoding address for proposal {}: {}", proposal.getLocation(), proposal.getAddress());
                 try {
                     proposalCoordinates = geocodingService.getCoordinates(proposal.getAddress());
                     if (proposalCoordinates != null) {
-                        // Save for future use
                         try {
                             proposal.setLatitude(proposalCoordinates.getLatitude());
                             proposal.setLongitude(proposalCoordinates.getLongitude());
@@ -175,12 +161,10 @@ public class ProposalService {
                     }
                 } catch (Exception e) {
                     logger.error("Unexpected error geocoding proposal {}: {}", proposal.getLocation(), proposal.getAddress(), e);
-                    // Continue to next proposal
                 }
             }
             
             if (proposalCoordinates != null) {
-                // Use Haversine formula for correct spherical distance
                 double distance = calculateHaversineDistance(
                         center.getLatitude(), center.getLongitude(),
                         proposalCoordinates.getLatitude(), proposalCoordinates.getLongitude()
@@ -189,9 +173,6 @@ public class ProposalService {
                 logger.debug("Distance from center to proposal '{}' is {} km. Satisfied prefs: {}", 
                         proposal.getLocation(), distance, satisfiedCount);
 
-                // Logic to update best proposal:
-                // 1. If this proposal satisfies MORE preferences than the current best, it becomes the new best (regardless of distance).
-                // 2. If it satisfies the SAME number of preferences, check if it is closer.
                 if (satisfiedCount > maxSatisfiedPreferences) {
                     maxSatisfiedPreferences = satisfiedCount;
                     minDistance = distance;
@@ -208,32 +189,26 @@ public class ProposalService {
         if (bestProposal != null) {
             logger.info("Found best proposal '{}' ({} km away, satisfied prefs: {}) for eventId: {}", 
                     bestProposal.getLocation(), String.format("%.2f", minDistance), maxSatisfiedPreferences, eventId);
-            addProposal(eventId, dateOptions, bestProposal.getLocation(), bestProposal.getAddress(), bestProposal.getDescription(), bestProposal.getDietaryPreferences());
+            addProposal(eventId, dateOptions, bestProposal.getLocation(), bestProposal.getAddress(), bestProposal.getDescription(), bestProposal.getEmail(), bestProposal.getPhoneNumber(), bestProposal.getWebsite(), bestProposal.getDietaryPreferences());
         } else {
             logger.warn("Could not find any suitable central proposal for eventId: {}", eventId);
         }
     }
 
-    /**
-     * Calculates the distance between two points on Earth using the Haversine formula.
-     * @return Distance in Kilometers
-     */
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // Radius of the earth in km
-
+        final int R = 6371;
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
         return R * c;
     }
 
     @Transactional
     public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
-            String description, Set<DietaryPreference> dietaryPreferences) {
+            String description, String email, String phoneNumber, String website, Set<DietaryPreference> dietaryPreferences) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id:" + eventId));
@@ -242,7 +217,6 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        // Check if proposal already exists in DB (Global Uniqueness)
         Proposal proposal = proposalRepository.findByLocationIgnoreCaseAndAddressIgnoreCase(location, address)
                 .orElse(null);
 
@@ -252,11 +226,13 @@ public class ProposalService {
                     .location(location)
                     .address(address)
                     .description(description)
+                    .email(email)
+                    .phoneNumber(phoneNumber)
+                    .website(website)
                     .dates(new ArrayList<>())
                     .dietaryPreferences(dietaryPreferences != null ? dietaryPreferences : new java.util.HashSet<>())
                     .build();
             
-            // Geocode new proposal immediately
             if (address != null && !address.isBlank()) {
                 try {
                     Coordinates coords = geocodingService.getCoordinates(address);
@@ -266,19 +242,16 @@ public class ProposalService {
                     }
                 } catch (Exception e) {
                     logger.error("Unexpected error geocoding new proposal {}: {}", location, address, e);
-                    // Continue saving proposal without coordinates
                 }
             }
             
             event.getProposals().add(proposal);
         } else {
-            // Found existing global proposal. Check if it's already linked to this event.
             if (!proposal.getDinnerEvents().contains(event)) {
                 proposal.getDinnerEvents().add(event);
                 event.getProposals().add(proposal);
             }
             
-            // Check if existing proposal needs geocoding (lazy fix for existing ones accessed via addProposal)
             if (proposal.getAddress() != null && !proposal.getAddress().isBlank() && 
                 (proposal.getLatitude() == null || proposal.getLongitude() == null)) {
                 try {
@@ -286,11 +259,9 @@ public class ProposalService {
                     if (coords != null) {
                         proposal.setLatitude(coords.getLatitude());
                         proposal.setLongitude(coords.getLongitude());
-                        // Will be saved when event is saved due to cascade/transaction
                     }
                 } catch (Exception e) {
                     logger.error("Unexpected error geocoding existing proposal {}: {}", location, address, e);
-                    // Continue
                 }
             }
 
@@ -298,8 +269,16 @@ public class ProposalService {
                     && !description.isBlank()) {
                 proposal.setDescription(description);
             }
+            if ((proposal.getEmail() == null || proposal.getEmail().isBlank()) && email != null && !email.isBlank()) {
+                proposal.setEmail(email);
+            }
+            if ((proposal.getPhoneNumber() == null || proposal.getPhoneNumber().isBlank()) && phoneNumber != null && !phoneNumber.isBlank()) {
+                proposal.setPhoneNumber(phoneNumber);
+            }
+            if ((proposal.getWebsite() == null || proposal.getWebsite().isBlank()) && website != null && !website.isBlank()) {
+                proposal.setWebsite(website);
+            }
             
-            // Update dietary preferences if provided
             if (dietaryPreferences != null && !dietaryPreferences.isEmpty()) {
                 proposal.setDietaryPreferences(dietaryPreferences);
             }
@@ -342,14 +321,20 @@ public class ProposalService {
 
     @Transactional
     public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
+            String description, Set<DietaryPreference> dietaryPreferences) {
+        addProposal(eventId, dateOptions, location, address, description, null, null, null, dietaryPreferences);
+    }
+
+    @Transactional
+    public void addProposal(Long eventId, List<LocalDateTime> dateOptions, String location, String address,
             String description) {
-        addProposal(eventId, dateOptions, location, address, description, null);
+        addProposal(eventId, dateOptions, location, address, description, null, null, null, null);
     }
 
     @Transactional
     public void addProposalFromSuggestion(Long eventId, List<LocalDateTime> dateOptions, String location,
             String address,
-            String description, String username) {
+            String description, String email, String phoneNumber, String website, String username) {
         Objects.requireNonNull(eventId, "Event ID must not be null");
         DinnerEvent event = dinnerEventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event Id"));
@@ -362,7 +347,14 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
-        addProposal(eventId, dateOptions, location, address, description);
+        addProposal(eventId, dateOptions, location, address, description, email, phoneNumber, website, null);
+    }
+    
+    @Transactional
+    public void addProposalFromSuggestion(Long eventId, List<LocalDateTime> dateOptions, String location,
+            String address,
+            String description, String username) {
+        addProposalFromSuggestion(eventId, dateOptions, location, address, description, null, null, null, username);
     }
 
     @Transactional
@@ -390,7 +382,7 @@ public class ProposalService {
                 String json = new String(java.util.Base64.getDecoder().decode(encoded));
                 ProposalSuggestionDTO dto = mapper.readValue(json, ProposalSuggestionDTO.class);
 
-                addProposal(eventId, List.of(date), dto.getLocation(), dto.getAddress(), dto.getDescription());
+                addProposal(eventId, List.of(date), dto.getLocation(), dto.getAddress(), dto.getDescription(), dto.getEmail(), dto.getPhoneNumber(), dto.getWebsite(), dto.getDietaryPreferences());
                 addedCount++;
             } catch (Exception e) {
                 logger.error("Error processing batch proposal", e);

@@ -133,6 +133,21 @@
                         <input type="text" id="gp-description" name="description"
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     </div>
+                    <div>
+                        <label for="gp-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input type="email" id="gp-email" name="email"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="gp-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefono</label>
+                        <input type="text" id="gp-phone" name="phoneNumber"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="gp-website" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sito Web</label>
+                        <input type="text" id="gp-website" name="website"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                             th:text="#{profile.dietary}">Dietary Preferences</label>
@@ -216,12 +231,25 @@
                                         onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
                                         ✏️
                                     </button>
+                                    <!-- Edit Details Button -->
+                                    <button th:if="${isOrganizer}" type="button"
+                                        class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                                        th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                        th:data-email="${prop.email}" th:data-phone="${prop.phoneNumber}" th:data-website="${prop.website}"
+                                        onclick="openUpdateDetailsModal(this)" title="Modifica Dettagli">
+                                        📝
+                                    </button>
                                 </div>
                             </div>
                             <p class="text-sm text-gray-500 dark:text-gray-400 truncate" th:text="${prop.address}">
                                 Address</p>
                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate"
                                 th:text="${prop.description}"></p>
+                            <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <span th:if="${prop.email}" th:text="${prop.email}"></span>
+                                <span th:if="${prop.phoneNumber}" th:text="${prop.phoneNumber}"></span>
+                                <a th:if="${prop.website}" th:href="${prop.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
+                            </div>
 
                             <div th:if="${isOrganizer}" class="mt-2">
                                 <button type="button"
@@ -446,6 +474,55 @@
         </div>
     </div>
 
+    <!-- Update Details Modal -->
+    <div id="update-details-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onclick="document.getElementById('update-details-modal').style.display='none'"></div>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Modifica Dettagli</h3>
+                <form th:action="@{/proposals/update-details}" method="post">
+                    <input type="hidden" id="udet-location" name="location">
+                    <input type="hidden" id="udet-address" name="address">
+
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                            <strong id="udet-display-loc" class="text-gray-900 dark:text-gray-100">Location</strong>
+                        </p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="udet-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                <input type="email" id="udet-email" name="email"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label for="udet-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefono</label>
+                                <input type="text" id="udet-phone" name="phoneNumber"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label for="udet-website" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sito Web</label>
+                                <input type="text" id="udet-website" name="website"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                            onclick="document.getElementById('update-details-modal').style.display='none'"
+                            th:text="#{app.cancel}">Cancel</button>
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors cursor-pointer"
+                            th:text="#{app.save}">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Notifications -->
     <div th:if="${errorMessage}"
         class="fixed top-4 right-4 z-50 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4 shadow-lg flex items-start">
@@ -547,6 +624,17 @@
             }
 
             document.getElementById('update-dietary-modal').style.display = 'block';
+        }
+
+        function openUpdateDetailsModal(btn) {
+            document.getElementById('udet-location').value = btn.getAttribute('data-location');
+            document.getElementById('udet-address').value = btn.getAttribute('data-address');
+            document.getElementById('udet-display-loc').textContent = btn.getAttribute('data-location');
+            document.getElementById('udet-email').value = btn.getAttribute('data-email') || '';
+            document.getElementById('udet-phone').value = btn.getAttribute('data-phone') || '';
+            document.getElementById('udet-website').value = btn.getAttribute('data-website') || '';
+
+            document.getElementById('update-details-modal').style.display = 'block';
         }
 
         function openBatchAddModal() {

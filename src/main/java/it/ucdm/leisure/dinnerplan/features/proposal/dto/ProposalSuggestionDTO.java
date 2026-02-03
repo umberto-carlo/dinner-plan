@@ -9,6 +9,9 @@ public class ProposalSuggestionDTO {
     private String location;
     private String address;
     private String description;
+    private String email;
+    private String phoneNumber;
+    private String website;
     private long totalLikes;
     private long totalDislikes;
     private int usageCount;
@@ -19,11 +22,14 @@ public class ProposalSuggestionDTO {
     public ProposalSuggestionDTO() {
     }
 
-    public ProposalSuggestionDTO(String location, String address, String description, long totalLikes,
+    public ProposalSuggestionDTO(String location, String address, String description, String email, String phoneNumber, String website, long totalLikes,
             long totalDislikes, int usageCount, Set<DietaryPreference> dietaryPreferences) {
         this.location = location;
         this.address = address;
         this.description = description;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.website = website;
         this.totalLikes = totalLikes;
         this.totalDislikes = totalDislikes;
         this.usageCount = usageCount;
@@ -66,6 +72,30 @@ public class ProposalSuggestionDTO {
         this.description = description;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
     public long getTotalLikes() {
         return totalLikes;
     }
@@ -103,6 +133,9 @@ public class ProposalSuggestionDTO {
         private String location;
         private String address;
         private String description;
+        private String email;
+        private String phoneNumber;
+        private String website;
         private long totalLikes;
         private long totalDislikes;
         private int usageCount;
@@ -121,6 +154,21 @@ public class ProposalSuggestionDTO {
 
         public ProposalSuggestionDTOBuilder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder website(String website) {
+            this.website = website;
             return this;
         }
 
@@ -150,7 +198,7 @@ public class ProposalSuggestionDTO {
         }
 
         public ProposalSuggestionDTO build() {
-            ProposalSuggestionDTO dto = new ProposalSuggestionDTO(location, address, description, totalLikes,
+            ProposalSuggestionDTO dto = new ProposalSuggestionDTO(location, address, description, email, phoneNumber, website, totalLikes,
                     totalDislikes, usageCount, dietaryPreferences);
             dto.setEncodedData(encodedData);
             return dto;
