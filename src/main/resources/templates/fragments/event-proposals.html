@@ -36,7 +36,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
-                            <span th:text="${#numbers.formatDecimal(proposalDTO.distanceFromUser, 1, 2) + ' km da te'}">0.00 km</span>
+                            <span th:text="${#numbers.formatDecimal(proposalDTO.distanceFromUser, 1, 2) + ' ' + #messages.msg('event.proposals.distance_from_you')}">0.00 km</span>
                         </div>
                     </div>
 
@@ -64,11 +64,18 @@
                 <div th:if="${proposal.description}" class="text-sm text-gray-500 dark:text-gray-400 italic"
                     th:text="${proposal.description}">Description</div>
 
+                <!-- Contact Info -->
+                <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span th:if="${proposal.email}" th:text="${proposal.email}"></span>
+                    <span th:if="${proposal.phoneNumber}" th:text="${proposal.phoneNumber}"></span>
+                    <a th:if="${proposal.website}" th:href="${proposal.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
+                </div>
+
                 <!-- Incompatible Participants Warning -->
                 <!-- Debug info: ID=[[${proposal.id}]] Size=[[${incompatibleUsersMap != null ? incompatibleUsersMap.get(proposal.id)?.size() : 'MAP_NULL'}]] -->
                 <div th:if="${incompatibleUsersMap != null and incompatibleUsersMap.containsKey(proposal.id) and !incompatibleUsersMap.get(proposal.id).isEmpty()}"
                      class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
-                    <span class="font-bold">⚠️ Attenzione:</span> Questa proposta non è compatibile con le preferenze alimentari di:
+                    <span class="font-bold" th:text="#{event.proposals.incompatible}">⚠️ Attenzione:</span>
                     <span th:each="user, iterStat : ${incompatibleUsersMap.get(proposal.id)}" class="font-medium">
                         <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
                     </span>

@@ -190,92 +190,113 @@
                 method="post">
                 <div class="space-y-4">
                     <div th:each="prop : ${rankedProposals}"
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center gap-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-750">
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col gap-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-750">
 
-                        <div th:if="${isOrganizer}" class="flex-shrink-0">
-                            <input type="checkbox" name="selectedProposals" th:value="${prop.encodedData}"
-                                th:data-location="${prop.location}"
-                                class="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
-                        </div>
+                        <div class="flex items-start gap-4">
+                            <div th:if="${isOrganizer}" class="flex-shrink-0 pt-1">
+                                <input type="checkbox" name="selectedProposals" th:value="${prop.encodedData}"
+                                    th:data-location="${prop.location}"
+                                    class="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700">
+                            </div>
 
-                        <div class="flex flex-col items-center justify-center min-w-[3rem]">
-                            <span class="text-lg font-bold text-gray-900 dark:text-gray-100"
-                                th:text="${prop.totalLikes}">0</span>
-                            <svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
+                            <div class="flex flex-col items-center justify-center min-w-[3rem]">
+                                <span class="text-lg font-bold text-gray-900 dark:text-gray-100"
+                                    th:text="${prop.totalLikes}">0</span>
+                                <svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
 
-                        <div class="flex-grow min-w-0">
-                            <div class="flex items-center gap-2">
-                                <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate"
-                                    th:text="${prop.location}">Location</h4>
-                                <!-- Dietary Icons -->
-                                <div class="flex gap-1 items-center">
-                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
-                                        class="text-lg" th:title="#{register.dietary.OMNIVORE}">🍖</span>
-                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
-                                        class="text-lg" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
-                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
-                                        class="text-lg" th:title="#{register.dietary.VEGAN}">🌱</span>
-                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
-                                        class="text-lg" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
+                            <div class="flex-grow min-w-0">
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 truncate"
+                                            th:text="${prop.location}">Location</h4>
+                                        <!-- Dietary Icons -->
+                                        <div class="flex gap-1 items-center">
+                                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
+                                                class="text-lg" th:title="#{register.dietary.OMNIVORE}">🍖</span>
+                                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
+                                                class="text-lg" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
+                                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
+                                                class="text-lg" th:title="#{register.dietary.VEGAN}">🌱</span>
+                                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
+                                                class="text-lg" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
 
-                                    <!-- Edit Dietary Preferences Button -->
-                                    <button th:if="${isOrganizer}" type="button"
-                                        class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                                            <!-- Edit Dietary Preferences Button -->
+                                            <button th:if="${isOrganizer}" type="button"
+                                                class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                                                th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                                th:data-preferences="${#strings.listJoin(prop.dietaryPreferences, ',')}"
+                                                onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
+                                                ✏️
+                                            </button>
+                                            <!-- Edit Details Button -->
+                                            <button th:if="${isOrganizer}" type="button"
+                                                class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                                                th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                                th:data-email="${prop.email}" th:data-phone="${prop.phoneNumber}" th:data-website="${prop.website}"
+                                                onclick="openUpdateDetailsModal(this)" title="Modifica Dettagli">
+                                                📝
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Distance Badge -->
+                                    <div th:if="${prop.distanceFromUser != null}"
+                                         class="text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                        <span th:text="${#numbers.formatDecimal(prop.distanceFromUser, 1, 2) + ' km da te'}">0.00 km</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 truncate" th:text="${prop.address}">
+                                    Address</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate"
+                                    th:text="${prop.description}"></p>
+                                <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <span th:if="${prop.email}" th:text="${prop.email}"></span>
+                                    <span th:if="${prop.phoneNumber}" th:text="${prop.phoneNumber}"></span>
+                                    <a th:if="${prop.website}" th:href="${prop.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
+                                </div>
+
+                                <div th:if="${isOrganizer}" class="mt-2">
+                                    <button type="button"
+                                        class="inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
                                         th:data-location="${prop.location}" th:data-address="${prop.address}"
-                                        th:data-preferences="${#strings.listJoin(prop.dietaryPreferences, ',')}"
-                                        onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
-                                        ✏️
-                                    </button>
-                                    <!-- Edit Details Button -->
-                                    <button th:if="${isOrganizer}" type="button"
-                                        class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
-                                        th:data-location="${prop.location}" th:data-address="${prop.address}"
-                                        th:data-email="${prop.email}" th:data-phone="${prop.phoneNumber}" th:data-website="${prop.website}"
-                                        onclick="openUpdateDetailsModal(this)" title="Modifica Dettagli">
-                                        📝
+                                        th:data-description="${prop.description}" onclick="openAddToEventModal(this)"
+                                        th:text=" '+ ' + #{proposals.add_to_existing}">
+                                        + Aggiungi a Evento Esistente
                                     </button>
                                 </div>
                             </div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate" th:text="${prop.address}">
-                                Address</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate"
-                                th:text="${prop.description}"></p>
-                            <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span th:if="${prop.email}" th:text="${prop.email}"></span>
-                                <span th:if="${prop.phoneNumber}" th:text="${prop.phoneNumber}"></span>
-                                <a th:if="${prop.website}" th:href="${prop.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
-                            </div>
 
-                            <div th:if="${isOrganizer}" class="mt-2">
-                                <button type="button"
-                                    class="inline-flex items-center px-2 py-1 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
-                                    th:data-location="${prop.location}" th:data-address="${prop.address}"
-                                    th:data-description="${prop.description}" onclick="openAddToEventModal(this)"
-                                    th:text=" '+ ' + #{proposals.add_to_existing}">
-                                    + Aggiungi a Evento Esistente
-                                </button>
+                            <div class="flex-shrink-0 text-right min-w-[5rem]">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    <span th:text="#{dashboard.used}">Usato</span>
+                                    <span class="font-bold text-gray-900 dark:text-gray-100"
+                                        th:text="${prop.usageCount}">0</span>
+                                    <span th:text="#{dashboard.times}">volte</span>
+                                </div>
+                                <div class="flex items-center justify-end text-red-500 mt-1">
+                                    <span class="text-sm font-bold mr-1" th:text="${prop.totalDislikes}">0</span>
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex-shrink-0 text-right min-w-[5rem]">
-                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                <span th:text="#{dashboard.used}">Usato</span>
-                                <span class="font-bold text-gray-900 dark:text-gray-100"
-                                    th:text="${prop.usageCount}">0</span>
-                                <span th:text="#{dashboard.times}">volte</span>
-                            </div>
-                            <div class="flex items-center justify-end text-red-500 mt-1">
-                                <span class="text-sm font-bold mr-1" th:text="${prop.totalDislikes}">0</span>
-                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                        clip-rule="evenodd" />
-                                </svg>
+                        <!-- Map Section -->
+                        <div th:if="${prop.address}" class="w-full mt-2">
+                            <div class="rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 h-40">
+                                <iframe width="100%" height="100%" frameborder="0" loading="lazy" allowfullscreen
+                                    th:src="'https://maps.google.com/maps?q=' + ${prop.address} + '&t=&z=15&ie=UTF8&iwloc=&output=embed'">
+                                </iframe>
                             </div>
                         </div>
                     </div>

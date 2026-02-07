@@ -105,6 +105,8 @@ public class ProposalCatalogService {
             ProposalSuggestionDTO dto = map.getOrDefault(key, ProposalSuggestionDTO.builder()
                     .location(p.getLocation())
                     .address(p.getAddress())
+                    .latitude(p.getLatitude())
+                    .longitude(p.getLongitude())
                     .description(p.getDescription())
                     .email(p.getEmail())
                     .phoneNumber(p.getPhoneNumber())
@@ -134,6 +136,8 @@ public class ProposalCatalogService {
             if (p.getEmail() != null && !p.getEmail().isBlank()) dto.setEmail(p.getEmail());
             if (p.getPhoneNumber() != null && !p.getPhoneNumber().isBlank()) dto.setPhoneNumber(p.getPhoneNumber());
             if (p.getWebsite() != null && !p.getWebsite().isBlank()) dto.setWebsite(p.getWebsite());
+            if (p.getLatitude() != null) dto.setLatitude(p.getLatitude());
+            if (p.getLongitude() != null) dto.setLongitude(p.getLongitude());
             
             if (p.getDietaryPreferences() != null) {
                 dto.getDietaryPreferences().addAll(p.getDietaryPreferences());

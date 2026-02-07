@@ -8,28 +8,28 @@ import java.util.Set;
 public class ProposalSuggestionDTO {
     private String location;
     private String address;
+    private Double latitude;
+    private Double longitude;
     private String description;
-    private String email;
-    private String phoneNumber;
-    private String website;
     private long totalLikes;
     private long totalDislikes;
     private int usageCount;
     private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
+    private Double distanceFromUser; // New field
 
     private String encodedData;
+    private String email;
+    private String phoneNumber;
+    private String website;
 
     public ProposalSuggestionDTO() {
     }
 
-    public ProposalSuggestionDTO(String location, String address, String description, String email, String phoneNumber, String website, long totalLikes,
+    public ProposalSuggestionDTO(String location, String address, String description, long totalLikes,
             long totalDislikes, int usageCount, Set<DietaryPreference> dietaryPreferences) {
         this.location = location;
         this.address = address;
         this.description = description;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.website = website;
         this.totalLikes = totalLikes;
         this.totalDislikes = totalDislikes;
         this.usageCount = usageCount;
@@ -64,36 +64,28 @@ public class ProposalSuggestionDTO {
         this.address = address;
     }
 
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
     }
 
     public long getTotalLikes() {
@@ -128,19 +120,53 @@ public class ProposalSuggestionDTO {
         this.dietaryPreferences = dietaryPreferences;
     }
 
+    public Double getDistanceFromUser() {
+        return distanceFromUser;
+    }
+
+    public void setDistanceFromUser(Double distanceFromUser) {
+        this.distanceFromUser = distanceFromUser;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
     // Builder class update
     public static class ProposalSuggestionDTOBuilder {
         private String location;
         private String address;
+        private Double latitude;
+        private Double longitude;
         private String description;
-        private String email;
-        private String phoneNumber;
-        private String website;
         private long totalLikes;
         private long totalDislikes;
         private int usageCount;
         private Set<DietaryPreference> dietaryPreferences = new HashSet<>();
         private String encodedData;
+        private String email;
+        private String phoneNumber;
+        private String website;
 
         public ProposalSuggestionDTOBuilder location(String location) {
             this.location = location;
@@ -152,23 +178,18 @@ public class ProposalSuggestionDTO {
             return this;
         }
 
+        public ProposalSuggestionDTOBuilder latitude(Double latitude) {
+            this.latitude = latitude;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder longitude(Double longitude) {
+            this.longitude = longitude;
+            return this;
+        }
+
         public ProposalSuggestionDTOBuilder description(String description) {
             this.description = description;
-            return this;
-        }
-
-        public ProposalSuggestionDTOBuilder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public ProposalSuggestionDTOBuilder phoneNumber(String phoneNumber) {
-            this.phoneNumber = phoneNumber;
-            return this;
-        }
-
-        public ProposalSuggestionDTOBuilder website(String website) {
-            this.website = website;
             return this;
         }
 
@@ -197,10 +218,30 @@ public class ProposalSuggestionDTO {
             return this;
         }
 
+        public ProposalSuggestionDTOBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public ProposalSuggestionDTOBuilder website(String website) {
+            this.website = website;
+            return this;
+        }
+
         public ProposalSuggestionDTO build() {
-            ProposalSuggestionDTO dto = new ProposalSuggestionDTO(location, address, description, email, phoneNumber, website, totalLikes,
+            ProposalSuggestionDTO dto = new ProposalSuggestionDTO(location, address, description, totalLikes,
                     totalDislikes, usageCount, dietaryPreferences);
+            dto.setLatitude(latitude);
+            dto.setLongitude(longitude);
             dto.setEncodedData(encodedData);
+            dto.setEmail(email);
+            dto.setPhoneNumber(phoneNumber);
+            dto.setWebsite(website);
             return dto;
         }
     }

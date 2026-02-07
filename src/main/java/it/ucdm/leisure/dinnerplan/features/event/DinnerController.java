@@ -6,6 +6,7 @@ import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalDTO;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.Role;
 import it.ucdm.leisure.dinnerplan.features.user.User;
@@ -57,7 +58,11 @@ public class DinnerController {
             List<DinnerEvent> eventList = dinnerEventService
                     .getEventsForUser(userDetails.getUsername());
             model.addAttribute("events", eventList);
-            model.addAttribute("rankedProposals", proposalCatalogService.getProposalSuggestions());
+            
+            List<ProposalSuggestionDTO> suggestions = proposalCatalogService.getProposalSuggestions();
+            calculateDistancesForSuggestions(suggestions, user);
+            model.addAttribute("rankedProposals", suggestions);
+            
             model.addAttribute("user", user);
             model.addAttribute("isOrganizer", user.getRole() == Role.ORGANIZER);
         } else {
@@ -77,7 +82,11 @@ public class DinnerController {
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
             model.addAttribute("events", dinnerEventService.getEventsForUser(userDetails.getUsername()));
-            model.addAttribute("rankedProposals", proposalCatalogService.getProposalSuggestions());
+            
+            List<ProposalSuggestionDTO> suggestions = proposalCatalogService.getProposalSuggestions();
+            calculateDistancesForSuggestions(suggestions, user);
+            model.addAttribute("rankedProposals", suggestions);
+            
             model.addAttribute("user", user);
             model.addAttribute("isOrganizer", user.getRole() == Role.ORGANIZER);
         } else {
@@ -89,6 +98,18 @@ public class DinnerController {
             return "mobile/dashboard :: dashboardContent";
         }
         return "dashboard :: dashboardContent";
+    }
+
+    private void calculateDistancesForSuggestions(List<ProposalSuggestionDTO> suggestions, User user) {
+        if (user != null && user.getLatitude() != null && user.getLongitude() != null) {
+            for (ProposalSuggestionDTO dto : suggestions) {
+                if (dto.getLatitude() != null && dto.getLongitude() != null) {
+                    double distance = calculateHaversineDistance(user.getLatitude(), user.getLongitude(),
+                            dto.getLatitude(), dto.getLongitude());
+                    dto.setDistanceFromUser(distance);
+                }
+            }
+        }
     }
 
     @PreAuthorize("hasRole('ORGANIZER')")
