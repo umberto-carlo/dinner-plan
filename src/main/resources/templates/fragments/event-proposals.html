@@ -60,6 +60,31 @@
                     </div>
                 </div>
 
+                <!-- Incompatible Participants Warning -->
+                <!-- Debug info: ID=[[${proposal.id}]] Size=[[${incompatibleUsersMap != null ? incompatibleUsersMap.get(proposal.id)?.size() : 'MAP_NULL'}]] -->
+                <div th:if="${incompatibleUsersMap != null and incompatibleUsersMap.containsKey(proposal.id) and !incompatibleUsersMap.get(proposal.id).isEmpty()}"
+                     class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
+                    <span class="font-bold" th:text="#{event.proposals.incompatible}">⚠️ Attenzione:</span>
+                    <span th:each="user, iterStat : ${incompatibleUsersMap.get(proposal.id)}" class="font-medium">
+                        <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
+                    </span>
+                </div>
+
+                <!-- Affinity Score (Organizer/Admin Only) -->
+                <div th:if="${(isOrganizer or currentUser.role.name() == 'ADMIN') and proposalDTO.affinityScore != null}"
+                     class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded p-3 mb-2">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wider">Affinity Score</span>
+                        <span class="text-sm font-bold text-blue-600 dark:text-blue-400" th:text="${#numbers.formatDecimal(proposalDTO.affinityScore.totalScore, 1, 0) + '%'}">85%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                        <div class="bg-blue-600 h-2.5 rounded-full" th:style="'width: ' + ${proposalDTO.affinityScore.totalScore} + '%'"></div>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400" th:text="${proposalDTO.affinityScore.explanation}">
+                        Dist: 80%, Diet: 100%, Pop: 50%
+                    </div>
+                </div>
+
                 <!-- Description -->
                 <div th:if="${proposal.description}" class="text-sm text-gray-500 dark:text-gray-400 italic"
                     th:text="${proposal.description}">Description</div>
@@ -69,16 +94,6 @@
                     <span th:if="${proposal.email}" th:text="${proposal.email}"></span>
                     <span th:if="${proposal.phoneNumber}" th:text="${proposal.phoneNumber}"></span>
                     <a th:if="${proposal.website}" th:href="${proposal.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
-                </div>
-
-                <!-- Incompatible Participants Warning -->
-                <!-- Debug info: ID=[[${proposal.id}]] Size=[[${incompatibleUsersMap != null ? incompatibleUsersMap.get(proposal.id)?.size() : 'MAP_NULL'}]] -->
-                <div th:if="${incompatibleUsersMap != null and incompatibleUsersMap.containsKey(proposal.id) and !incompatibleUsersMap.get(proposal.id).isEmpty()}"
-                     class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-sm text-red-800 dark:text-red-300">
-                    <span class="font-bold" th:text="#{event.proposals.incompatible}">⚠️ Attenzione:</span>
-                    <span th:each="user, iterStat : ${incompatibleUsersMap.get(proposal.id)}" class="font-medium">
-                        <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
-                    </span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

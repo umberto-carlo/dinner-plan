@@ -93,6 +93,21 @@
                     </span>
                 </div>
 
+                <!-- Affinity Score (Organizer/Admin Only) -->
+                <div th:if="${(isOrganizer or currentUser.role.name() == 'ADMIN') and proposalDTO.affinityScore != null}"
+                     style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: 4px; padding: 0.5rem; margin-bottom: 0.5rem; margin-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.7rem; font-weight: bold; color: #1e40af; text-transform: uppercase;">Affinity Score</span>
+                        <span style="font-size: 0.8rem; font-weight: bold; color: #2563eb;" th:text="${#numbers.formatDecimal(proposalDTO.affinityScore.totalScore, 1, 0) + '%'}">85%</span>
+                    </div>
+                    <div style="width: 100%; background: #e5e7eb; border-radius: 9999px; height: 0.5rem; margin-bottom: 0.25rem;">
+                        <div style="background: #2563eb; height: 0.5rem; border-radius: 9999px;" th:styleappend="'width: ' + ${proposalDTO.affinityScore.totalScore} + '%'"></div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #6b7280;" th:text="${proposalDTO.affinityScore.explanation}">
+                        Dist: 80%, Diet: 100%, Pop: 50%
+                    </div>
+                </div>
+
                 <!-- Row 3: Address/Map + Dates -->
                 <div style="margin-top: 0.5rem;">
                     <!-- Col 1: Address and Map (Stacked) -->

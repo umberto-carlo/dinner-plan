@@ -12,6 +12,7 @@ public class ProposalDTO {
 
     private final Proposal proposal;
     private Double distanceFromUser; // in km
+    private AffinityScoreDTO affinityScore;
 
     public ProposalDTO(Proposal proposal) {
         this.proposal = proposal;
@@ -29,6 +30,14 @@ public class ProposalDTO {
         this.distanceFromUser = distanceFromUser;
     }
 
+    public AffinityScoreDTO getAffinityScore() {
+        return affinityScore;
+    }
+
+    public void setAffinityScore(AffinityScoreDTO affinityScore) {
+        this.affinityScore = affinityScore;
+    }
+
     // Delegate methods to make it easy to use in Thymeleaf
     public Long getId() {
         return proposal.getId();
@@ -44,6 +53,18 @@ public class ProposalDTO {
 
     public String getDescription() {
         return proposal.getDescription();
+    }
+
+    public String getEmail() {
+        return proposal.getEmail();
+    }
+
+    public String getPhoneNumber() {
+        return proposal.getPhoneNumber();
+    }
+
+    public String getWebsite() {
+        return proposal.getWebsite();
     }
 
     public Set<DietaryPreference> getDietaryPreferences() {

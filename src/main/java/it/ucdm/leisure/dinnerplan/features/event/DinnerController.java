@@ -2,6 +2,7 @@ package it.ucdm.leisure.dinnerplan.features.event;
 
 import it.ucdm.leisure.dinnerplan.features.event.dto.CalendarEventDTO;
 import it.ucdm.leisure.dinnerplan.features.event.dto.SmartEventRequest;
+import it.ucdm.leisure.dinnerplan.features.proposal.AffinityService;
 import it.ucdm.leisure.dinnerplan.features.proposal.Proposal;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalCatalogService;
 import it.ucdm.leisure.dinnerplan.features.proposal.ProposalService;
@@ -33,16 +34,18 @@ public class DinnerController {
     private final InteractionService interactionService;
     private final UserService userService;
     private final UserAgentUtils userAgentUtils;
+    private final AffinityService affinityService;
 
     public DinnerController(DinnerEventService dinnerEventService, ProposalService proposalService,
             ProposalCatalogService proposalCatalogService, InteractionService interactionService,
-            UserService userService, UserAgentUtils userAgentUtils) {
+            UserService userService, UserAgentUtils userAgentUtils, AffinityService affinityService) {
         this.dinnerEventService = dinnerEventService;
         this.proposalService = proposalService;
         this.proposalCatalogService = proposalCatalogService;
         this.interactionService = interactionService;
         this.userService = userService;
         this.userAgentUtils = userAgentUtils;
+        this.affinityService = affinityService;
     }
 
     @GetMapping("/manual")
@@ -217,17 +220,25 @@ public class DinnerController {
             return Integer.compare(v2, v1);
         });
         
-        // Convert to DTOs and calculate distance
+        // Convert to DTOs and calculate distance AND Affinity Score
         User currentUser = (User) model.getAttribute("currentUser");
         List<ProposalDTO> proposalDTOs = new ArrayList<>();
         for (Proposal p : sortedProposals) {
             ProposalDTO dto = new ProposalDTO(p);
+            
+            // Distance
             if (currentUser != null && currentUser.getLatitude() != null && currentUser.getLongitude() != null 
                     && p.getLatitude() != null && p.getLongitude() != null) {
                 double distance = calculateHaversineDistance(currentUser.getLatitude(), currentUser.getLongitude(), 
                         p.getLatitude(), p.getLongitude());
                 dto.setDistanceFromUser(distance);
             }
+            
+            // Affinity Score
+            if (currentUser != null && (currentUser.getRole() == Role.ORGANIZER || currentUser.getRole() == Role.ADMIN)) {
+                 dto.setAffinityScore(affinityService.calculateAffinity(p, event));
+            }
+            
             proposalDTOs.add(dto);
         }
         
@@ -328,17 +339,25 @@ public class DinnerController {
             return Integer.compare(v2, v1);
         });
         
-        // Convert to DTOs and calculate distance
+        // Convert to DTOs and calculate distance AND Affinity Score
         User currentUser = (User) model.getAttribute("currentUser");
         List<ProposalDTO> proposalDTOs = new ArrayList<>();
         for (Proposal p : sortedProposals) {
             ProposalDTO dto = new ProposalDTO(p);
+            
+            // Distance
             if (currentUser != null && currentUser.getLatitude() != null && currentUser.getLongitude() != null 
                     && p.getLatitude() != null && p.getLongitude() != null) {
                 double distance = calculateHaversineDistance(currentUser.getLatitude(), currentUser.getLongitude(), 
                         p.getLatitude(), p.getLongitude());
                 dto.setDistanceFromUser(distance);
             }
+            
+            // Affinity Score
+            if (currentUser != null && (currentUser.getRole() == Role.ORGANIZER || currentUser.getRole() == Role.ADMIN)) {
+                 dto.setAffinityScore(affinityService.calculateAffinity(p, event));
+            }
+
             proposalDTOs.add(dto);
         }
         model.addAttribute("sortedProposals", proposalDTOs);

@@ -4,6 +4,7 @@ import it.ucdm.leisure.dinnerplan.features.event.DinnerEvent;
 import it.ucdm.leisure.dinnerplan.features.event.DinnerEventRepository;
 import it.ucdm.leisure.dinnerplan.features.geocode.Coordinates;
 import it.ucdm.leisure.dinnerplan.features.geocode.GeocodingService;
+import it.ucdm.leisure.dinnerplan.features.proposal.dto.AffinityScoreDTO;
 import it.ucdm.leisure.dinnerplan.features.proposal.dto.ProposalSuggestionDTO;
 import it.ucdm.leisure.dinnerplan.features.user.DietaryPreference;
 import it.ucdm.leisure.dinnerplan.features.user.User;
@@ -19,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ProposalService {
@@ -30,15 +30,17 @@ public class ProposalService {
     private final UserRepository userRepository; // Needed to save user coordinates
     private final GeocodingService geocodingService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AffinityService affinityService;
     private final tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
 
     public ProposalService(ProposalRepository proposalRepository, DinnerEventRepository dinnerEventRepository,
-                           UserRepository userRepository, GeocodingService geocodingService, SimpMessagingTemplate messagingTemplate) {
+                           UserRepository userRepository, GeocodingService geocodingService, SimpMessagingTemplate messagingTemplate, AffinityService affinityService) {
         this.proposalRepository = proposalRepository;
         this.dinnerEventRepository = dinnerEventRepository;
         this.userRepository = userRepository;
         this.geocodingService = geocodingService;
         this.messagingTemplate = messagingTemplate;
+        this.affinityService = affinityService;
     }
 
     public List<Proposal> getProposalsForEvent(Long eventId) {
@@ -54,59 +56,27 @@ public class ProposalService {
             throw new IllegalStateException("Event is already decided");
         }
 
+        // Ensure user coordinates are up to date for accurate scoring
         List<User> usersToConsider = new ArrayList<>(event.getParticipants());
         usersToConsider.add(event.getOrganizer());
-
-        Set<DietaryPreference> requiredPreferences = usersToConsider.stream()
-                .map(User::getDietaryPreference)
-                .filter(pref -> pref != DietaryPreference.OMNIVORE)
-                .collect(Collectors.toSet());
-
-        List<Coordinates> coordinates = new ArrayList<>();
+        
         for (User user : usersToConsider) {
-            if (user.getAddress() != null && !user.getAddress().isBlank()) {
-                if (user.getLatitude() != null && user.getLongitude() != null) {
-                    logger.debug("Using cached coordinates for user {}", user.getUsername());
-                    coordinates.add(new Coordinates(user.getLatitude(), user.getLongitude()));
-                } else {
-                    logger.info("Geocoding address for user {}: {}", user.getUsername(), user.getAddress());
-                    try {
-                        Coordinates userCoordinates = geocodingService.getCoordinates(user.getAddress());
-                        if (userCoordinates != null) {
-                            coordinates.add(userCoordinates);
-                            try {
-                                User persistentUser = userRepository.findById(user.getId()).orElse(user);
-                                persistentUser.setLatitude(userCoordinates.getLatitude());
-                                persistentUser.setLongitude(userCoordinates.getLongitude());
-                                userRepository.save(persistentUser);
-                                logger.info("Saved coordinates for user {}", user.getUsername());
-                            } catch (Exception e) {
-                                logger.error("Failed to save coordinates for user {}", user.getUsername(), e);
-                            }
-                        } else {
-                            logger.warn("Could not geocode address for user {}: {}", user.getUsername(), user.getAddress());
-                        }
-                    } catch (Exception e) {
-                        logger.error("Unexpected error geocoding user {}: {}", user.getUsername(), user.getAddress(), e);
+            if (user.getAddress() != null && !user.getAddress().isBlank() && (user.getLatitude() == null || user.getLongitude() == null)) {
+                 try {
+                    Coordinates userCoordinates = geocodingService.getCoordinates(user.getAddress());
+                    if (userCoordinates != null) {
+                        User persistentUser = userRepository.findById(user.getId()).orElse(user);
+                        persistentUser.setLatitude(userCoordinates.getLatitude());
+                        persistentUser.setLongitude(userCoordinates.getLongitude());
+                        userRepository.save(persistentUser);
                     }
+                } catch (Exception e) {
+                    logger.error("Error geocoding user {}", user.getUsername(), e);
                 }
             }
         }
 
-        if (coordinates.size() < 2) {
-            logger.warn("Not enough users with valid addresses to find a central point for eventId: {}", eventId);
-            return;
-        }
-
-        double lat = 0;
-        double lon = 0;
-        for (Coordinates c : coordinates) {
-            lat += c.getLatitude();
-            lon += c.getLongitude();
-        }
-        Coordinates center = new Coordinates(lat / coordinates.size(), lon / coordinates.size());
-        logger.info("Calculated center point for eventId {}: {}", eventId, center);
-
+        // Find candidate proposals (global proposals not yet in this event)
         List<Proposal> candidateProposals = proposalRepository.findAll().stream()
                 .filter(p -> p.getDinnerEvents().stream().noneMatch(e -> e.getId().equals(eventId)))
                 .toList();
@@ -117,78 +87,37 @@ public class ProposalService {
         }
 
         Proposal bestProposal = null;
-        double minDistance = Double.MAX_VALUE;
-        long maxSatisfiedPreferences = -1;
+        double maxScore = -1.0;
 
         for (Proposal proposal : candidateProposals) {
-            if (proposal.getAddress() == null || proposal.getAddress().isBlank()) {
-                continue;
-            }
-
-            long satisfiedCount = 0;
-            if (requiredPreferences.isEmpty()) {
-                satisfiedCount = Long.MAX_VALUE;
-            } else {
-                satisfiedCount = requiredPreferences.stream()
-                        .filter(pref -> proposal.getDietaryPreferences().contains(pref))
-                        .count();
-            }
-
-            if (maxSatisfiedPreferences != -1 && satisfiedCount < maxSatisfiedPreferences) {
-                continue;
-            }
-
-            Coordinates proposalCoordinates = null;
-            
-            if (proposal.getLatitude() != null && proposal.getLongitude() != null) {
-                logger.debug("Using cached coordinates for proposal {}", proposal.getLocation());
-                proposalCoordinates = new Coordinates(proposal.getLatitude(), proposal.getLongitude());
-            } else {
-                logger.info("Geocoding address for proposal {}: {}", proposal.getLocation(), proposal.getAddress());
-                try {
-                    proposalCoordinates = geocodingService.getCoordinates(proposal.getAddress());
-                    if (proposalCoordinates != null) {
-                        try {
-                            proposal.setLatitude(proposalCoordinates.getLatitude());
-                            proposal.setLongitude(proposalCoordinates.getLongitude());
-                            proposalRepository.save(proposal);
-                            logger.info("Saved coordinates for proposal {}", proposal.getLocation());
-                        } catch (Exception e) {
-                            logger.error("Failed to save coordinates for proposal {}", proposal.getLocation(), e);
-                        }
-                    } else {
-                        logger.warn("Could not geocode address for proposal {}: {}", proposal.getLocation(), proposal.getAddress());
+            // Ensure proposal has coordinates for accurate scoring
+            if (proposal.getAddress() != null && !proposal.getAddress().isBlank() && (proposal.getLatitude() == null || proposal.getLongitude() == null)) {
+                 try {
+                    Coordinates coords = geocodingService.getCoordinates(proposal.getAddress());
+                    if (coords != null) {
+                        proposal.setLatitude(coords.getLatitude());
+                        proposal.setLongitude(coords.getLongitude());
+                        proposalRepository.save(proposal);
                     }
                 } catch (Exception e) {
-                    logger.error("Unexpected error geocoding proposal {}: {}", proposal.getLocation(), proposal.getAddress(), e);
+                    logger.error("Error geocoding proposal {}", proposal.getLocation(), e);
                 }
             }
-            
-            if (proposalCoordinates != null) {
-                double distance = calculateHaversineDistance(
-                        center.getLatitude(), center.getLongitude(),
-                        proposalCoordinates.getLatitude(), proposalCoordinates.getLongitude()
-                );
-                
-                logger.debug("Distance from center to proposal '{}' is {} km. Satisfied prefs: {}", 
-                        proposal.getLocation(), distance, satisfiedCount);
 
-                if (satisfiedCount > maxSatisfiedPreferences) {
-                    maxSatisfiedPreferences = satisfiedCount;
-                    minDistance = distance;
-                    bestProposal = proposal;
-                } else if (satisfiedCount == maxSatisfiedPreferences) {
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        bestProposal = proposal;
-                    }
-                }
+            AffinityScoreDTO scoreDTO = affinityService.calculateAffinity(proposal, event);
+            double currentScore = scoreDTO.getTotalScore();
+            
+            logger.debug("Proposal '{}' score: {}", proposal.getLocation(), currentScore);
+
+            if (currentScore > maxScore) {
+                maxScore = currentScore;
+                bestProposal = proposal;
             }
         }
 
         if (bestProposal != null) {
-            logger.info("Found best proposal '{}' ({} km away, satisfied prefs: {}) for eventId: {}", 
-                    bestProposal.getLocation(), String.format("%.2f", minDistance), maxSatisfiedPreferences, eventId);
+            logger.info("Found best proposal '{}' (Score: {}) for eventId: {}", 
+                    bestProposal.getLocation(), String.format("%.2f", maxScore), eventId);
             addProposal(eventId, dateOptions, bestProposal.getLocation(), bestProposal.getAddress(), bestProposal.getDescription(), bestProposal.getEmail(), bestProposal.getPhoneNumber(), bestProposal.getWebsite(), bestProposal.getDietaryPreferences());
         } else {
             logger.warn("Could not find any suitable central proposal for eventId: {}", eventId);
