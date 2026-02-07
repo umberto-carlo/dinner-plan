@@ -147,6 +147,18 @@
                             style="display:block; margin-bottom: 0.25rem;">Descrizione</label>
                         <input type="text" id="gp-description" name="description" style="width: 100%; padding: 0.5rem;">
                     </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="gp-email" style="display:block; margin-bottom: 0.25rem;">Email</label>
+                        <input type="email" id="gp-email" name="email" style="width: 100%; padding: 0.5rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="gp-phone" style="display:block; margin-bottom: 0.25rem;">Telefono</label>
+                        <input type="text" id="gp-phone" name="phoneNumber" style="width: 100%; padding: 0.5rem;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="gp-website" style="display:block; margin-bottom: 0.25rem;">Sito Web</label>
+                        <input type="text" id="gp-website" name="website" style="width: 100%; padding: 0.5rem;">
+                    </div>
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label style="display: block; margin-bottom: 0.5rem;" th:text="#{profile.dietary}">Dietary Preferences</label>
                         <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
@@ -200,29 +212,56 @@
                         <i style="color: var(--success); font-size: 1rem;">&#9650;</i>
                     </div>
                     <div style="flex-grow: 1;">
-                        <div style="font-weight: bold; font-size: 1.1rem;" th:text="${prop.location}">Location</div>
-                        <!-- Dietary Icons -->
-                        <div style="display: flex; gap: 0.25rem; margin-bottom: 0.25rem;">
-                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
-                                style="font-size: 1.1rem;" th:title="#{register.dietary.OMNIVORE}">🍖</span>
-                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
-                                style="font-size: 1.1rem;" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
-                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
-                                style="font-size: 1.1rem;" th:title="#{register.dietary.VEGAN}">🌱</span>
-                            <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
-                                style="font-size: 1.1rem;" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2">
+                                <div style="font-weight: bold; font-size: 1.1rem;" th:text="${prop.location}">Location</div>
+                                <!-- Dietary Icons -->
+                                <div style="display: flex; gap: 0.25rem; margin-bottom: 0.25rem;">
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
+                                        style="font-size: 1.1rem;" th:title="#{register.dietary.OMNIVORE}">🍖</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
+                                        style="font-size: 1.1rem;" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
+                                        style="font-size: 1.1rem;" th:title="#{register.dietary.VEGAN}">🌱</span>
+                                    <span th:if="${#lists.contains(prop.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
+                                        style="font-size: 1.1rem;" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
 
-                            <!-- Edit Dietary Preferences Button -->
-                            <button th:if="${isOrganizer}" type="button"
-                                style="background: none; border: none; cursor: pointer; font-size: 1rem; margin-left: 0.5rem; color: var(--text-secondary);"
-                                th:data-location="${prop.location}" th:data-address="${prop.address}"
-                                th:data-preferences="${#strings.listJoin(prop.dietaryPreferences, ',')}"
-                                onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
-                                ✏️
-                            </button>
+                                    <!-- Edit Dietary Preferences Button -->
+                                    <button th:if="${isOrganizer}" type="button"
+                                        style="background: none; border: none; cursor: pointer; font-size: 1rem; margin-left: 0.5rem; color: var(--text-secondary);"
+                                        th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                        th:data-preferences="${#strings.listJoin(prop.dietaryPreferences, ',')}"
+                                        onclick="openUpdateDietaryModal(this)" title="Modifica Preferenze">
+                                        ✏️
+                                    </button>
+                                    <!-- Edit Details Button -->
+                                    <button th:if="${isOrganizer}" type="button"
+                                        style="background: none; border: none; cursor: pointer; font-size: 1rem; margin-left: 0.5rem; color: var(--text-secondary);"
+                                        th:data-location="${prop.location}" th:data-address="${prop.address}"
+                                        th:data-email="${prop.email}" th:data-phone="${prop.phoneNumber}" th:data-website="${prop.website}"
+                                        onclick="openUpdateDetailsModal(this)" title="Modifica Dettagli">
+                                        📝
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Distance Badge -->
+                            <div th:if="${prop.distanceFromUser != null}"
+                                 class="text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <span th:text="${#numbers.formatDecimal(prop.distanceFromUser, 1, 2) + ' ' + #messages.msg('event.proposals.distance_from_you')}">0.00 km</span>
+                            </div>
                         </div>
                         <div style="color: var(--text-secondary);" th:text="${prop.address}">Address</div>
                         <div style="font-size: 0.9rem; margin-top: 0.2rem;" th:text="${prop.description}"></div>
+
+                        <!-- Contact Info -->
+                        <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span th:if="${prop.email}" th:text="${prop.email}"></span>
+                            <span th:if="${prop.phoneNumber}" th:text="${prop.phoneNumber}"></span>
+                            <a th:if="${prop.website}" th:href="${prop.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
+                        </div>
 
                         <!-- ADD TO EXISTING EVENT BTN -->
                         <div th:if="${isOrganizer}" style="margin-top: 0.5rem;">
@@ -233,6 +272,16 @@
                                 onclick="openAddToEventModal(this)" th:text=" '+ ' + #{proposals.add_to_existing}">
                                 + Aggiungi a Evento Esistente
                             </button>
+                        </div>
+
+                        <!-- Map Section -->
+                        <div th:if="${prop.address}" class="w-full mt-2">
+                            <a th:href="'https://www.google.com/maps/search/?api=1&query=' + ${prop.address}"
+                                target="_blank"
+                                class="w-full text-center inline-flex justify-center items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                style="text-decoration: none;">
+                                🗺️ Apri Mappa
+                            </a>
                         </div>
                     </div>
                     <div style="text-align: right; min-width: 100px;">
@@ -403,6 +452,43 @@
         </form>
     </div>
 
+    <!-- Update Details Modal -->
+    <div id="update-details-modal"
+        class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-4 border border-gray-100 dark:border-gray-700"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border: 1px solid var(--border);">
+        <h4 style="margin-bottom: 1rem;">Modifica Dettagli</h4>
+        <form th:action="@{/proposals/update-details}" method="post">
+            <input type="hidden" id="udet-location" name="location">
+            <input type="hidden" id="udet-address" name="address">
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <p style="margin-bottom: 0.5rem;"><strong id="udet-display-loc">Location</strong></p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="udet-email" style="display:block; margin-bottom: 0.25rem;">Email</label>
+                    <input type="email" id="udet-email" name="email" style="width: 100%; padding: 0.5rem;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="udet-phone" style="display:block; margin-bottom: 0.25rem;">Telefono</label>
+                    <input type="text" id="udet-phone" name="phoneNumber" style="width: 100%; padding: 0.5rem;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="udet-website" style="display:block; margin-bottom: 0.25rem;">Sito Web</label>
+                    <input type="text" id="udet-website" name="website" style="width: 100%; padding: 0.5rem;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                <button type="button"
+                    class="btn btn-secondary inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    onclick="document.getElementById('update-details-modal').style.display='none'"
+                    th:text="#{app.cancel}">Annulla</button>
+                <button type="submit"
+                    class="btn inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    th:text="#{app.save}">Salva</button>
+            </div>
+        </form>
+    </div>
+
     <!-- Error/Success Messages from Flash Attributes -->
     <div th:if="${errorMessage}"
         class="card bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-4 border border-gray-100 dark:border-gray-700"
@@ -453,6 +539,17 @@
             }
 
             document.getElementById('update-dietary-modal').style.display = 'block';
+        }
+
+        function openUpdateDetailsModal(btn) {
+            document.getElementById('udet-location').value = btn.getAttribute('data-location');
+            document.getElementById('udet-address').value = btn.getAttribute('data-address');
+            document.getElementById('udet-display-loc').textContent = btn.getAttribute('data-location');
+            document.getElementById('udet-email').value = btn.getAttribute('data-email') || '';
+            document.getElementById('udet-phone').value = btn.getAttribute('data-phone') || '';
+            document.getElementById('udet-website').value = btn.getAttribute('data-website') || '';
+
+            document.getElementById('update-details-modal').style.display = 'block';
         }
 
         function openBatchAddModal() {

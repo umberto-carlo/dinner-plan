@@ -8,14 +8,39 @@
             Nessuna proposta aggiunta ancora.
         </div>
 
-        <div th:each="proposal : ${sortedProposals}"
+        <div th:each="proposalDTO : ${sortedProposals}"
+            th:with="proposal=${proposalDTO.proposal}"
             class="bg-white dark:bg-gray-800 rounded-lg shadow border-l-4 border-l-primary-500 overflow-hidden mb-4 p-4">
             <div class="flex flex-col gap-2">
 
                 <!-- Row 1: Location (Title) -->
                 <div
                     style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary); border-bottom: 1px solid #eee; padding-bottom: 0.25rem; display: flex; justify-content: space-between; align-items: center;">
-                    <span th:text="${proposal.location}">Location</span>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <span th:text="${proposal.location}">Location</span>
+                            <!-- Dietary Icons -->
+                            <div class="flex gap-1">
+                                <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).OMNIVORE)}"
+                                    style="font-size: 1rem;" th:title="#{register.dietary.OMNIVORE}">🍖</span>
+                                <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGETARIAN)}"
+                                    style="font-size: 1rem;" th:title="#{register.dietary.VEGETARIAN}">🥗</span>
+                                <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).VEGAN)}"
+                                    style="font-size: 1rem;" th:title="#{register.dietary.VEGAN}">🌱</span>
+                                <span th:if="${#lists.contains(proposal.dietaryPreferences, T(it.ucdm.leisure.dinnerplan.features.user.DietaryPreference).CELIAC)}"
+                                    style="font-size: 1rem;" th:title="#{register.dietary.CELIAC}">🌾🚫</span>
+                            </div>
+                        </div>
+                        <!-- Distance Badge -->
+                        <div th:if="${proposalDTO.distanceFromUser != null}"
+                             class="text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            <span th:text="${#numbers.formatDecimal(proposalDTO.distanceFromUser, 1, 2) + ' ' + #messages.msg('event.proposals.distance_from_you')}">0.00 km</span>
+                        </div>
+                    </div>
+
                     <!-- Rating Controls (Decided Event - Proposal Level) -->
                     <div th:if="${event.status.name() == 'DECIDED' and event.selectedProposalDate != null and event.selectedProposalDate.proposal.id == proposal.id and currentUser != null}"
                         style="display: flex; gap: 0.25rem; align-items: center;">
@@ -28,7 +53,7 @@
                                 class="inline-flex items-center px-2 py-1 border border-border rounded shadow-sm text-xs font-medium"
                                 th:classappend="${userRating == true} ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'"
                                 title="Mi piace">
-                                👎
+                                👍
                             </button>
                         </form>
                         <!-- Dislike -->
@@ -50,6 +75,22 @@
                 <div th:if="${proposal.description}"
                     style="font-size: 0.95rem; color: var(--text-secondary); font-style: italic;">
                     <span th:text="${proposal.description}">Descrizione</span>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="flex gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span th:if="${proposal.email}" th:text="${proposal.email}"></span>
+                    <span th:if="${proposal.phoneNumber}" th:text="${proposal.phoneNumber}"></span>
+                    <a th:if="${proposal.website}" th:href="${proposal.website}" target="_blank" class="text-primary-600 hover:underline">Sito</a>
+                </div>
+
+                <!-- Incompatible Participants Warning -->
+                <div th:if="${incompatibleUsersMap != null and incompatibleUsersMap.containsKey(proposal.id) and !incompatibleUsersMap.get(proposal.id).isEmpty()}"
+                     class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-2 text-xs text-red-800 dark:text-red-300 mt-2">
+                    <span class="font-bold" th:text="#{event.proposals.incompatible}">⚠️ Attenzione:</span>
+                    <span th:each="user, iterStat : ${incompatibleUsersMap.get(proposal.id)}" class="font-medium">
+                        <span th:text="${user.username}">User</span><span th:if="${!iterStat.last}">, </span>
+                    </span>
                 </div>
 
                 <!-- Row 3: Address/Map + Dates -->
