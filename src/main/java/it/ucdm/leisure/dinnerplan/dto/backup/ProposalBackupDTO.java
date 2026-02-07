@@ -20,5 +20,8 @@ public class ProposalBackupDTO {
     private Double latitude;
     private Double longitude;
     private String description;
+    private String email;
+    private String phoneNumber;
+    private String website;
     private Set<DietaryPreference> dietaryPreferences;
 }

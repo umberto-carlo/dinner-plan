@@ -219,6 +219,9 @@ public class AdminDataService {
             proposal.setLatitude(dto.getLatitude());
             proposal.setLongitude(dto.getLongitude());
             proposal.setDescription(dto.getDescription());
+            proposal.setEmail(dto.getEmail());
+            proposal.setPhoneNumber(dto.getPhoneNumber());
+            proposal.setWebsite(dto.getWebsite());
             proposal.setDietaryPreferences(dto.getDietaryPreferences());
 
             // Link to Events (ManyToMany)
